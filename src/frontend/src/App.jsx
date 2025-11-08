@@ -59,3 +59,27 @@ return (
         {error && (
           <div className="mt-4 p-3 bg-red-600 rounded text-sm">{error}</div>
         )}
+
+        {sentiment && (
+          <div className="mt-6 p-4 bg-gray-800 rounded">
+            <p className="text-lg">
+              Sentiment Score:{" "}
+              <span
+                className={`font-bold ${
+                  sentiment.score > 0 ? "text-green-400" : "text-red-400"
+                }`}
+              >
+                {sentiment.score.toFixed(2)}
+              </span>
+            </p>
+            <p className="text-sm mt-2 text-gray-400">
+              Based on data from Reddit and news headlines
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default App;
