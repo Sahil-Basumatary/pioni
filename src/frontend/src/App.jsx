@@ -53,4 +53,4 @@ return (
       <button
           onClick={fetchSentiment}
           className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 py-2 rounded"
-        > {loading ? "Loading..." : "Get Sentiment"}</button>
+        > {loading ? "Please wait" : "Get Sentiment"}</button>
