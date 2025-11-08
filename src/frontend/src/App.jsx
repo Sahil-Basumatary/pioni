@@ -7,7 +7,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Function to fetch sentiment data for the given ticker from the backend API
+  // a Function to fetch sentiment data for the given ticker from the backend API
   const fetchSentiment = async () => {
     if (!ticker.trim()) {
       setError("Please enter a ticker symbol.");
@@ -21,9 +21,8 @@ function App() {
     try {
       // Fetch sentiment data from backend API
       const response = await fetch(`http://localhost:8000/sentiment/${ticker}`);
-      // Check if response is successful
+
       if (!response.ok) {
-        // Throw error if response status indicates failure
         throw new Error("Failed to fetch sentiment data");
       }
       // Parse JSON data from response
@@ -37,4 +36,21 @@ function App() {
     }
   };
 
-  
+// Renderng here the main UI of the sentiment checker app
+
+return (
+  <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
+    <h1 className="text-3xl font-bold mb-6">Pioni Sentiment Checker</h1>
+
+    <div className="w-full max-w-md">
+      <input
+        type="text"
+        placeholder="Enter stock ticker (e.g. TSLA)"
+        value={ticker}
+        onChange={(e) => setTicker(e.target.value)}
+        className="w-full px-4 py-2 text-black rounded"
+      />
+      <button
+          onClick={fetchSentiment}
+          className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 py-2 rounded"
+        > {loading ? "Loading..." : "Get Sentiment"}</button>
