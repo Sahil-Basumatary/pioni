@@ -1,19 +1,13 @@
 # Build Log
 
-## Update 1 — Project Kickoff
-- Repository created with initial folder structure and docs
-- Defined core vision and problem to solve
+## Update 1: project start
+Got the repo set up and added a basic folder layout. I wrote down the main idea behind the project and some goals so I have something to refer back to.
 
-## Update 2 — Next Planned Steps
-- Begin backend scaffolding with FastAPI
-- Select and test first sentiment data source
-- Create basic UI wireframes before writing code
+## Update 2: some future plans
+Planning to start working on the backend using FastAPI. Also want to test out different sources I can use to pull sentiment data. Before any frontend , I'm sketching out some simple UI wireframes to get a feel for the layout.
 
-## Update 3 — First Sentiment API Working
-- Implemented sentiment extraction from NewsAPI + Reddit
-- Added basic route /sentiment/{ticker} with combined score output
-- Tested locally with tickers: TSLA, AAPL, NVDA
+## Update 3: First Sentiment Feature Working
+Got the first version of the sentiment extraction running using data from NewsAPI and Reddit. Added a route (`/sentiment/{ticker}`) that returns a combined score. Tested it locally using TSLA, AAPL, and NVDA. Might add twitter later
 
-## Update 4 — Added first API tests
-- Installed pytest and FastAPI test client
-- Added test for health check endpoint
+## Update 4: Writing Tests
+Added `pytest` and wrote a basic test to check if the API health check endpoint works. More tests to come once I build out more features.
