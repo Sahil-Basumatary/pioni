@@ -53,4 +53,9 @@ return (
       <button
           onClick={fetchSentiment}
           className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 py-2 rounded"
-        > {loading ? "Please wait" : "Get Sentiment"}</button>
+        > {loading ? "Please wait" : "Get Sentiment"}
+        </button>
+
+        {error && (
+          <div className="mt-4 p-3 bg-red-600 rounded text-sm">{error}</div>
+        )}
