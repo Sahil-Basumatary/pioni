@@ -6,3 +6,11 @@ node_modules/
 dist/
 build/
 .DS_Store
+venv/
+node_modules/
+.env
+*.log
+__pycache__/
+venv/
+src/frontend/node_modules/
+.env
