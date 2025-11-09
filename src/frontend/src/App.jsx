@@ -20,7 +20,7 @@ function App() {
 
     try {
       // Fetch sentiment data from backend API
-      const response = await fetch(`http://localhost:8000/sentiment/${ticker}`);
+      const response = await fetch(`http://127.0.0.1:8000/sentiment/${ticker}`);
 
       if (!response.ok) {
         throw new Error("Failed to fetch sentiment data");
@@ -60,20 +60,20 @@ return (
           <div className="mt-4 p-3 bg-red-600 rounded text-sm">{error}</div>
         )}
 
-        {sentiment && (
+        {sentiment && sentiment.sentiment !== undefined && (
           <div className="mt-6 p-4 bg-gray-800 rounded">
             <p className="text-lg">
               Sentiment Score:{" "}
               <span
                 className={`font-bold ${
-                  sentiment.score > 0 ? "text-green-400" : "text-red-400"
+                  sentiment.sentiment > 0 ? "text-green-400" : "text-red-400"
                 }`}
               >
-                {sentiment.score.toFixed(2)}
+                {Number(sentiment.sentiment).toFixed(2)}
               </span>
             </p>
             <p className="text-sm mt-2 text-gray-400">
-              Based on data from Reddit and news headlines
+              Based on data from News headlines and Reddit :/
             </p>
           </div>
         )}
