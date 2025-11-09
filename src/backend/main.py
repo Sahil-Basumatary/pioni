@@ -9,6 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 import random
 from fastapi.responses import JSONResponse
+from dotenv import load_dotenv
+
+load_dotenv() # auto load environment variables
 
 
 class SentimentResponse(BaseModel):
