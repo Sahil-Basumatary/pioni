@@ -78,6 +78,22 @@ def health_check():
 
 @app.get("/sentiment/{ticker}", response_model=SentimentResponse)
 def get_sentiment(ticker: str):
+    ticker = ticker.upper()
+
+    if USE_MOCK:
+        # Used mocked data for a faster testing workflow
+        mock = MOCK_DATA.get(ticker, {
+            "sentiment": round(random.uniform(-1, 1), 2),
+            "sources": {"mock": random.uniform(-1, 1)},
+            "confidence": 0.5,
+        })
+        return SentimentResponse(
+            ticker=ticker,
+            sentiment=mock["sentiment"],
+            sources=mock["sources"],
+            confidence=mock["confidence"],
+        )
+
     news_score = fetch_news_sentiment(ticker)
     reddit_score = fetch_reddit_sentiment(ticker)
 
@@ -88,12 +104,12 @@ def get_sentiment(ticker: str):
         sources["reddit"] = reddit_score
 
     if not sources:
-        return {"ticker": ticker.upper(), "error": "No sentiment data found"}
+        raise HTTPException(status_code=404, detail="No sentiment data found")
 
     combined_score = round(sum(sources.values()) / len(sources), 2)
 
     return SentimentResponse(
-        ticker=ticker.upper(),
+        ticker=ticker,
         sentiment=combined_score,
         sources=sources,
         confidence=round(abs(combined_score), 2)
