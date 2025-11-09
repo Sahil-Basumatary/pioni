@@ -5,7 +5,7 @@ A live trading intelligence platform which uses human emotions, social sentiment
 
 ## what it does so far:
 
-## What it does (so far)
+## What it does so far:-
 
  
 
