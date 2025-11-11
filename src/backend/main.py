@@ -7,6 +7,7 @@ import os
 import praw
 from fastapi.middleware.cors import CORSMiddleware
 import logging
+from datetime import datetime
 import random
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
@@ -117,3 +118,9 @@ def get_sentiment(ticker: str):
         sources=sources,
         confidence=round(abs(combined_score), 2)
     )
+
+logging.basicConfig(
+    filename="logs/app.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
