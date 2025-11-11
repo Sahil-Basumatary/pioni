@@ -1,13 +1,12 @@
 import { useState } from "react";
 
 function App() {
-  // State hooks to manage ticker input, sentiment data, loading status, and error messages
+  
   const [ticker, setTicker] = useState("");
   const [sentiment, setSentiment] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // a Function to fetch sentiment data for the given ticker from the backend API
   const fetchSentiment = async () => {
     if (!ticker.trim()) {
       setError("Please enter a ticker symbol.");
@@ -19,13 +18,12 @@ function App() {
     setSentiment(null);
 
     try {
-      // Fetch sentiment data from backend API
+  
       const response = await fetch(`http://127.0.0.1:8000/sentiment/${ticker}`);
 
       if (!response.ok) {
         throw new Error("Failed to fetch sentiment data");
       }
-      // Parse JSON data from response
       const data = await response.json();
       setSentiment(data);
     } catch (err) {
@@ -36,7 +34,7 @@ function App() {
     }
   };
 
-// Renderng here the main UI of the sentiment checker app
+// Rendering here the main UI of the sentiment checker app
 
 return (
   <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
