@@ -3,8 +3,6 @@ A live trading intelligence platform which uses human emotions, social sentiment
 
 **Status** : early development
 
-## what it does so far:
-
 ## What it does so far:-
 
  
