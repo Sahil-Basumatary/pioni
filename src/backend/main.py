@@ -5,7 +5,7 @@ from newsapi import NewsApiClient
 from textblob import TextBlob
 import os
 import praw
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware                                
 import logging
 from datetime import datetime
 import random
@@ -14,6 +14,11 @@ from dotenv import load_dotenv
 
 load_dotenv() # auto load environment variables
 
+logging.basicConfig(
+        filename="logs/app.log",
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s"
+    )
 
 class SentimentResponse(BaseModel):
     ticker: str
@@ -83,44 +88,48 @@ def health_check():
 @app.get("/sentiment/{ticker}", response_model=SentimentResponse)
 def get_sentiment(ticker: str):
     ticker = ticker.upper()
+    logging.info(f"Request received for sentiment: {ticker}")
 
-    if USE_MOCK:
-        # Used mocked data for a faster testing workflow
-        mock = MOCK_DATA.get(ticker, {
-            "sentiment": round(random.uniform(-1, 1), 2),
-            "sources": {"mock": random.uniform(-1, 1)},
-            "confidence": 0.5,
-        })
+    try:
+        if USE_MOCK:
+            # Used mocked data for a faster testing workflow
+            mock = MOCK_DATA.get(ticker, {
+                "sentiment": round(random.uniform(-1, 1), 2),
+                "sources": {"mock": random.uniform(-1, 1)},
+                "confidence": 0.5,
+            })
+            logging.info(f"Returning mock sentiment for {ticker}: {mock}")
+            return SentimentResponse(
+                ticker=ticker,
+                sentiment=mock["sentiment"],
+                sources=mock["sources"],
+                confidence=mock["confidence"],
+            )
+
+        news_score = fetch_news_sentiment(ticker)
+        reddit_score = fetch_reddit_sentiment(ticker)
+
+        sources = {}
+        if news_score is not None:
+            sources["newsapi"] = news_score
+        if reddit_score is not None:
+            sources["reddit"] = reddit_score
+
+        if not sources:
+            logging.warning(f"No sentiment data found for {ticker}")
+            raise HTTPException(status_code=404, detail="OOPS! No sentiment data found")
+
+        combined_score = round(sum(sources.values()) / len(sources), 2)
+        logging.info(f"Sentiment calculated for {ticker}: {combined_score}")
+
         return SentimentResponse(
             ticker=ticker,
-            sentiment=mock["sentiment"],
-            sources=mock["sources"],
-            confidence=mock["confidence"],
+            sentiment=combined_score,
+            sources=sources,
+            confidence=round(abs(combined_score), 2)
         )
 
-    news_score = fetch_news_sentiment(ticker)
-    reddit_score = fetch_reddit_sentiment(ticker)
+    except Exception as e:
+        logging.error(f"Error processing {ticker}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
-    sources = {}
-    if news_score is not None:
-        sources["newsapi"] = news_score
-    if reddit_score is not None:
-        sources["reddit"] = reddit_score
-
-    if not sources:
-        raise HTTPException(status_code=404, detail="No sentiment data found")
-
-    combined_score = round(sum(sources.values()) / len(sources), 2)
-
-    return SentimentResponse(
-        ticker=ticker,
-        sentiment=combined_score,
-        sources=sources,
-        confidence=round(abs(combined_score), 2)
-    )
-
-logging.basicConfig(
-    filename="logs/app.log",
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
