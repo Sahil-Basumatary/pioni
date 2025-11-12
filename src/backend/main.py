@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Dict, Optional
 from newsapi import NewsApiClient
@@ -13,6 +13,11 @@ from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 
 load_dotenv() # auto load environment variables
+USE_MOCK = os.getenv("MOCK", "true").lower() == "true"
+MOCK_DATA = {
+    "TSLA": {"sentiment": 0.3, "sources": {"mock": 0.3}, "confidence": 0.5},
+    "AAPL": {"sentiment": -0.1, "sources": {"mock": -0.1}, "confidence": 0.5}
+}
 
 logging.basicConfig(
         filename="logs/app.log",

@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 function App() {
-  
   const [ticker, setTicker] = useState("");
   const [sentiment, setSentiment] = useState(null);
   const [loading, setLoading] = useState(false);
