@@ -48,10 +48,20 @@ return (
         className="w-full px-4 py-2 text-black rounded"
       />
       <button
-          onClick={fetchSentiment}
-          className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 py-2 rounded"
-        > {loading ? "Please wait" : "Get Sentiment"}
-        </button>
+        onClick={fetchSentiment}
+        disabled={loading}
+        className={`mt-4 w-full bg-indigo-600 hover:bg-indigo-700 py-2 rounded 
+        ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
+      >
+        {loading ? (
+          <div className="flex items-center justify-center gap-2">
+            <div className="loader"></div>
+            <span>hold on, cooking...</span>
+          </div>
+        ) : (
+          "Get Sentiment"
+        )}
+      </button>
 
         {error && (
           <div className="mt-4 p-3 bg-red-600 rounded text-sm">{error}</div>
