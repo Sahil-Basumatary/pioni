@@ -26,14 +26,19 @@ function App() {
       const data = await response.json();
       setSentiment(data);
     } catch (err) {
-      // Handle errors such as network issues or invalid ticker
       setError("Error fetching sentiment. Check backend or enter a valid ticker.");
     } finally {
       setLoading(false);
     }
   };
 
-// Rendering here the main UI of the sentiment checker app
+    const getSentimentLabel = (score) => {
+        if (score > 0.25) return "Leaning positive :)";
+        if (score < -0.25) return "Leaning negative :(";
+        return "Mixed or neutral";
+      };
+
+//main UI
 
 return (
   <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
@@ -67,21 +72,34 @@ return (
           <div className="mt-4 p-3 bg-red-600 rounded text-sm">{error}</div>
         )}
 
-        {sentiment && sentiment.sentiment !== undefined && (
-          <div className="mt-6 p-4 bg-gray-800 rounded">
-            <p className="text-lg">
-              Sentiment Score:{" "}
-              <span
-                className={`font-bold ${
-                  sentiment.sentiment > 0 ? "text-green-400" : "text-red-400"
-                }`}
-              >
-                {Number(sentiment.sentiment).toFixed(2)}
+        {sentiment && (
+          <div className="mt-6 w-full max-w-md bg-gray-900 border border-gray-700 rounded-xl p-5 shadow-lg">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm uppercase tracking-wide text-gray-400">
+                {sentiment.ticker}
+              </p>
+              <span className="text-xs px-2 py-1 rounded-full bg-gray-800 text-gray-300">
+                {getSentimentLabel(sentiment.sentiment)}
               </span>
+            </div>
+
+            <p className="text-4xl font-semibold">
+              {sentiment.sentiment.toFixed(2)}
             </p>
-            <p className="text-sm mt-2 text-gray-400">
-              Based on data from News headlines and Reddit :/
+
+            <p className="text-xs text-gray-500 mt-1">
+              Combined mood from news and reddit
             </p>
+
+            <div className="mt-4">
+              <p className="text-xs text-gray-400 mb-1">Confidence</p>
+              <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-indigo-500"
+                  style={{ width: `${Math.round((sentiment.confidence ?? 0) * 100)}%` }}
+                />
+              </div>
+            </div>
           </div>
         )}
       </div>
