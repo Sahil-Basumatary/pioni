@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+praw
+textblob
+requests
+python-dotenv
+newsapi-python

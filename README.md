@@ -5,8 +5,6 @@ A live trading intelligence platform which uses human emotions, social sentiment
 
 ## What it does so far
 
- 
-
 Analyzes sentiment for stock tickers by aggregating data from:
 
 1. NewsAPI (headlines about the stock)
@@ -14,6 +12,9 @@ Analyzes sentiment for stock tickers by aggregating data from:
 2.  Reddit (r/stocks, r/wallstreetbets, r/investing)
 
  Returns a sentiment score from -1 (very negative) to +1 (very positive).
+
+![UI Screenshot](./src/frontend/public/UI-1.jpeg)
+![UI Screenshot](./src/frontend/public/UI-2.jpeg)
 
 ## Setup
 
