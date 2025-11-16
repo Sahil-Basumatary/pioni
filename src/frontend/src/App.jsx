@@ -1,5 +1,15 @@
 import { useState } from "react";
 import "./loader.css";
+import { Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale
+} from "chart.js";
+
+ChartJS.register(LineElement, PointElement, CategoryScale, LinearScale);
 
 function App() {
   const [ticker, setTicker] = useState("");
@@ -39,6 +49,24 @@ function App() {
         return "Mixed or neutral";
       };
 
+    // quick mock data for chart (temporary until backend provides history)
+  const chartData = sentiment
+    ? {
+        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        datasets: [
+          {
+            label: "Sentiment trend",
+            data: Array.from({ length: 7 }, () =>
+              Number((sentiment.sentiment + (Math.random() - 0.5) * 0.3).toFixed(2))
+            ),
+            borderColor: "rgba(99, 102, 241, 0.9)",
+            backgroundColor: "rgba(99, 102, 241, 0.4)",
+            tension: 0.3
+          }
+        ]
+      }
+    : null;
+  
 //main UI
 
 return (
@@ -103,6 +131,12 @@ return (
                 />
               </div>
             </div>
+          </div>
+        )}
+        {sentiment && chartData && (
+          <div className="mt-8 w-full max-w-md bg-gray-900 border border-gray-700 rounded-xl p-5 shadow-lg">
+            <h2 className="text-sm text-gray-400 mb-3">Last 7 days (mocked)</h2>
+            <Line data={chartData} />
           </div>
         )}
       </div>
