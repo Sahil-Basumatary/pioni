@@ -1,4 +1,5 @@
 import { useState } from "react";
+import "./loader.css";
 
 function App() {
   const [ticker, setTicker] = useState("");
@@ -16,6 +17,11 @@ function App() {
     setError("");
     setSentiment(null);
 
+    if (!ticker.trim()) {
+      setError("Please enter a stock ticker.");
+      return;
+    }
+    
     try {
   
       const response = await fetch(`http://127.0.0.1:8000/sentiment/${ticker}`);
@@ -26,7 +32,7 @@ function App() {
       const data = await response.json();
       setSentiment(data);
     } catch (err) {
-      setError("Error fetching sentiment. Check backend or enter a valid ticker.");
+      setError("OOPS! omething went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -69,7 +75,9 @@ return (
       </button>
 
         {error && (
-          <div className="mt-4 p-3 bg-red-600 rounded text-sm">{error}</div>
+          <div className="mt-4 p-3 bg-red-500/90 border border-red-400 rounded-lg text-sm shadow-sm">
+            {error}
+          </div>
         )}
 
         {sentiment && (
