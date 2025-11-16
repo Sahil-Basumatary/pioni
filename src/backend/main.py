@@ -7,7 +7,7 @@ import os
 import praw
 from fastapi.middleware.cors import CORSMiddleware                                
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
@@ -137,4 +137,18 @@ def get_sentiment(ticker: str):
     except Exception as e:
         logging.error(f"Error processing {ticker}: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+    
+@app.get("/sentiment/history/{ticker}")
+async def sentiment_history(ticker: str):
+    history = []
+    today = datetime.utcnow()
+
+    for i in range(7):
+        day = today - timedelta(days=i)
+        history.append({
+            "date": day.strftime("%Y-%m-%d"),
+            "score": round(random.uniform(-1, 1), 2)
+        })
+
+    return {"ticker": ticker.upper(), "history": list(reversed(history))}
 

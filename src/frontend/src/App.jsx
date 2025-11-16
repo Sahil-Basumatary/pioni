@@ -66,6 +66,12 @@ function App() {
         ]
       }
     : null;
+
+  const fetchHistory = async (ticker) => {
+    const response = await fetch(`http://127.0.0.1:8000/sentiment/history/${ticker}`);
+    if (!response.ok) throw new Error("Failed to fetch history");
+    return await response.json();
+  };
   
 //main UI
 
