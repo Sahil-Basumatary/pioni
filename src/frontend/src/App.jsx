@@ -16,11 +16,6 @@ function App() {
     setLoading(true);
     setError("");
     setSentiment(null);
-
-    if (!ticker.trim()) {
-      setError("Please enter a stock ticker.");
-      return;
-    }
     
     try {
   
