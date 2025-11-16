@@ -27,7 +27,7 @@ function App() {
       const data = await response.json();
       setSentiment(data);
     } catch (err) {
-      setError("OOPS! omething went wrong. Please try again.");
+      setError("OOPS! Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
