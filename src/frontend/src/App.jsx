@@ -16,6 +16,7 @@ function App() {
   const [sentiment, setSentiment] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [history, setHistory] = useState([]);
 
   const fetchSentiment = async () => {
     if (!ticker.trim()) {
@@ -34,6 +35,8 @@ function App() {
       if (!response.ok) {
         throw new Error("Failed to fetch sentiment data");
       }
+      const historyData = await fetchHistory(ticker);
+      setHistory(historyData.history);
       const data = await response.json();
       setSentiment(data);
     } catch (err) {
@@ -66,6 +69,16 @@ function App() {
         ]
       }
     : null;
+
+  const historyChartData = history.length > 0 ? {
+    labels: history.map(item => item.date),
+    datasets: [{
+      label: "7-Day Sentiment Trend",
+      data: history.map(item => item.score),
+      borderWidth: 2,
+      tension: 0.25,
+    }]
+  } : null;
 
   const fetchHistory = async (ticker) => {
     const response = await fetch(`http://127.0.0.1:8000/sentiment/history/${ticker}`);
@@ -139,10 +152,20 @@ return (
             </div>
           </div>
         )}
+        
         {sentiment && chartData && (
           <div className="mt-8 w-full max-w-md bg-gray-900 border border-gray-700 rounded-xl p-5 shadow-lg">
             <h2 className="text-sm text-gray-400 mb-3">Last 7 days (mocked)</h2>
             <Line data={chartData} />
+          </div>
+        )}
+
+        {historyChartData && (
+          <div className="w-full max-w-2xl mt-8 p-4 bg-gray-800 rounded-lg shadow-lg">
+            <h2 className="text-lg font-semibold mb-3 text-white">
+              7-Day Sentiment Trend
+            </h2>
+            <Line data={historyChartData} />
           </div>
         )}
       </div>
