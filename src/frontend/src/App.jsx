@@ -17,6 +17,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [history, setHistory] = useState([]);
+  const [chartLoading, setChartLoading] = useState(false);
 
   const fetchSentiment = async () => {
     if (!ticker.trim()) {
@@ -35,10 +36,14 @@ function App() {
       if (!response.ok) {
         throw new Error("Failed to fetch sentiment data");
       }
+      setChartLoading(true);
       const historyData = await fetchHistory(ticker);
       setHistory(historyData.history);
+      setChartLoading(false);
+      
       const data = await response.json();
       setSentiment(data);
+      
     } catch (err) {
       setError("OOPS! Something went wrong. Please try again.");
     } finally {
@@ -152,6 +157,13 @@ return (
             </div>
           </div>
         )}
+
+        {chartLoading && (
+          <div className="w-full max-w-2xl mt-8 p-4 bg-gray-800 rounded-lg animate-pulse">
+            <div className="h-5 w-40 bg-gray-700 rounded mb-4"></div>
+            <div className="h-40 w-full bg-gray-700 rounded"></div>
+          </div>
+        )}
         
         {sentiment && chartData && (
           <div className="mt-8 w-full max-w-md bg-gray-900 border border-gray-700 rounded-xl p-5 shadow-lg">
@@ -160,7 +172,7 @@ return (
           </div>
         )}
 
-        {historyChartData && (
+        {!chartLoading && historyChartData && (
           <div className="w-full max-w-2xl mt-8 p-4 bg-gray-800 rounded-lg shadow-lg">
             <h2 className="text-lg font-semibold mb-3 text-white">
               7-Day Sentiment Trend
