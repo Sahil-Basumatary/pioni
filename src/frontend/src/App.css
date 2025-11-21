@@ -4,6 +4,20 @@
   padding: 2rem;
   text-align: center;
 }
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #111827;
+  --bg-tertiary: rgba(255, 255, 255, 0.03);
+
+  --card-bg: rgba(255, 255, 255, 0.06);
+  --card-border: rgba(255, 255, 255, 0.12);
+
+  --text-primary: #f7f9fc;
+  --text-secondary: #d3dae6;
+  --text-muted: #9aa3b2;
+
+  --accent: #4f7dfd;
+}
 
 .logo {
   height: 6em;

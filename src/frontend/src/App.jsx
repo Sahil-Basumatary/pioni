@@ -8,6 +8,7 @@ import {
   CategoryScale,
   LinearScale
 } from "chart.js";
+import "./App.css";
 
 ChartJS.register(LineElement, PointElement, CategoryScale, LinearScale);
 
@@ -43,7 +44,7 @@ function App() {
       
       const data = await response.json();
       setSentiment(data);
-      
+
     } catch (err) {
       setError("OOPS! Something went wrong. Please try again.");
     } finally {
@@ -56,24 +57,6 @@ function App() {
         if (score < -0.25) return "Leaning negative :(";
         return "Mixed or neutral";
       };
-
-    // quick mock data for chart (temporary until backend provides history)
-  const chartData = sentiment
-    ? {
-        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-        datasets: [
-          {
-            label: "Sentiment trend",
-            data: Array.from({ length: 7 }, () =>
-              Number((sentiment.sentiment + (Math.random() - 0.5) * 0.3).toFixed(2))
-            ),
-            borderColor: "rgba(99, 102, 241, 0.9)",
-            backgroundColor: "rgba(99, 102, 241, 0.4)",
-            tension: 0.3
-          }
-        ]
-      }
-    : null;
 
   const historyChartData = history.length > 0 ? {
     labels: history.map(item => item.date),
@@ -93,96 +76,207 @@ function App() {
   
 //main UI
 
-return (
-  <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
-    <h1 className="text-3xl font-bold mb-6">Pioni Sentiment Checker</h1>
-
-    <div className="w-full max-w-md">
-      <input
-        type="text"
-        placeholder="Enter stock ticker (e.g. TSLA)"
-        value={ticker}
-        onChange={(e) => setTicker(e.target.value)}
-        className="w-full px-4 py-2 text-black rounded"
-      />
-      <button
-        onClick={fetchSentiment}
-        disabled={loading}
-        className={`mt-4 w-full bg-indigo-600 hover:bg-indigo-700 py-2 rounded 
-        ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
-      >
-        {loading ? (
-          <div className="flex items-center justify-center gap-2">
-            <div className="loader"></div>
-            <span>hold on, cooking...</span>
+  return (
+    <div
+      className="min-h-screen w-full flex flex-col items-center justify-center px-4"
+      style={{
+        background:
+          "radial-gradient(circle at top, #0f172a 0, #020617 45%, #020617 100%)",
+        color: "var(--text-primary)"
+      }}
+    >
+      <div className="w-full max-w-5xl px-4 py-10 space-y-8">
+        {/* header */}
+        <header className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
+              Pioni Sentiment
+            </h1>
+            <p className="text-sm text-[var(--text-muted)] mt-1">
+              Quick read on how the market is feeling about a ticker.
+            </p>
           </div>
-        ) : (
-          "Get Sentiment"
-        )}
-      </button>
-
-        {error && (
-          <div className="mt-4 p-3 bg-red-500/90 border border-red-400 rounded-lg text-sm shadow-sm">
-            {error}
+          <div className="hidden md:flex items-center text-xs px-3 py-1 rounded-full border border-[var(--border-subtle)] bg-[var(--surface)]">
+            <span className="mr-1 h-2 w-2 rounded-full bg-emerald-400"></span>
+            Mock mode on
           </div>
-        )}
+        </header>
 
-        {sentiment && (
-          <div className="mt-6 w-full max-w-md bg-gray-900 border border-gray-700 rounded-xl p-5 shadow-lg">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm uppercase tracking-wide text-gray-400">
-                {sentiment.ticker}
-              </p>
-              <span className="text-xs px-2 py-1 rounded-full bg-gray-800 text-gray-300">
-                {getSentimentLabel(sentiment.sentiment)}
-              </span>
+        {/* content */}
+        <div className="grid gap-8 lg:grid-cols-2">
+          {/* left column: search + current sentiment */}
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface)] backdrop-blur-xl p-5 shadow-[0_18px_45px_rgba(0,0,0,0.55)]">
+              <label className="block text-xs font-medium uppercase tracking-[0.12em] text-[var(--text-muted)] mb-2">
+                Ticker
+              </label>
+              <input
+                type="text"
+                placeholder="Example: TSLA"
+                value={ticker}
+                onChange={(e) => setTicker(e.target.value.toUpperCase())}
+                className="w-full px-4 py-2.5 rounded-xl bg-[#0b0c10] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition"
+              />
+
+              <button
+                onClick={fetchSentiment}
+                disabled={loading}
+                className="mt-4 w-full py-3 rounded-xl text-sm font-medium
+                  bg-[var(--accent)]
+                  hover:bg-[var(--accent-soft)]
+                  transition-all
+                  backdrop-blur-xl
+                  shadow-[0_0_20px_rgba(76,121,255,0.35)]
+                  disabled:opacity-60 disabled:shadow-none"
+              >
+                {loading ? "hold on, cooking..." : "Get sentiment"}
+              </button>
+
+              {error && (
+                <div className="mt-3 text-xs rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-red-200">
+                  {error}
+                </div>
+              )}
+
+              {!error && !loading && !sentiment && (
+                <p className="mt-3 text-xs text-[var(--text-muted)]">
+                  Try a liquid US stock ticker. This is a simple early prototype.
+                </p>
+              )}
             </div>
 
-            <p className="text-4xl font-semibold">
-              {sentiment.sentiment.toFixed(2)}
-            </p>
+            {sentiment && (
+              <div className="mt-6 w-full max-w-md bg-gray-900 border border-gray-700 rounded-xl p-5 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-[var(--text-muted)]">
+                      {sentiment.ticker}
+                    </p>
+                    <p className="text-4xl font-semibold mt-1 leading-tight">
+                      {sentiment.sentiment.toFixed(2)}
+                    </p>
+                  </div>
+                  <span className="text-[10px] px-2 py-1 rounded-full bg-[#151722] text-[var(--text-secondary)] border border-[var(--border-subtle)]">
+                    {getSentimentLabel(sentiment.sentiment)}
+                  </span>
+                </div>
 
-            <p className="text-xs text-gray-500 mt-1">
-              Combined mood from news and reddit
-            </p>
+                <p className="text-xs text-[var(--text-secondary)]">
+                  Combined mood from recent news and Reddit mentions. Values are in
+                  the range -1 to 1.
+                </p>
 
-            <div className="mt-4">
-              <p className="text-xs text-gray-400 mb-1">Confidence</p>
-              <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-indigo-500"
-                  style={{ width: `${Math.round((sentiment.confidence ?? 0) * 100)}%` }}
+                <div className="pt-2">
+                  <p className="text-[10px] text-[var(--text-muted)] mb-1">
+                    Confidence
+                  </p>
+                  <div className="h-1.5 w-full rounded-full bg-[#151722] overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-[var(--accent)]"
+                      style={{
+                        width: `${Math.round(
+                          (sentiment.confidence ?? 0) * 100
+                        )}%`
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* right column: chart */}
+          <div className="flex flex-col">
+            <div
+              className="flex-1 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface)] backdrop-blur-2xl p-5 shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-sm font-medium text-[var(--text-primary)]">
+                    7-day sentiment trend
+                  </h2>
+                  <p className="text-[11px] text-[var(--text-muted)] mt-1">
+                    Simple rolling view based on the latest checks.
+                  </p>
+                </div>
+              </div>
+
+              {chartLoading && (
+                <div className="w-full h-56 flex items-center justify-center text-xs text-[var(--text-muted)]">
+                  loading chart...
+                </div>
+              )}
+
+           {!chartLoading && historyChartData && (
+              <div
+                className="w-full mt-10 rounded-2xl shadow-xl"
+                style={{
+                    maxWidth: "900px",
+                    padding: "2rem",
+                    background: "rgba(15, 23, 42, 0.95)",
+                    border: "1px solid rgba(148, 163, 184, 0.45)",
+                    backdropFilter: "blur(20px)"
+                  }}
+              >
+                <Line
+                  data={historyChartData}
+                  options={{
+                    responsive: true,
+                    plugins: {
+                      legend: { display: false },
+                      tooltip: {
+                        mode: "index",
+                        intersect: false
+                      }
+                    },
+                    interaction: {
+                      mode: "index",
+                      intersect: false
+                    },
+                    scales: {
+                      x: {
+                        grid: { color: "rgba(255,255,255,0.04)" },
+                        ticks: { color: "var(--text-muted)", font: { size: 10 } }
+                      },
+                      y: {
+                        grid: { color: "rgba(255,255,255,0.04)" },
+                        ticks: {
+                          color: "var(--text-muted)",
+                          font: { size: 10 }
+                        }
+                      }
+                    },
+                    elements: {
+                      line: {
+                        borderColor: "rgba(76,121,255,0.9)"
+                      },
+                      point: {
+                        radius: 2,
+                        hitRadius: 6
+                      }
+                    }
+                  }}
                 />
               </div>
+            )}
+
+              {!chartLoading && !historyChartData && sentiment && (
+                <div className="w-full h-56 flex items-center justify-center text-xs text-[var(--text-muted)]">
+                  No historical sentiment data available yet.
+                </div>
+              )}
+
+              {!chartLoading && !sentiment && (
+                <div className="w-full h-56 flex items-center justify-center text-xs text-[var(--text-muted)]">
+                  Run a search to see charted sentiment here.
+                </div>
+              )}
             </div>
           </div>
-        )}
-
-        {chartLoading && (
-          <div className="w-full max-w-2xl mt-8 p-4 bg-gray-800 rounded-lg animate-pulse">
-            <div className="h-5 w-40 bg-gray-700 rounded mb-4"></div>
-            <div className="h-40 w-full bg-gray-700 rounded"></div>
-          </div>
-        )}
-        
-        {sentiment && chartData && (
-          <div className="mt-8 w-full max-w-md bg-gray-900 border border-gray-700 rounded-xl p-5 shadow-lg">
-            <h2 className="text-sm text-gray-400 mb-3">Last 7 days (mocked)</h2>
-            <Line data={chartData} />
-          </div>
-        )}
-
-        {!chartLoading && historyChartData && (
-          <div className="w-full max-w-2xl mt-8 p-4 bg-gray-800 rounded-lg shadow-lg">
-            <h2 className="text-lg font-semibold mb-3 text-white">
-              7-Day Sentiment Trend
-            </h2>
-            <Line data={historyChartData} />
-          </div>
-        )}
+        </div>
       </div>
     </div>
-  );
-}
+    );
+  }
 
 export default App;
