@@ -5,9 +5,9 @@ from newsapi import NewsApiClient
 from textblob import TextBlob
 import os
 import praw
-from fastapi.middleware.cors import CORSMiddleware                                
+from fastapi.middleware.cors import CORSMiddleware                             
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import random
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
@@ -141,7 +141,7 @@ def get_sentiment(ticker: str):
 @app.get("/sentiment/history/{ticker}")
 async def sentiment_history(ticker: str):
     history = []
-    today = datetime.utcnow()
+    today = datetime.now(timezone.utc)
 
     for i in range(7):
         day = today - timedelta(days=i)

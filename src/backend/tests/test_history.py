@@ -1,8 +1,8 @@
 def test_history_mock_mode():
     from fastapi.testclient import TestClient
-    import main
+    from backend.main import app
 
-    client = TestClient(main.app)
+    client = TestClient(app)
 
     response = client.get("/sentiment/history/TSLA")
     assert response.status_code == 200
