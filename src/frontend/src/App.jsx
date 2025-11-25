@@ -127,26 +127,53 @@ function App() {
   };
 
   const fetchSentiment = async () => {
-    if (!isTickerValid(ticker)) {
-    setTickerError("Ticker looks invalid. Use 1-5 letters (A-Z).");
+  if (!isTickerValid(ticker)) {
+    setTickerError("Ticker is invalid bro. Use 1-5 letters (A-Z).");
     return;
-  } // clear previous errors
+  }
 
   setLoading(true);
   setTickerError("");
   setRequestError("");
   setSentiment(null);
+  setHistory([]);        
+  setChartLoading(false);
 
   try {
     const start = Date.now();
 
     const response = await fetch(`http://127.0.0.1:8000/sentiment/${ticker}`);
-    if (!response.ok) throw new Error("Failed to fetch sentiment data");
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        setRequestError("We couldn't find that ticker. Try a different symbol please.");
+      } else if (response.status === 429) {
+        setRequestError("We're hitting the sentiment API too often. Calm down and try again.");
+      } else if (response.status >= 500) {
+        setRequestError("The sentiment service is temporarily unavailable. Please try again soon.");
+      } else {
+        setRequestError("Something unexpected happened while fetching sentiment.");
+      }
+      return;
+    }
 
     setChartLoading(true);
-    const historyData = await fetchHistory(ticker);
-    setHistory(historyData?.history ?? []);
-    setChartLoading(false);
+    try {
+      const historyResponse = await fetch(
+        `http://127.0.0.1:8000/sentiment/history/${ticker}`
+      );
+
+      if (historyResponse.ok) {
+        const historyData = await historyResponse.json();
+        setHistory(historyData?.history ?? []);
+      } else {
+        setHistory([]);
+      }
+    } catch {
+      setHistory([]);
+    } finally {
+      setChartLoading(false);
+    }
 
     const data = await response.json();
 
@@ -156,12 +183,14 @@ function App() {
 
     setSentiment(data);
   } catch (err) {
-    setRequestError("OOPS! Something went wrong. Please try again.");
+    
+    setRequestError(
+      "Can't reach the sentiment server right now. Check that the backend is running and try again."
+    );
   } finally {
     setLoading(false);
   }
 };
-
   const getConfidenceLabel = (value) => {
     if (value < 0.33) return "Low confidence";
     if (value < 0.66) return "Medium confidence";
