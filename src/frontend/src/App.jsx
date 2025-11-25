@@ -100,74 +100,78 @@ function App() {
   const [ticker, setTicker] = useState("");
   const [sentiment, setSentiment] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [tickerError, setTickerError] = useState(""); 
+  const [requestError, setRequestError] = useState("");
   const [history, setHistory] = useState([]);
   const [chartLoading, setChartLoading] = useState(false);
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const handleTickerChange = (e) => {
     let value = e.target.value.toUpperCase();
-
-    value = value.replace(/\s+/g, "");
-
-    value = value.replace(/[^A-Z0-9.\-]/g, "");
+    value = value.replace(/\s+/g, "");     
+    value = value.replace(/[^A-Z]/g, "");  
 
     if (value.length > 5) {
-      setError("Tickers must be 1-5 characters.");
+      setTickerError("Tickers must be 1–5 letters (A–Z).");
       value = value.slice(0, 5);
     } else {
-      setError("");
+      setTickerError("");
     }
 
+    setRequestError("");   
     setTicker(value);
   };
-  
+
+  const isTickerValid = (val) => {
+    return /^[A-Z]{1,5}$/.test(val);
+  };
+
   const fetchSentiment = async () => {
-    if (!ticker.trim()) {
-      setError("Please enter a ticker symbol.");
-      return;
-    }
+    if (!isTickerValid(ticker)) {
+    setTickerError("Ticker looks invalid. Use 1-5 letters (A-Z).");
+    return;
+  } // clear previous errors
 
-    setLoading(true);
-    setError("");
-    setSentiment(null);
+  setLoading(true);
+  setTickerError("");
+  setRequestError("");
+  setSentiment(null);
 
-    try {
-      const start = Date.now();
+  try {
+    const start = Date.now();
 
-      const response = await fetch(`http://127.0.0.1:8000/sentiment/${ticker}`);
-      if (!response.ok) throw new Error("Failed to fetch sentiment data");
+    const response = await fetch(`http://127.0.0.1:8000/sentiment/${ticker}`);
+    if (!response.ok) throw new Error("Failed to fetch sentiment data");
 
-      setChartLoading(true);
-      const historyData = await fetchHistory(ticker);
-      setHistory(historyData.history);
-      setChartLoading(false);
+    setChartLoading(true);
+    const historyData = await fetchHistory(ticker);
+    setHistory(historyData?.history ?? []);
+    setChartLoading(false);
 
-      const data = await response.json();
+    const data = await response.json();
 
-      // --- enforce minimum loading time ---
-      const elapsed = Date.now() - start;
-      const MIN_LOAD = 600; // ms (premium-feel)
-      if (elapsed < MIN_LOAD) await wait(MIN_LOAD - elapsed);
+    const elapsed = Date.now() - start;
+    const MIN_LOAD = 600;
+    if (elapsed < MIN_LOAD) await wait(MIN_LOAD - elapsed);
 
-      setSentiment(data);
-    } catch (err) {
-      setError("OOPS! Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getSentimentLabel = (score) => {
-    if (score > 0.25) return "Leaning positive :)";
-    if (score < -0.25) return "Leaning negative :(";
-    return "Mixed or neutral";
-  };
+    setSentiment(data);
+  } catch (err) {
+    setRequestError("OOPS! Something went wrong. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const getConfidenceLabel = (value) => {
     if (value < 0.33) return "Low confidence";
     if (value < 0.66) return "Medium confidence";
     return "High confidence";
+  };
+
+  const getSentimentLabel = (value) => {
+    if (value > 0.6) return "Positive";
+    if (value < 0.4) return "Negative";
+    return "Neutral";
   };
 
   const historyChartData = history.length
@@ -179,7 +183,7 @@ function App() {
             data: history.map((i) => i.score),
             borderWidth: 2,
             tension: 0.25,
-            borderColor: "#2A2A2A", // BlackRock graphite
+            borderColor: "#2A2A2A", 
             pointBackgroundColor: "#2A2A2A",
           },
         ],
@@ -238,23 +242,23 @@ function App() {
                               focus:ring-2 focus:ring-[var(--accent)]"
                   />
 
-                  {error && (
+                  {tickerError && (
                     <p className="mt-2 text-[10px] text-red-500 font-medium">
-                      {error}
+                      {tickerError}
                     </p>
                   )}
 
                   <button
                     onClick={fetchSentiment}
-                    disabled={loading}
-                    className="btn-premium w-full mt-4 text-sm"
+                    disabled={loading || ticker.length === 0}
+                    className="btn-premium w-full mt-4 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {loading ? "hold on, cooking..." : "Get sentiment"}
                   </button>
 
-                  {error && (
+                  {requestError && (
                     <div className="mt-3 text-xs rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-red-600">
-                      {error}
+                      {requestError}
                     </div>
                   )}
                 </>
@@ -278,17 +282,19 @@ function App() {
 
             {sentiment && (
               <div className="card-premium mt-3 w-full max-w-md rounded-xl p-5 border border-[var(--card-border)]">
+                
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs uppercase tracking-wider text-[var(--text-muted)]">
-                      {sentiment.ticker}
+                      {sentiment?.ticker}
                     </p>
                     <p className="text-4xl font-semibold mt-1 leading-tight">
-                      {sentiment.sentiment.toFixed(2)}
+                      {(sentiment?.sentiment ?? 0).toFixed(2)}
                     </p>
                   </div>
+
                   <span className="text-[10px] px-2 py-1 rounded-full bg-[var(--bg)] text-[var(--text-muted)] border border-[var(--card-border)]">
-                    {getSentimentLabel(sentiment.sentiment)}
+                    {getSentimentLabel(sentiment?.sentiment ?? 0)}
                   </span>
                 </div>
 
@@ -296,58 +302,54 @@ function App() {
                   Combined mood from recent news and Reddit sources.
                 </p>
 
+                {/* Confidence */}
                 <div className="pt-3">
                   <div className="flex items-center justify-between mb-1">
-                    <p className="text-[10px] text-[var(--text-muted)]">
-                      Confidence
-                    </p>
+                    <p className="text-[10px] text-[var(--text-muted)]">Confidence</p>
 
-                    {/* Numeric percentage */}
                     <p className="text-[10px] font-medium text-[var(--text-primary)] tabular-nums">
-                      {Math.round((sentiment.confidence ?? 0) * 100)}%
+                      {Math.round((sentiment?.confidence ?? 0) * 100)}%
                     </p>
                   </div>
 
-                  {/* Confidence bar */}
                   <div className="h-1.5 w-full rounded-full bg-[#E5E5E5] overflow-hidden">
                     <div
                       className="h-full rounded-full bg-[var(--accent)] transition-all duration-300"
                       style={{
-                        width: `${Math.round((sentiment.confidence ?? 0) * 100)}%`,
+                        width: `${Math.round((sentiment?.confidence ?? 0) * 100)}%`,
                       }}
                     />
-                    <p className="mt-2 text-[10px] font-medium text-[var(--text-secondary)]">
-                      {getConfidenceLabel(sentiment.confidence)}
-                    </p>
                   </div>
+
+                  <p className="mt-2 text-[10px] font-medium text-[var(--text-secondary)]">
+                    {getConfidenceLabel(sentiment?.confidence ?? 0)}
+                  </p>
                 </div>
 
-                {sentiment.sources && (
+                {/* Sources */}
+                {sentiment?.sources && (
                   <div className="mt-4 pt-3 border-t border-[var(--card-border)]">
                     <p className="text-[10px] text-[var(--text-muted)] mb-2">
                       Breakdown by source
                     </p>
-                    <div className="space-y-1">
-                      {Object.entries(sentiment.sources).map(([source, value]) => (
-                        <div
-                          key={source}
-                          className="flex items-center justify-between text-xs"
-                        >
-                          <span className="text-[var(--text-muted)]">
-                            {source === "newsapi"
-                              ? "News"
-                              : source === "reddit"
-                              ? "Reddit"
-                              : source}
-                          </span>
-                          <span className="font-medium tabular-nums">
-                            {value.toFixed(2)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+
+                    {Object.entries(sentiment.sources).map(([source, value]) => (
+                      <div key={source} className="flex items-center justify-between text-xs">
+                        <span className="text-[var(--text-muted)]">
+                          {source === "newsapi"
+                            ? "News"
+                            : source === "reddit"
+                            ? "Reddit"
+                            : source}
+                        </span>
+
+                        <span className="font-medium tabular-nums">
+                          {(value ?? 0).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                )} 
+                )}
               </div>
             )}
           </div>
