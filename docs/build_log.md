@@ -31,3 +31,16 @@ The original UI looked too dull so rewrote it using Tailwind. Added a side panel
 # Small fixes and clean up
 
 Cleaned up unnecessary planning docs. 
+
+# load testing and validation
+
+wanted to make absolutely sure that the sentiment endpoints could handle mutiple requests at the same time without any problem.
+For that, I wrote an async loading test using aiohttp that throws 100 queries.
+
+Noticed some errors here and ther due to time out errors of some queries as I was not properly handling access concurrently
+
+After fixing that, got some pretty great results with as follows - 
+
+- 100% success rate 
+- average response time of ~5ms 
+- no errors
