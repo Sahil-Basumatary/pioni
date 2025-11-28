@@ -111,8 +111,10 @@ function App() {
     value = value.replace(/\s+/g, "");     
     value = value.replace(/[^A-Z]/g, "");  
 
-    if (value.length > 5) {
-      setTickerError("Tickers must be 1–5 letters (A–Z).");
+    const devBypass = ["NONEWS", "NORED", "TOOFEW", "ZEROSENT", "LIMIT"];
+
+    if (!devBypass.includes(value) && value.length > 5) {
+      setTickerError("Tickers must be 1-5 letters (A-Z).");
       value = value.slice(0, 5);
     } else {
       setTickerError("");
@@ -123,74 +125,94 @@ function App() {
   };
 
   const isTickerValid = (val) => {
+  // for development testing purposes
+    const devBypass = ["NONEWS", "TOOFEW", "ZEROSENT", "LIMIT", "NORED"];
+
+    if (devBypass.includes(val)) return true;
+
     return /^[A-Z]{1,5}$/.test(val);
   };
 
   const fetchSentiment = async () => {
-  if (!isTickerValid(ticker)) {
-    setTickerError("Ticker is invalid bro. Use 1-5 letters (A-Z).");
-    return;
-  }
-
-  setLoading(true);
-  setTickerError("");
-  setRequestError("");
-  setSentiment(null);
-  setHistory([]);        
-  setChartLoading(false);
-
-  try {
-    const start = Date.now();
-
-    const response = await fetch(`http://127.0.0.1:8000/sentiment/${ticker}`);
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        setRequestError("We couldn't find that ticker. Try a different symbol please.");
-      } else if (response.status === 429) {
-        setRequestError("We're hitting the sentiment API too often. Calm down and try again.");
-      } else if (response.status >= 500) {
-        setRequestError("The sentiment service is temporarily unavailable. Please try again soon.");
-      } else {
-        setRequestError("Something unexpected happened while fetching sentiment.");
-      }
+    if (!isTickerValid(ticker)) {
+      setTickerError("Ticker looks invalid. Use 1-5 letters (A-Z).");
       return;
     }
 
-    setChartLoading(true);
+    setLoading(true);
+    setTickerError("");
+    setRequestError("");
+    setSentiment(null);
+    setHistory([]);
+    setChartLoading(false);
+
     try {
-      const historyResponse = await fetch(
-        `http://127.0.0.1:8000/sentiment/history/${ticker}`
-      );
+      const start = Date.now();
 
-      if (historyResponse.ok) {
-        const historyData = await historyResponse.json();
-        setHistory(historyData?.history ?? []);
-      } else {
-        setHistory([]);
+      const response = await fetch(`http://127.0.0.1:8000/sentiment/${ticker}`);
+
+      if (!response.ok) {
+        let payload = null;
+        try {
+          payload = await response.json();
+        } catch {}
+
+        const errorCode = payload?.error || payload?.detail?.error || null;
+
+        if (errorCode === "INVALID_TICKER" || errorCode === "NO_DATA") {
+          setRequestError("NOT_FOUND");
+        } else if (errorCode === "NO_NEWS") {
+          setRequestError("NO_NEWS");
+        } else if (errorCode === "NO_REDDIT") {
+          setRequestError("NO_REDDIT");
+        } else if (errorCode === "ZERO_SENTIMENT") {
+          setRequestError("ZERO_SENTIMENT");
+        } else if (errorCode === "TOO_FEW_POSTS") {
+          setRequestError("TOO_FEW_POSTS");
+        } else if (errorCode === "RATE_LIMIT" || response.status === 429) {
+          setRequestError("RATE_LIMIT");
+        } else if (response.status >= 500) {
+          setRequestError("SERVER_DOWN");
+        } else {
+          setRequestError("GENERIC");
+        }
+
+        return;
       }
-    } catch {
-      setHistory([]);
+
+      const data = await response.json();
+
+      setChartLoading(true);
+      try {
+        const historyResponse = await fetch(
+          `http://127.0.0.1:8000/sentiment/history/${ticker}`
+        );
+
+        if (historyResponse.ok) {
+          const hist = await historyResponse.json();
+          setHistory(hist.history ?? []);
+        } else {
+          setHistory([]);
+        }
+      } catch {
+        setHistory([]);
+      } finally {
+        setChartLoading(false);
+      }
+
+      const elapsed = Date.now() - start;
+      const MIN_LOAD = 600;
+      if (elapsed < MIN_LOAD) await wait(MIN_LOAD - elapsed);
+
+      setSentiment(data);
+
+    } catch (err) {
+      setRequestError("SERVER_OFFLINE");
     } finally {
-      setChartLoading(false);
+      setLoading(false);
     }
+  };
 
-    const data = await response.json();
-
-    const elapsed = Date.now() - start;
-    const MIN_LOAD = 600;
-    if (elapsed < MIN_LOAD) await wait(MIN_LOAD - elapsed);
-
-    setSentiment(data);
-  } catch (err) {
-    
-    setRequestError(
-      "Can't reach the sentiment server right now. Check that the backend is running and try again."
-    );
-  } finally {
-    setLoading(false);
-  }
-};
   const getConfidenceLabel = (value) => {
     if (value < 0.33) return "Low confidence";
     if (value < 0.66) return "Medium confidence";
@@ -218,12 +240,6 @@ function App() {
         ],
       }
     : null;
-
-  const fetchHistory = async (ticker) => {
-    const response = await fetch(`http://127.0.0.1:8000/sentiment/history/${ticker}`);
-    if (!response.ok) throw new Error("Failed to fetch history");
-    return await response.json();
-  };
 
   /* main UI */
 
@@ -285,10 +301,76 @@ function App() {
                     {loading ? "hold on, cooking..." : "Get sentiment"}
                   </button>
 
-                  {requestError && (
-                    <div className="mt-3 text-xs rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-red-600">
-                      {requestError}
-                    </div>
+                  {requestError === "NOT_FOUND" && (
+                    <EmptyStatePanel
+                      variant="warning"
+                      title="Ticker not found"
+                      body="We couldn't locate this symbol in our data sources."
+                    />
+                  )}
+
+                  {requestError === "RATE_LIMIT" && (
+                    <EmptyStatePanel
+                      variant="warning"
+                      title="Too many requests"
+                      body="We're hitting the sentiment API too often. Please wait a bit and try again."
+                    />
+                  )}
+
+                  {requestError === "SERVER_DOWN" && (
+                    <EmptyStatePanel
+                      variant="warning"
+                      title="Service problem"
+                      body="The sentiment service is temporarily unavailable. Please try again soon."
+                    />
+                  )}
+
+                  {requestError === "SERVER_OFFLINE" && (
+                    <EmptyStatePanel
+                      variant="warning"
+                      title="Backend is offline"
+                      body="Can't reach the sentiment server. Make sure your FastAPI backend is running."
+                    />
+                  )}
+
+                  {requestError === "GENERIC" && (
+                    <EmptyStatePanel
+                      variant="warning"
+                      title="Something went wrong"
+                      body="Please try again in a moment."
+                    />
+                  )}
+
+                  {requestError === "NO_NEWS" && (
+                    <EmptyStatePanel
+                      variant="warning"
+                      title="No news found"
+                      body="We couldn't find any recent news articles for this ticker."
+                    />
+                  )}
+
+                  {requestError === "NO_REDDIT" && (
+                    <EmptyStatePanel
+                      variant="warning"
+                      title="No Reddit mentions"
+                      body="No recent Reddit posts matched this ticker."
+                    />
+                  )}
+
+                  {requestError === "ZERO_SENTIMENT" && (
+                    <EmptyStatePanel
+                      variant="warning"
+                      title="Perfectly neutral sentiment"
+                      body="Recent posts balance out to exactly neutral, so there's no clear lean yet."
+                    />
+                  )}
+
+                  {requestError === "TOO_FEW_POSTS" && (
+                    <EmptyStatePanel
+                      variant="warning"
+                      title="Too little data"
+                      body="There aren't enough recent posts yet to calculate a meaningful sentiment score."
+                    />
                   )}
                 </>
               ) : (
