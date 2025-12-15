@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import Dict
+from typing import Dict, Optional, List
 from newsapi import NewsApiClient
 from textblob import TextBlob
 import os
@@ -12,8 +12,8 @@ import random
 from dotenv import load_dotenv
 
 load_dotenv()  # auto load environment variables
-
-USE_MOCK = os.getenv("MOCK", "true").lower() == "true"
+def is_mock_mode() -> bool:
+    return os.getenv("MOCK", "true").lower() == "true"
 
 MOCK_DATA = {
     "TSLA": {"sentiment": 0.3, "sources": {"mock": 0.3}, "confidence": 0.5},
@@ -45,6 +45,8 @@ MOCK_ERROR_TICKERS = {
     ),
 }
 
+os.makedirs("logs", exist_ok=True)
+
 logging.basicConfig(
     filename="logs/app.log",
     level=logging.INFO,
@@ -57,6 +59,18 @@ class SentimentResponse(BaseModel):
     sentiment: float
     sources: Dict[str, float]
     confidence: float
+
+class FeedItem(BaseModel):
+    id: str
+    type: str          
+    title: str
+    source: str
+    score: float
+    ago: str
+
+class FeedResponse(BaseModel):
+    ticker: str
+    items: List[FeedItem]
 
 
 def raise_api_error(status_code: int, error_code: str, message: str) -> None:
@@ -145,7 +159,7 @@ def get_sentiment(ticker: str):
 
     try:
 
-        if USE_MOCK:
+        if is_mock_mode():
             
             if ticker in MOCK_ERROR_TICKERS:
                 error_code, status_code, msg = MOCK_ERROR_TICKERS[ticker]
@@ -238,3 +252,51 @@ async def sentiment_history(ticker: str):
         )
 
     return {"ticker": ticker.upper(), "history": list(reversed(history))}
+
+@app.get("/sentiment/feed/{ticker}", response_model=FeedResponse)
+async def sentiment_feed(ticker: str):
+    ticker = ticker.upper()
+
+    items: List[Dict] = []
+
+    # Simple mock feed for now 
+    for i in range(3):
+        minutes_ago = (i + 1) * 45
+        ago_str = f"{minutes_ago} min ago" if minutes_ago < 180 else f"{minutes_ago // 60} h ago"
+        items.append(
+            {
+                "id": f"news-{i}",
+                "type": "news",
+                "title": f"{ticker} mock news headline {i + 1}",
+                "source": "Mock Newswire",
+                "score": round(random.uniform(-1, 1), 2),
+                "ago": ago_str,
+            }
+        )
+
+    for i in range(2):
+        minutes_ago = (i + 4) * 30
+        ago_str = f"{minutes_ago} min ago" if minutes_ago < 180 else f"{minutes_ago // 60} h ago"
+        items.append(
+            {
+                "id": f"reddit-{i}",
+                "type": "reddit",
+                "title": f"{ticker} mock Reddit thread {i + 1}",
+                "source": "r/mockstocks",
+                "score": round(random.uniform(-1, 1), 2),
+                "ago": ago_str,
+            }
+        )
+
+    # Dev-only for special tickers
+    if ticker == "NONEWS":
+        items = [i for i in items if i["type"] == "reddit"]
+    elif ticker == "NORED":
+        items = [i for i in items if i["type"] == "news"]
+    elif ticker == "TOOFEW":
+        items = items[:1]
+    elif ticker == "ZEROSENT":
+        for i in items:
+            i["score"] = 0.0
+
+    return FeedResponse(ticker=ticker, items=[FeedItem(**i) for i in items])
