@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from typing import Dict, Optional, List
 from newsapi import NewsApiClient
@@ -10,6 +10,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 import random
 from dotenv import load_dotenv
+from uuid import uuid4
 
 load_dotenv()  # auto load environment variables
 def is_mock_mode() -> bool:
@@ -72,15 +73,13 @@ class FeedResponse(BaseModel):
     ticker: str
     items: List[FeedItem]
 
-
-def raise_api_error(status_code: int, error_code: str, message: str) -> None:
-
-    logging.warning(f"{error_code}: {message}")
+def raise_api_error(request: Request, status_code: int, error_code: str, message: str) -> None:
+    request_id = getattr(request.state, "request_id", None)
+    logging.warning(f"{error_code}: {message} (request_id={request_id})")
     raise HTTPException(
         status_code=status_code,
-        detail={"error": error_code, "message": message},
+        detail={"error": error_code, "message": message, "request_id": request_id},
     )
-
 
 def fetch_news_sentiment(ticker: str):
     api_key = os.getenv("NEWS_API_KEY")
@@ -131,6 +130,15 @@ def fetch_reddit_sentiment(ticker: str):
 
 app = FastAPI(title="Pioni API", version="0.3.0")
 
+
+@app.middleware("http")
+async def attach_request_id(request: Request, call_next):
+    request_id = uuid4().hex[:12]
+    request.state.request_id = request_id
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+    return response
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -153,7 +161,7 @@ def health_check():
 
 
 @app.get("/sentiment/{ticker}", response_model=SentimentResponse)
-def get_sentiment(ticker: str):
+def get_sentiment(ticker: str, request: Request):
     ticker = ticker.upper()
     logging.info(f"Request received for sentiment: {ticker}")
 
@@ -232,8 +240,13 @@ def get_sentiment(ticker: str):
     except HTTPException:
         raise
     except Exception as e:
-        logging.error(f"Error processing {ticker}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+        logging.exception(f"Unhandled error for {ticker}")
+        raise_api_error(
+            request,
+            status_code=500,
+            error_code="INTERNAL_ERROR",
+            message="Unexpected server error.",
+        )
 
 
 @app.get("/sentiment/history/{ticker}")

@@ -104,6 +104,8 @@ function App() {
   const [requestError, setRequestError] = useState("");
   const [history, setHistory] = useState([]);
   const [chartLoading, setChartLoading] = useState(false);
+  const [feed, setFeed] = useState([]);
+  const [feedLoading, setFeedLoading] = useState(false);
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const handleTickerChange = (e) => {
@@ -145,6 +147,8 @@ function App() {
     setSentiment(null);
     setHistory([]);
     setChartLoading(false);
+    setFeed([]);
+    setFeedLoading(false);
 
     try {
       const start = Date.now();
@@ -181,6 +185,24 @@ function App() {
       }
 
       const data = await response.json();
+
+      setFeedLoading(true);
+      try {
+        const feedResponse = await fetch(
+          `http://127.0.0.1:8000/sentiment/feed/${ticker}`
+        );
+
+        if (feedResponse.ok) {
+          const feedJson = await feedResponse.json();
+          setFeed(feedJson.items ?? []);
+        } else {
+          setFeed([]);
+        }
+      } catch {
+        setFeed([]);
+      } finally {
+        setFeedLoading(false);
+      }
 
       setChartLoading(true);
       try {
@@ -554,6 +576,90 @@ function App() {
           </div>
         </div>
       </div>
+
+
+    {/* Feed panel (full-width under both columns) */}
+    {(sentiment || feedLoading) && (
+      <div className="card-premium rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] backdrop-blur-xl p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-medium text-[var(--text-primary)]">
+              Recent mentions
+            </h2>
+            <p className="text-xs text-[var(--text-muted)] mt-1">
+              News headlines and posts that shape this sentiment score.
+            </p>
+          </div>
+        </div>
+
+        {feedLoading && (
+          <div className="space-y-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="flex items-start gap-3 py-2">
+                <div className="h-8 w-8 rounded-full skeleton" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 w-3/4 skeleton" />
+                  <div className="h-3 w-1/2 skeleton" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!feedLoading && feed && feed.length > 0 && (
+          <div className="space-y-2">
+            {feed.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-start gap-3 py-2 border-t border-[var(--card-border)] first:border-t-0"
+              >
+                <div className="mt-1 text-[10px] px-2 py-1 rounded-full bg-[var(--bg)] border border-[var(--card-border)]">
+                  {item.type === "news" ? "News" : "Reddit"}
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-[var(--text-primary)] line-clamp-2">
+                    {item.title}
+                  </p>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-[var(--text-muted)]">
+                    {item.source && <span>{item.source}</span>}
+                    {item.ago && (
+                      <>
+                        <span>•</span>
+                        <span>{item.ago}</span>
+                      </>
+                    )}
+                    {typeof item.score === "number" && (
+                      <>
+                        <span>•</span>
+                        <span
+                          className={
+                            item.score > 0.1
+                              ? "text-emerald-600"
+                              : item.score < -0.1
+                              ? "text-red-500"
+                              : "text-[var(--text-muted)]"
+                          }
+                        >
+                          {item.score.toFixed(2)}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!feedLoading && sentiment && feed && feed.length === 0 && (
+          <EmptyStatePanel
+            variant="history"
+            title="No posts to show yet"
+            body="We couldn't pull any recent headlines or Reddit posts for this ticker in mock mode."
+          />
+        )}
+      </div>
+    )}
     </div>
   );
 }
