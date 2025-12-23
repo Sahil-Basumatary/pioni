@@ -3,8 +3,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 def is_mock_mode() -> bool:
     return os.getenv("MOCK", "true").lower() == "true"
+
 
 def cors_origins() -> list[str]:
     raw = os.getenv("CORS_ORIGINS", "").strip()

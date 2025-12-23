@@ -3,9 +3,9 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.settings import cors_origins
-from backend.core.middleware import attach_request_id
 from backend.api.routes import router
+from backend.core.middleware import attach_request_id
+from backend.settings import cors_origins
 
 os.makedirs("logs", exist_ok=True)
 logging.basicConfig(
