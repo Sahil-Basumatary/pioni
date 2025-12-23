@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from backend.services.sentiment import get_sentiment
 from backend.services.history import get_history
@@ -8,13 +8,17 @@ from backend.services.feed import get_feed
 
 router = APIRouter()
 
+class HighlightItem(BaseModel):
+    source: str
+    text: str
+    score: float
 
 class SentimentResponse(BaseModel):
     ticker: str
     sentiment: float
     sources: Dict[str, float]
     confidence: float
-
+    highlights: Optional[List[HighlightItem]] = None
 
 class FeedItem(BaseModel):
     id: str
@@ -48,3 +52,4 @@ async def sentiment_history(ticker: str):
 @router.get("/sentiment/feed/{ticker}", response_model=FeedResponse)
 async def sentiment_feed(ticker: str):
     return await get_feed(ticker)
+

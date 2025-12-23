@@ -4,11 +4,17 @@ from typing import Dict
 import logging
 from fastapi import Request
 from newsapi import NewsApiClient
-from textblob import TextBlob
 import praw
 
 from backend.settings import is_mock_mode
 from backend.core.errors import raise_api_error
+from backend.services.scoring import score_items, compute_confidence
+from datetime import datetime, timezone
+
+SOURCE_LABEL = {
+    "news": "newsapi",
+    "reddit": "reddit",
+}
 
 MOCK_DATA = {
     "TSLA": {"sentiment": 0.3, "sources": {"mock": 0.3}, "confidence": 0.5},
@@ -23,38 +29,59 @@ MOCK_ERROR_TICKERS = {
     "LIMIT": ("RATE_LIMIT", 429, "Upstream data provider rate-limited us (simulated in mock mode)."),
 }
 
-def fetch_news_sentiment(ticker: str):
+def fetch_news_items(ticker: str):
     api_key = os.getenv("NEWS_API_KEY")
     if not api_key:
-        logging.warning("NEWS_API_KEY missing; falling back to mock news sentiment.")
-        return round(random.uniform(-1, 1), 2)
+        logging.warning("NEWS_API_KEY missing; falling back to mock news items.")
+        return [{"source": "news", "text": f"{ticker} mock news headline", "ts": None}]
 
     newsapi = NewsApiClient(api_key=api_key)
     query = f"{ticker} stock OR shares OR earnings"
-    articles = newsapi.get_everything(q=query, language="en", page_size=10)["articles"]
-    if not articles:
-        return None
+    articles = newsapi.get_everything(q=query, language="en", page_size=20)["articles"]
 
-    sentiments = [TextBlob(a["title"]).sentiment.polarity for a in articles]
-    return round(sum(sentiments) / len(sentiments), 2) if sentiments else None
+    items = []
+    for a in articles or []:
+        title = a.get("title")
+        if not title:
+            continue
+        ts = a.get("publishedAt")
+        dt = None
+        if ts:
+            try:
+                dt = datetime.fromisoformat(ts.replace("Z", "+00:00")).astimezone(timezone.utc)
+            except Exception:
+                dt = None
+        items.append({"source": "news", "text": title, "ts": dt})
 
-def fetch_reddit_sentiment(ticker: str):
+    return items
+
+def fetch_reddit_items(ticker: str):
     client_id = os.getenv("REDDIT_CLIENT_ID")
     client_secret = os.getenv("REDDIT_CLIENT_SECRET")
+
     if not client_id or not client_secret:
-        logging.warning("Reddit credentials missing; falling back to mock reddit sentiment.")
-        return round(random.uniform(-1, 1), 2)
+        logging.warning("Reddit credentials missing; falling back to mock reddit items.")
+        return [{"source": "reddit", "text": f"{ticker} mock reddit thread", "ts": None}]
 
-    reddit = praw.Reddit(client_id=client_id, client_secret=client_secret, user_agent="pioni_by_u/AquaBzy")
+    reddit = praw.Reddit(
+        client_id=client_id,
+        client_secret=client_secret,
+        user_agent="pioni_by_u/AquaBzy",
+    )
+
     subreddits = ["stocks", "wallstreetbets", "investing"]
-
-    sentiments = []
+    items = []
     for sub in subreddits:
-        posts = reddit.subreddit(sub).search(query=ticker, sort="top", limit=10)
-        for post in posts:
-            sentiments.append(TextBlob(post.title).sentiment.polarity)
+        posts = reddit.subreddit(sub).search(query=ticker, sort="top", limit=15)
+        for p in posts:
+            title = getattr(p, "title", None)
+            if not title:
+                continue
+            created = getattr(p, "created_utc", None)
+            dt = datetime.fromtimestamp(created, tz=timezone.utc) if created else None
+            items.append({"source": "reddit", "text": title, "ts": dt})
 
-    return round(sum(sentiments) / len(sentiments), 2) if sentiments else None
+    return items
 
 def get_sentiment(ticker: str, request: Request):
     ticker = ticker.upper()
@@ -69,32 +96,57 @@ def get_sentiment(ticker: str, request: Request):
         if not mock:
             raise_api_error(request, status_code=404, error_code="INVALID_TICKER", message="We couldn't find that ticker in the mock dataset.")
 
-        return {"ticker": ticker, **mock}
+        return {"ticker": ticker, **mock, "highlights": []}
 
-    news_score = fetch_news_sentiment(ticker)
-    reddit_score = fetch_reddit_sentiment(ticker)
+    news_items = fetch_news_items(ticker)
+    reddit_items = fetch_reddit_items(ticker)
 
-    if news_score is None and reddit_score is not None:
-        raise_api_error(request, status_code=422, error_code="NO_NEWS", message=f"No recent news articles found for {ticker}.")
-    if reddit_score is None and news_score is not None:
-        raise_api_error(request, status_code=422, error_code="NO_REDDIT", message=f"No relevant Reddit mentions found for {ticker}.")
+    if not news_items and reddit_items:
+        raise_api_error(request, 422, "NO_NEWS", f"No recent news articles found for {ticker}.")
+    if not reddit_items and news_items:
+        raise_api_error(request, 422, "NO_REDDIT", f"No relevant Reddit mentions found for {ticker}.")
+    if not news_items and not reddit_items:
+        raise_api_error(request, 404, "NO_DATA", f"OOPS! No sentiment data found for {ticker}.")
+
+    scored = score_items([*news_items, *reddit_items], finbert_top_n=12)
+    scores = [s.score for s in scored]
+
+    combined_score = round(sum(scores) / len(scores), 4) if scores else 0.0
+    if combined_score == 0:
+        raise_api_error(request, 422, "ZERO_SENTIMENT", f"Sentiment for {ticker} is exactly neutral based on recent data.")
 
     sources: Dict[str, float] = {}
-    if news_score is not None:
-        sources["newsapi"] = news_score
-    if reddit_score is not None:
-        sources["reddit"] = reddit_score
 
-    if not sources:
-        raise_api_error(request, status_code=404, error_code="NO_DATA", message=f"OOPS! No sentiment data found for {ticker}.")
+    news_scores = [s.score for s in scored if s.source == "news"]
+    reddit_scores = [s.score for s in scored if s.source == "reddit"]
 
-    combined_score = round(sum(sources.values()) / len(sources), 2)
-    if combined_score == 0:
-        raise_api_error(request, status_code=422, error_code="ZERO_SENTIMENT", message=f"Sentiment for {ticker} is exactly neutral based on recent data.")
+    if news_scores:
+        sources["newsapi"] = round(sum(news_scores) / len(news_scores), 4)
+    if reddit_scores:
+        sources["reddit"] = round(sum(reddit_scores) / len(reddit_scores), 4)
+
+    confidence = round(compute_confidence(scores, has_news=bool(news_scores), has_reddit=bool(reddit_scores)), 4)
+
+    top_pos = sorted(scored, key=lambda s: s.score, reverse=True)[:2]
+    top_neg = sorted(scored, key=lambda s: s.score)[:2]
+
+    highlights = [
+        *[
+            {"source": SOURCE_LABEL.get(s.source, s.source), "text": s.text, "score": round(s.score, 4)}
+            for s in top_pos
+            if s.score > 0
+        ],
+        *[
+            {"source": SOURCE_LABEL.get(s.source, s.source), "text": s.text, "score": round(s.score, 4)}
+            for s in top_neg
+            if s.score < 0
+        ],
+    ]
 
     return {
         "ticker": ticker,
         "sentiment": combined_score,
         "sources": sources,
-        "confidence": round(abs(combined_score), 2),
+        "confidence": confidence,
+        "highlights": highlights,
     }

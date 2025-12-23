@@ -10,6 +10,8 @@ import {
 } from "chart.js";
 import "./App.css";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8001";
+
 ChartJS.register(LineElement, PointElement, CategoryScale, LinearScale);
 
 function EmptyStatePanel({ variant, title, body }) {
@@ -153,7 +155,7 @@ function App() {
     try {
       const start = Date.now();
 
-      const response = await fetch(`http://127.0.0.1:8000/sentiment/${ticker}`);
+      const response = await fetch(`${API_BASE_URL}/sentiment/${ticker}`)
 
       if (!response.ok) {
         let payload = null;
@@ -188,9 +190,7 @@ function App() {
 
       setFeedLoading(true);
       try {
-        const feedResponse = await fetch(
-          `http://127.0.0.1:8000/sentiment/feed/${ticker}`
-        );
+        const feedResponse = await fetch(`${API_BASE_URL}/sentiment/feed/${ticker}`)
 
         if (feedResponse.ok) {
           const feedJson = await feedResponse.json();
@@ -206,9 +206,7 @@ function App() {
 
       setChartLoading(true);
       try {
-        const historyResponse = await fetch(
-          `http://127.0.0.1:8000/sentiment/history/${ticker}`
-        );
+        const historyResponse = await fetch(`${API_BASE_URL}/sentiment/history/${ticker}`)
 
         if (historyResponse.ok) {
           const hist = await historyResponse.json();
