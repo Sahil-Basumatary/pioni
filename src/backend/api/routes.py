@@ -40,8 +40,8 @@ def health_check():
 
 
 @router.get("/sentiment/{ticker}", response_model=SentimentResponse)
-def sentiment(ticker: str, request: Request):
-    return get_sentiment(ticker, request)
+async def sentiment(ticker: str, request: Request):
+    return await get_sentiment(ticker, request)
 
 
 @router.get("/sentiment/history/{ticker}")

@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.api.routes import router
 from backend.core.middleware import attach_request_id
 from backend.settings import cors_origins
+from backend.core.ratelimit import rate_limit_middleware
 
 os.makedirs("logs", exist_ok=True)
 logging.basicConfig(
@@ -25,5 +26,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.middleware("http")(rate_limit_middleware)
 
 app.include_router(router)
