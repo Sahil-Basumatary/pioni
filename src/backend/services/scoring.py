@@ -17,13 +17,14 @@ class ScoredItem:
     score: float
     ts: Optional[datetime] = None
 
-
 def _get_vader() -> SentimentIntensityAnalyzer:
     global _vader
     if _vader is None:
         _vader = SentimentIntensityAnalyzer()
     return _vader
 
+class FinbertUnavailable(Exception):
+    pass
 
 def _get_finbert():
     global _finbert
@@ -34,14 +35,20 @@ def _get_finbert():
         if _finbert is not None:
             return _finbert
 
-        from transformers import pipeline
+        try:
+            from transformers import pipeline
+        except ModuleNotFoundError as e:
+            raise FinbertUnavailable("transformers not installed") from e
 
-        _finbert = pipeline(
-            "sentiment-analysis",
-            model="ProsusAI/finbert",
-            tokenizer="ProsusAI/finbert",
-        )
-        return _finbert
+        try:
+            _finbert = pipeline(
+                "sentiment-analysis",
+                model="ProsusAI/finbert",
+                tokenizer="ProsusAI/finbert",
+            )
+            return _finbert
+        except Exception as e:
+            raise FinbertUnavailable(f"FinBERT failed to load: {e}") from e
 
 
 def _age_weight(ts: Optional[datetime], half_life_hours: float = 48.0) -> float:

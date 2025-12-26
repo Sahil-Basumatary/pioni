@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Response
 from pydantic import BaseModel
 from typing import Dict, List, Optional
 
@@ -38,10 +38,11 @@ class FeedResponse(BaseModel):
 def health_check():
     return {"status": "running"}
 
-
 @router.get("/sentiment/{ticker}", response_model=SentimentResponse)
-async def sentiment(ticker: str, request: Request):
-    return await get_sentiment(ticker, request)
+async def sentiment(ticker: str, request: Request, response: Response):
+    payload, cache_status = await get_sentiment(ticker, request)
+    response.headers["X-Cache"] = cache_status
+    return payload
 
 
 @router.get("/sentiment/history/{ticker}")
