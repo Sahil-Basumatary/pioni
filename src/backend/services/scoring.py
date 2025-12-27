@@ -3,9 +3,11 @@ import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Iterable, Optional
-
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+import os
+import time
 
+_finbert_disabled = False
 _vader = None
 _finbert = None
 _lock = threading.Lock()
@@ -23,11 +25,20 @@ def _get_vader() -> SentimentIntensityAnalyzer:
         _vader = SentimentIntensityAnalyzer()
     return _vader
 
+def _finbert_is_enabled() -> bool:
+    global _finbert_disabled
+    if _finbert_disabled:
+        return False
+    return os.getenv("FINBERT_ENABLED", "true").lower() == "true"
+
 class FinbertUnavailable(Exception):
     pass
 
 def _get_finbert():
     global _finbert
+    if not _finbert_is_enabled():
+        raise FinbertUnavailable("FinBERT disabled")
+
     if _finbert is not None:
         return _finbert
 
@@ -68,10 +79,19 @@ def vader_score(text: str) -> float:
     v = _get_vader()
     return float(v.polarity_scores(text)["compound"])
 
-
 def finbert_score(texts: list[str]) -> list[float]:
+    global _finbert_disabled
+
     clf = _get_finbert()
+
+    max_ms = int(os.getenv("FINBERT_MAX_LATENCY_MS", "9000"))
+    t0 = time.perf_counter()
     out = clf(texts, truncation=True)
+    elapsed_ms = (time.perf_counter() - t0) * 1000
+
+    if elapsed_ms > max_ms:
+        _finbert_disabled = True
+        raise FinbertUnavailable(f"FinBERT too slow ({int(elapsed_ms)}ms > {max_ms}ms), auto-disabled")
 
     scores: list[float] = []
     for r in out:
@@ -86,7 +106,6 @@ def finbert_score(texts: list[str]) -> list[float]:
             scores.append(0.0)
 
     return scores
-
 
 def blend(vader: float, finbert: Optional[float]) -> float:
     if finbert is None:
@@ -108,9 +127,8 @@ def compute_confidence(scores: list[float], has_news: bool, has_reddit: bool) ->
     agreement = max(0.0, 1.0 - std)
 
     raw = 0.55 * volume + 1.25 * agreement + mix_bonus
-    conf = 1.0 / (1.0 + math.exp(-raw))  # sigmoid
+    conf = 1.0 / (1.0 + math.exp(-raw))  
     return float(max(0.0, min(1.0, conf)))
-
 
 def score_items(items: Iterable[dict], finbert_top_n: int = 12) -> list[ScoredItem]:
     items_list = list(items)
@@ -126,10 +144,16 @@ def score_items(items: Iterable[dict], finbert_top_n: int = 12) -> list[ScoredIt
     vader_scored.sort(key=lambda t: abs(t[1]), reverse=True)
     top = vader_scored[:finbert_top_n]
 
-    fin_texts = [t[0]["text"] for t in top]
-    fin_scores = finbert_score(fin_texts)
+    fin_map = {}
 
-    fin_map = {id(top[i][0]): fin_scores[i] for i in range(len(top))}
+    try:
+        fin_texts = [t[0]["text"] for t in top]
+        fin_scores = finbert_score(fin_texts)
+        fin_map = {id(top[i][0]): fin_scores[i] for i in range(len(top))}
+    except FinbertUnavailable:
+        if os.getenv("FINBERT_REQUIRED", "false").lower() == "true":
+            raise
+        fin_map = {}
 
     scored: list[ScoredItem] = []
     for it, vs in vader_scored:

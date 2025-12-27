@@ -2,11 +2,9 @@ import os
 import logging
 from typing import Dict
 from datetime import datetime, timezone
-
 from fastapi import Request
 from newsapi import NewsApiClient
 import praw
-
 from backend.settings import is_mock_mode
 from backend.core.errors import raise_api_error
 from backend.services.scoring import score_items, compute_confidence, FinbertUnavailable
@@ -35,8 +33,8 @@ CACHE_STALE_SECONDS = int(os.getenv("SENTIMENT_CACHE_STALE_SECONDS", "60"))
 def fetch_news_items(ticker: str):
     api_key = os.getenv("NEWS_API_KEY")
     if not api_key:
-        logging.warning("NEWS_API_KEY missing; falling back to mock news items.")
-        return [{"source": "news", "text": f"{ticker} mock news headline", "ts": None}]
+        logging.warning("NEWS_API_KEY missing; returning no news items.")
+        return []
 
     newsapi = NewsApiClient(api_key=api_key)
     query = f"{ticker} stock OR shares OR earnings"
@@ -62,8 +60,8 @@ def fetch_reddit_items(ticker: str):
     client_id = os.getenv("REDDIT_CLIENT_ID")
     client_secret = os.getenv("REDDIT_CLIENT_SECRET")
     if not client_id or not client_secret:
-        logging.warning("Reddit credentials missing; falling back to mock reddit items.")
-        return [{"source": "reddit", "text": f"{ticker} mock reddit thread", "ts": None}]
+        logging.warning("Reddit credentials missing; returning no reddit items.")
+        return []
 
     reddit = praw.Reddit(
         client_id=client_id,
