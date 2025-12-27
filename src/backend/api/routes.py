@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Request, Response
 from pydantic import BaseModel
 from typing import Dict, List, Optional
-
 from backend.services.sentiment import get_sentiment
 from backend.services.history import get_history
 from backend.services.feed import get_feed
+from backend.settings import is_mock_mode
 
 router = APIRouter()
 
@@ -33,7 +33,6 @@ class FeedResponse(BaseModel):
     ticker: str
     items: List[FeedItem]
 
-
 @router.get("/health")
 def health_check():
     return {"status": "running"}
@@ -42,15 +41,19 @@ def health_check():
 async def sentiment(ticker: str, request: Request, response: Response):
     payload, cache_status = await get_sentiment(ticker, request)
     response.headers["X-Cache"] = cache_status
+    response.headers["X-Mode"] = "MOCK" if cache_status == "MOCK" else "LIVE"
     return payload
 
-
 @router.get("/sentiment/history/{ticker}")
-async def sentiment_history(ticker: str):
-    return await get_history(ticker)
-
+async def sentiment_history(ticker: str, request: Request, response: Response):
+    payload, cache_status = await get_history(ticker, request)
+    response.headers["X-Cache"] = cache_status
+    response.headers["X-Mode"] = "MOCK" if cache_status == "MOCK" else "LIVE"
+    return payload
 
 @router.get("/sentiment/feed/{ticker}", response_model=FeedResponse)
-async def sentiment_feed(ticker: str):
-    return await get_feed(ticker)
-
+async def sentiment_feed(ticker: str, request: Request, response: Response):
+    payload, cache_status = await get_feed(ticker, request)
+    response.headers["X-Cache"] = cache_status
+    response.headers["X-Mode"] = "MOCK" if cache_status == "MOCK" else "LIVE"
+    return payload

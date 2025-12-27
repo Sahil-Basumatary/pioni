@@ -108,6 +108,44 @@ function App() {
   const [chartLoading, setChartLoading] = useState(false);
   const [feed, setFeed] = useState([]);
   const [feedLoading, setFeedLoading] = useState(false);
+  const [cacheStatus, setCacheStatus] = useState(null); // x-cache header from backend
+  const [appMode, setAppMode] = useState(null); // x-mode header (LIVE/MOCK)
+
+  const [recentTickers, setRecentTickers] = useState(() => {
+    try {
+      const raw = localStorage.getItem("pioni_recent_tickers");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const saveRecentTickers = (next) => {
+    setRecentTickers(next);
+    try {
+      localStorage.setItem("pioni_recent_tickers", JSON.stringify(next));
+    } catch {
+  
+    }
+  };
+
+  const pushRecentTicker = (symbol) => {
+    const clean = String(symbol || "").toUpperCase();
+    if (!clean) return;
+
+    const next = [clean, ...recentTickers.filter((t) => t !== clean)].slice(0, 6);
+    saveRecentTickers(next);
+  };
+
+  const clearRecentTickers = () => {
+    saveRecentTickers([]);
+    try {
+      localStorage.removeItem("pioni_recent_tickers");
+    } catch {
+    }
+  };
+
+  const QUICK_PICKS = ["TSLA", "AAPL", "NVDA", "MSFT", "AMZN", "GOOGL"]; 
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const handleTickerChange = (e) => {
@@ -137,15 +175,19 @@ function App() {
     return /^[A-Z]{1,5}$/.test(val);
   };
 
-  const fetchSentiment = async () => {
-    if (!isTickerValid(ticker)) {
+  const fetchSentiment = async (symbolOverride) => {
+    const symbol = (symbolOverride ?? ticker).toUpperCase();
+    if (!isTickerValid(symbol)) {
       setTickerError("Ticker looks invalid. Use 1-5 letters (A-Z).");
       return;
     }
 
     setLoading(true);
     setTickerError("");
+    setTicker(symbol);
     setRequestError("");
+    setCacheStatus(null);
+    setAppMode(null);
     setSentiment(null);
     setHistory([]);
     setChartLoading(false);
@@ -155,7 +197,11 @@ function App() {
     try {
       const start = Date.now();
 
-      const response = await fetch(`${API_BASE_URL}/sentiment/${ticker}`)
+      const response = await fetch(`${API_BASE_URL}/sentiment/${symbol}`)
+      const xCache = response.headers.get("x-cache");
+      const xMode = response.headers.get("x-mode");
+      if (xCache) setCacheStatus(xCache.toUpperCase());
+      if (xMode) setAppMode(xMode.toUpperCase());
 
       if (!response.ok) {
         let payload = null;
@@ -190,7 +236,11 @@ function App() {
 
       setFeedLoading(true);
       try {
-        const feedResponse = await fetch(`${API_BASE_URL}/sentiment/feed/${ticker}`)
+        const feedResponse = await fetch(`${API_BASE_URL}/sentiment/feed/${symbol}`)
+        const feedXCache = feedResponse.headers.get("x-cache");
+        const feedXMode = feedResponse.headers.get("x-mode");
+        if (feedXCache) setCacheStatus(feedXCache.toUpperCase());
+        if (feedXMode) setAppMode(feedXMode.toUpperCase());
 
         if (feedResponse.ok) {
           const feedJson = await feedResponse.json();
@@ -206,7 +256,11 @@ function App() {
 
       setChartLoading(true);
       try {
-        const historyResponse = await fetch(`${API_BASE_URL}/sentiment/history/${ticker}`)
+        const historyResponse = await fetch(`${API_BASE_URL}/sentiment/history/${symbol}`)
+        const histXCache = historyResponse.headers.get("x-cache");
+        const histXMode = historyResponse.headers.get("x-mode");
+        if (histXCache) setCacheStatus(histXCache.toUpperCase());
+        if (histXMode) setAppMode(histXMode.toUpperCase());
 
         if (historyResponse.ok) {
           const hist = await historyResponse.json();
@@ -225,6 +279,7 @@ function App() {
       if (elapsed < MIN_LOAD) await wait(MIN_LOAD - elapsed);
 
       setSentiment(data);
+      pushRecentTicker(symbol);
 
     } catch (err) {
       setRequestError("SERVER_OFFLINE");
@@ -261,65 +316,195 @@ function App() {
       }
     : null;
 
+    const landing = !sentiment && !loading && !requestError;
+
   /* main UI */
 
-  return (
+   return (
     <div
-      className="min-h-screen w-full flex flex-col items-center px-4 py-10"
+      className="min-h-screen w-full px-6 lg:px-12 py-10"
       style={{ background: "var(--bg)", color: "var(--text-primary)" }}
     >
-      <div className="w-full max-w-5xl space-y-10">
+      <div className="mx-auto w-full max-w-[1320px] space-y-10">
         {/* Header */}
-        <header className="header-premium flex items-center justify-between pb-5 mb-4">
+        <header className="header-premium flex items-center justify-between pb-5">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">Pioni Sentiment</h1>
             <p className="text-sm text-[var(--text-muted)] mt-2">
               Quick read on how the market is feeling about a ticker.
             </p>
           </div>
-          <div className="hidden md:flex items-center text-xs px-3 py-1 rounded-full border border-[var(--card-border)] bg-[var(--card-bg)]">
-            <span className="mr-1 h-2 w-2 rounded-full bg-emerald-400"></span>
-            Mock mode on
+
+          <div className="hidden md:flex items-center gap-2 text-xs px-3 py-1 rounded-full border border-[var(--card-border)] bg-[var(--card-bg)]">
+            <span className={`h-2 w-2 rounded-full ${appMode === "LIVE" ? "bg-emerald-400" : appMode === "MOCK" ? "bg-zinc-400" : "bg-zinc-400"}`}></span>
+            <span className="font-medium text-[var(--text-secondary)]">
+              {appMode ? appMode : "—"}
+            </span>
+            {cacheStatus && appMode === "LIVE" && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full border border-[var(--card-border)] bg-[var(--bg)] text-[var(--text-muted)]">
+                {cacheStatus}
+              </span>
+            )}
           </div>
         </header>
 
-        {/* Main grid */}
-        <div className="grid gap-10 lg:grid-cols-2 items-start">
+        {/* HERO / MAIN GRID */}
+        <section
+          className={`relative ${landing ? "lg:min-h-[62vh] flex items-center justify-center" : ""}`}
+        >
+          <div aria-hidden className="hero-glow" />
+
+          <div className="relative grid gap-10 lg:gap-12 lg:grid-cols-2 w-full items-stretch">
           {/* Left column: input + sentiment */}
-          <div className="space-y-5">
+          <div className="flex flex-col gap-5 h-full">
 
             {/* INPUT CARD */}
-            <div className="card-premium rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] backdrop-blur-xl p-5">
+            <div
+              className={`card-premium rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] backdrop-blur-xl p-6 flex flex-col ${
+                landing ? "min-h-[320px] sm:min-h-[360px]" : ""
+              }`}
+            >
               {!loading ? (
                 <>
-                  <label className="block text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-2">
-                    Ticker
-                  </label>
-
-                  <input
-                    type="text"
-                    placeholder="Example: TSLA"
-                    value={ticker}
-                    onChange={handleTickerChange}
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#EDEDED] 
-                              border border-[var(--card-border)] 
-                              text-[var(--text-primary)] text-sm 
-                              focus:ring-2 focus:ring-[var(--accent)]"
-                  />
-
-                  {tickerError && (
-                    <p className="mt-2 text-[10px] text-red-500 font-medium">
-                      {tickerError}
+                  <div className="mb-4">
+                    <h2 className="text-sm font-medium text-[var(--text-primary)]">Ticker</h2>
+                    <p className="text-xs text-[var(--text-muted)] mt-1">
+                      Enter a stock symbol (1-5 letters). Example: TSLA.
                     </p>
-                  )}
+                  </div>
 
-                  <button
-                    onClick={fetchSentiment}
-                    disabled={loading || ticker.length === 0}
-                    className="btn-premium w-full mt-4 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {loading ? "hold on, cooking..." : "Get sentiment"}
-                  </button>
+                  <div className={landing ? "flex-1 flex flex-col justify-center" : ""}>
+                    {/* Core controls */}
+                    <div className="space-y-2">
+                      <label className="sr-only" htmlFor="ticker-input">
+                        Ticker
+                      </label>
+
+                      <input
+                        id="ticker-input"
+                        type="text"
+                        placeholder="Example: TSLA"
+                        value={ticker}
+                        onChange={handleTickerChange}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") fetchSentiment();
+                        }}
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#EDEDED]
+                                  border border-[var(--card-border)]
+                                  text-[var(--text-primary)] text-sm
+                                  focus:ring-2 focus:ring-[var(--accent)]"
+                      />
+
+                      {tickerError && (
+                        <p className="text-[10px] text-red-500 font-medium">
+                          {tickerError}
+                        </p>
+                      )}
+
+                      <div className="pt-2 flex flex-wrap items-center gap-2">
+                        <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] mr-1">
+                          Quick picks
+                        </p>
+                        {QUICK_PICKS.map((sym) => (
+                          <button
+                            key={sym}
+                            type="button"
+                            onClick={() => fetchSentiment(sym)}
+                            className="text-[11px] px-2.5 py-1 rounded-full border border-[var(--card-border)] bg-[var(--bg)] text-[var(--text-secondary)] hover:bg-white transition"
+                          >
+                            {sym}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={fetchSentiment}
+                      disabled={loading || ticker.length === 0}
+                      className="btn-premium w-full mt-5 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {loading ? "hold on, cooking..." : "Get sentiment"}
+                    </button>
+
+                    <div className="mt-5 grid grid-cols-3 gap-3">
+                      <div className="rounded-xl border border-[var(--card-border)] bg-[var(--bg)] px-3 py-2 text-left">
+                        <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
+                          Score
+                        </p>
+                        <p className="mt-1 text-sm font-semibold tabular-nums text-[var(--text-primary)]">
+                          {sentiment ? (sentiment.sentiment ?? 0).toFixed(2) : "—"}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-[var(--card-border)] bg-[var(--bg)] px-3 py-2 text-left">
+                        <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
+                          Confidence
+                        </p>
+                        <p className="mt-1 text-sm font-semibold tabular-nums text-[var(--text-primary)]">
+                          {sentiment ? `${Math.round((sentiment.confidence ?? 0) * 100)}%` : "—"}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-[var(--card-border)] bg-[var(--bg)] px-3 py-2 text-left">
+                        <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
+                          Mentions
+                        </p>
+                        <p className="mt-1 text-sm font-semibold tabular-nums text-[var(--text-primary)]">
+                          {feedLoading ? "…" : sentiment ? (feed?.length ?? "—") : "—"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {recentTickers.length > 0 && (
+                      <div className="mt-5">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
+                            Recent
+                          </p>
+                          <button
+                            type="button"
+                            onClick={clearRecentTickers}
+                            className="text-[10px] font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
+                          >
+                            Clear
+                          </button>
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {recentTickers.map((sym) => (
+                            <button
+                              key={sym}
+                              type="button"
+                              onClick={() => fetchSentiment(sym)}
+                              className="text-[11px] px-2.5 py-1 rounded-full border border-[var(--card-border)] bg-white text-[var(--text-secondary)] hover:bg-[var(--bg)] transition"
+                            >
+                              {sym}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {landing && (
+                      <div className="mt-5 rounded-xl border border-[var(--card-border)] bg-[var(--bg)] px-4 py-3 text-left">
+                        <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
+                          Features of this legendary app
+                        </p>
+                        <ul className="mt-2 space-y-1 text-xs text-[var(--text-muted)]">
+                          <li>• Combined sentiment score with confidence</li>
+                          <li>• 7-day trend snapshot</li>
+                          <li>• Recent headlines and Reddit mentions</li>
+                        </ul>
+                      </div>
+                    )}
+
+                    <div className="mt-6 pt-4 border-t border-[var(--card-border)] flex items-center justify-between text-[11px] text-[var(--text-muted)]">
+                      <span>
+                        Sources: <span className="text-[var(--text-secondary)]">News</span> + <span className="text-[var(--text-secondary)]">Reddit</span>
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] opacity-40" />
+                        Rate limits apply
+                      </span>
+                    </div>
+                  </div>
 
                   {requestError === "NOT_FOUND" && (
                     <EmptyStatePanel
@@ -402,7 +587,7 @@ function App() {
             </div>
 
             {loading && (
-              <div className="card-premium mt-3 w-full max-w-md rounded-xl p-5 border border-[var(--card-border)] space-y-4">
+              <div className="card-premium mt-3 w-full rounded-xl p-5 border border-[var(--card-border)] space-y-4">
                 <div className="h-4 w-20 skeleton"></div>   {/* Ticker label */}
                 <div className="h-8 w-32 skeleton"></div>   {/* Big number */}
                 <div className="h-3 w-full skeleton"></div> {/* Description line */}
@@ -412,7 +597,7 @@ function App() {
             )}
 
             {sentiment && (
-              <div className="card-premium mt-3 w-full max-w-md rounded-xl p-5 border border-[var(--card-border)]">
+              <div className="card-premium mt-3 w-full rounded-xl p-5 border border-[var(--card-border)]">
                 
                 <div className="flex items-center justify-between">
                   <div>
@@ -487,7 +672,7 @@ function App() {
 
           {/* Right column: chart */}
           <div className="flex flex-col h-full">
-            <div className="card-premium chart-card flex-1 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] backdrop-blur-2xl p-5">
+            <div className="card-premium chart-card flex-1 min-h-[320px] sm:min-h-[360px] rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] backdrop-blur-2xl p-5">
               <div className="mb-4">
                 <h2 className="text-sm font-medium text-[var(--text-primary)]">
                   7-day sentiment trend
@@ -572,92 +757,93 @@ function App() {
               )}
             </div>
           </div>
-        </div>
-      </div>
-
-
-    {/* Feed panel (full-width under both columns) */}
-    {(sentiment || feedLoading) && (
-      <div className="card-premium rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] backdrop-blur-xl p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-medium text-[var(--text-primary)]">
-              Recent mentions
-            </h2>
-            <p className="text-xs text-[var(--text-muted)] mt-1">
-              News headlines and posts that shape this sentiment score.
-            </p>
           </div>
-        </div>
+        </section>
 
-        {feedLoading && (
-          <div className="space-y-3">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="flex items-start gap-3 py-2">
-                <div className="h-8 w-8 rounded-full skeleton" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-3 w-3/4 skeleton" />
-                  <div className="h-3 w-1/2 skeleton" />
-                </div>
+
+        {/* Feed panel (full-width under both columns) */}
+        {(sentiment || feedLoading) && (
+          <div className="card-premium rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] backdrop-blur-xl p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-medium text-[var(--text-primary)]">
+                  Recent mentions
+                </h2>
+                <p className="text-xs text-[var(--text-muted)] mt-1">
+                  News headlines and posts that shape this sentiment score.
+                </p>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
 
-        {!feedLoading && feed && feed.length > 0 && (
-          <div className="space-y-2">
-            {feed.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-start gap-3 py-2 border-t border-[var(--card-border)] first:border-t-0"
-              >
-                <div className="mt-1 text-[10px] px-2 py-1 rounded-full bg-[var(--bg)] border border-[var(--card-border)]">
-                  {item.type === "news" ? "News" : "Reddit"}
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs text-[var(--text-primary)] line-clamp-2">
-                    {item.title}
-                  </p>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-[var(--text-muted)]">
-                    {item.source && <span>{item.source}</span>}
-                    {item.ago && (
-                      <>
-                        <span>•</span>
-                        <span>{item.ago}</span>
-                      </>
-                    )}
-                    {typeof item.score === "number" && (
-                      <>
-                        <span>•</span>
+            {feedLoading && (
+              <div className="space-y-3">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="flex items-start gap-3 py-2">
+                    <div className="h-8 w-8 rounded-full skeleton" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3 w-3/4 skeleton" />
+                      <div className="h-3 w-1/2 skeleton" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!feedLoading && feed && feed.length > 0 && (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {feed.map((item) => (
+                  <div
+                    key={item.id}
+                    className="rounded-2xl border border-[var(--card-border)] bg-[var(--bg)] p-4 hover:shadow-lg transition"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] px-2 py-1 rounded-full bg-[var(--card-bg)] border border-[var(--card-border)]">
+                        {item.type === "news" ? "News" : "Reddit"}
+                      </span>
+
+                      {typeof item.score === "number" && (
                         <span
                           className={
                             item.score > 0.1
-                              ? "text-emerald-600"
+                              ? "text-emerald-600 text-xs font-medium"
                               : item.score < -0.1
-                              ? "text-red-500"
-                              : "text-[var(--text-muted)]"
+                              ? "text-red-500 text-xs font-medium"
+                              : "text-[var(--text-muted)] text-xs font-medium"
                           }
                         >
                           {item.score.toFixed(2)}
                         </span>
-                      </>
-                    )}
+                      )}
+                    </div>
+
+                    <p className="mt-3 text-sm text-[var(--text-primary)] leading-snug line-clamp-3">
+                      {item.title}
+                    </p>
+
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[var(--text-muted)]">
+                      {item.source && <span>{item.source}</span>}
+                      {item.ago && (
+                        <>
+                          <span>•</span>
+                          <span>{item.ago}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
+            )}
+
+            {!feedLoading && sentiment && feed && feed.length === 0 && (
+              <EmptyStatePanel
+                variant="history"
+                title="No posts to show yet"
+                body="We couldn't pull any recent headlines or Reddit posts for this ticker in mock mode."
+              />
+            )}
           </div>
         )}
-
-        {!feedLoading && sentiment && feed && feed.length === 0 && (
-          <EmptyStatePanel
-            variant="history"
-            title="No posts to show yet"
-            body="We couldn't pull any recent headlines or Reddit posts for this ticker in mock mode."
-          />
-        )}
       </div>
-    )}
     </div>
   );
 }

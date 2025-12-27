@@ -33,7 +33,6 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  display: flex;
   background: linear-gradient(to bottom, #F8F8F8 0%, #F4F4F4 55%, #F1F1F1 100%);
   color: var(--text-primary);
 }
