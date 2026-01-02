@@ -12,7 +12,286 @@ import "./App.css";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8003";
 
+
 ChartJS.register(LineElement, PointElement, CategoryScale, LinearScale);
+
+// --- Trend helpers and UI components ---
+
+const cacheLabel = (status) => {
+  switch (String(status || "").toUpperCase()) {
+    case "MISS":
+      return "Fresh";
+    case "HIT":
+      return "Cached";
+    case "STALE":
+      return "Refreshing";
+    case "MOCK":
+      return "Mock";
+    default:
+      return "—";
+  }
+};
+
+const formatSigned = (n, decimals = 2) => {
+  const num = Number(n);
+  if (!Number.isFinite(num)) return "—";
+  const sign = num > 0 ? "+" : "";
+  return `${sign}${num.toFixed(decimals)}`;
+};
+
+const formatAsOf = (iso) => {
+  if (!iso) return "—";
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "—";
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(d.getUTCDate()).padStart(2, "0");
+    const hh = String(d.getUTCHours()).padStart(2, "0");
+    const mi = String(d.getUTCMinutes()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi} UTC`;
+  } catch {
+    return "—";
+  }
+};
+
+const timeAgoFromIso = (iso) => {
+  if (!iso) return "—";
+  const t = new Date(iso).getTime();
+  if (!Number.isFinite(t)) return "—";
+
+  const diffSec = Math.max(0, Math.floor((Date.now() - t) / 1000));
+  if (diffSec < 60) return `${diffSec}s ago`;
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  return `${diffDay}d ago`;
+};
+
+const clamp01 = (x) => Math.max(0, Math.min(1, Number(x) || 0));
+const pct = (x) => `${Math.round(clamp01(x) * 100)}%`;
+
+const agreementLabel = (a) => {
+  const v = clamp01(a);
+  if (v >= 0.85) return "High agreement";
+  if (v >= 0.7) return "Medium agreement";
+  return "Low agreement";
+};
+
+const dispersionLabel = (std) => {
+  const v = Number(std) || 0;
+  if (v <= 0.12) return "Low dispersion";
+  if (v <= 0.25) return "Medium dispersion";
+  return "High dispersion";
+};
+
+const deriveTrendStats = (history = []) => {
+  if (!Array.isArray(history) || history.length < 2) return null;
+
+  const values = history
+    .map((p) => Number(p?.score))
+    .filter((n) => Number.isFinite(n));
+
+  if (values.length < 2) return null;
+
+  const first = values[0];
+  const last = values[values.length - 1];
+  const avg = values.reduce((a, b) => a + b, 0) / values.length;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min;
+
+  const variance = values.reduce((acc, v) => acc + Math.pow(v - avg, 2), 0) / values.length;
+  const vol = Math.sqrt(variance);
+
+  const delta = last - first;
+
+  const bias = avg > 0.05 ? "Positive" : avg < -0.05 ? "Negative" : "Neutral";
+  const direction = delta > 0.02 ? "Improving" : delta < -0.02 ? "Weakening" : "Stable";
+
+  return {
+    first,
+    last,
+    avg,
+    min,
+    max,
+    range,
+    vol,
+    delta,
+    bias,
+    direction,
+  };
+};
+
+const pickDrivers = ({ sentiment, feed }) => {
+  const highlights = Array.isArray(sentiment?.highlights) ? sentiment.highlights : [];
+  if (highlights.length) {
+    return highlights
+      .filter((h) => typeof h?.score === "number" && h?.text)
+      .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
+      .slice(0, 4)
+      .map((h, idx) => ({
+        id: `hl-${idx}`,
+        type: h.source === "reddit" ? "reddit" : "news",
+        title: h.text,
+        source: h.source || "",
+        score: h.score,
+        ago: "",
+      }));
+  }
+
+  const items = Array.isArray(feed) ? feed : [];
+  return items
+    .filter((i) => typeof i?.score === "number" && i?.title)
+    .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
+    .slice(0, 4);
+};
+
+function Metric({ label, value, hint }) {
+  return (
+    <div className="rounded-xl border border-[var(--card-border)] bg-[var(--bg)] px-3 py-2">
+      <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{label}</p>
+      <p className="mt-1 text-sm font-semibold tabular-nums text-[var(--text-primary)]">{value}</p>
+      {hint ? (
+        <p className="mt-1 text-[10px] text-[var(--text-muted)]">{hint}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function Chip({ label, value, hint }) {
+  return (
+    <div className="rounded-full border border-[var(--card-border)] bg-[var(--bg)] px-3 py-1.5">
+      <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{label}</p>
+      <p className="text-xs font-semibold tabular-nums text-[var(--text-primary)]">
+        {value}
+        {hint ? (
+          <span className="ml-2 text-[10px] font-medium text-[var(--text-muted)]">
+            {hint}
+          </span>
+        ) : null}
+      </p>
+    </div>
+  );
+}
+
+function TrendSummary({ stats }) {
+  if (!stats) return null;
+
+  const fmt = (n) => (Number.isFinite(n) ? n.toFixed(2) : "—");
+  const deltaPrefix = stats.delta > 0 ? "+" : "";
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium text-[var(--text-primary)]">Trend summary</p>
+        <p className="text-[11px] text-[var(--text-muted)]">
+          {stats.bias} bias • {stats.direction} • Range {fmt(stats.range)}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+        <Metric label="Last" value={fmt(stats.last)} />
+        <Metric label="7D Δ" value={`${deltaPrefix}${fmt(stats.delta)}`} />
+        <Metric label="7D Avg" value={fmt(stats.avg)} />
+        <Metric label="Range" value={fmt(stats.range)} />
+        <Metric label="Vol (σ)" value={fmt(stats.vol)} hint="Dispersion" />
+      </div>
+    </div>
+  );
+}
+
+function TrendDrivers({ items }) {
+  if (!items || !items.length) return null;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium text-[var(--text-primary)]">Key drivers</p>
+        <p className="text-[11px] text-[var(--text-muted)]">Largest-magnitude items</p>
+      </div>
+
+      <div className="grid gap-2">
+        {items.map((item) => (
+          <div
+            key={item.id}
+            className="rounded-xl border border-[var(--card-border)] bg-[var(--bg)] px-3 py-2"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--card-bg)] border border-[var(--card-border)]">
+                    {item.type === "news" ? "News" : "Reddit"}
+                  </span>
+                  <p className="text-[11px] text-[var(--text-muted)] truncate">
+                    {item.source || ""}{item.ago ? ` • ${item.ago}` : ""}
+                  </p>
+                </div>
+                <p className="mt-1 text-sm text-[var(--text-primary)] leading-snug line-clamp-2">
+                  {item.title}
+                </p>
+              </div>
+
+              {typeof item.score === "number" && (
+                <span
+                  className={
+                    item.score > 0.1
+                      ? "text-emerald-600 text-xs font-semibold tabular-nums"
+                      : item.score < -0.1
+                      ? "text-red-500 text-xs font-semibold tabular-nums"
+                      : "text-[var(--text-muted)] text-xs font-semibold tabular-nums"
+                  }
+                >
+                  {formatSigned(item.score, 2)}
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TrendEmptyPreview() {
+  return (
+    <div className="space-y-4">
+      <div className="w-full h-56 relative overflow-hidden rounded-xl bg-[var(--card-bg)]">
+        <div className="absolute inset-0 grid grid-cols-6 grid-rows-4 opacity-[0.12]">
+          {Array.from({ length: 24 }).map((_, i) => (
+            <div key={i} className="border border-black/5"></div>
+          ))}
+        </div>
+        <svg className="absolute inset-0 w-full h-full opacity-25" viewBox="0 0 100 40" preserveAspectRatio="none">
+          <polyline
+            fill="none"
+            stroke="black"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            points="0,26 18,18 36,24 54,12 72,16 90,10 100,14"
+          />
+        </svg>
+      </div>
+
+      <div className="rounded-xl border border-[var(--card-border)] bg-[var(--bg)] px-4 py-3">
+        <p className="text-sm font-medium text-[var(--text-primary)]">Waiting for you bruv</p>
+        <p className="mt-1 text-xs text-[var(--text-muted)]">
+          Enter a ticker to unlock a compact trend read: bias, direction, and the biggest drivers behind the move.
+        </p>
+
+        <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <Metric label="Bias" value="—" />
+          <Metric label="7D Δ" value="—" />
+          <Metric label="Range" value="—" />
+          <Metric label="Drivers" value="—" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function EmptyStatePanel({ variant, title, body }) {
   const renderIcon = () => {
@@ -237,11 +516,6 @@ function App() {
       setFeedLoading(true);
       try {
         const feedResponse = await fetch(`${API_BASE_URL}/sentiment/feed/${symbol}`)
-        const feedXCache = feedResponse.headers.get("x-cache");
-        const feedXMode = feedResponse.headers.get("x-mode");
-        if (feedXCache) setCacheStatus(feedXCache.toUpperCase());
-        if (feedXMode) setAppMode(feedXMode.toUpperCase());
-
         if (feedResponse.ok) {
           const feedJson = await feedResponse.json();
           setFeed(feedJson.items ?? []);
@@ -257,11 +531,6 @@ function App() {
       setChartLoading(true);
       try {
         const historyResponse = await fetch(`${API_BASE_URL}/sentiment/history/${symbol}`)
-        const histXCache = historyResponse.headers.get("x-cache");
-        const histXMode = historyResponse.headers.get("x-mode");
-        if (histXCache) setCacheStatus(histXCache.toUpperCase());
-        if (histXMode) setAppMode(histXMode.toUpperCase());
-
         if (historyResponse.ok) {
           const hist = await historyResponse.json();
           setHistory(hist.history ?? []);
@@ -295,8 +564,8 @@ function App() {
   };
 
   const getSentimentLabel = (value) => {
-    if (value > 0.6) return "Positive";
-    if (value < 0.4) return "Negative";
+    if (value > 0.10) return "Positive";
+    if (value < -0.10) return "Negative";
     return "Neutral";
   };
 
@@ -315,6 +584,9 @@ function App() {
         ],
       }
     : null;
+
+  const trendStats = deriveTrendStats(history);
+  const driverItems = pickDrivers({ sentiment, feed });
 
     const landing = !sentiment && !loading && !requestError;
 
@@ -342,7 +614,7 @@ function App() {
             </span>
             {cacheStatus && appMode === "LIVE" && (
               <span className="text-[10px] px-2 py-0.5 rounded-full border border-[var(--card-border)] bg-[var(--bg)] text-[var(--text-muted)]">
-                {cacheStatus}
+                {cacheLabel(cacheStatus)}
               </span>
             )}
           </div>
@@ -448,7 +720,13 @@ function App() {
                           Mentions
                         </p>
                         <p className="mt-1 text-sm font-semibold tabular-nums text-[var(--text-primary)]">
-                          {feedLoading ? "…" : sentiment ? (feed?.length ?? "—") : "—"}
+                          {feedLoading
+                            ? "…"
+                            : sentiment
+                            ? (Number.isFinite(sentiment?.n_news) || Number.isFinite(sentiment?.n_reddit)
+                                ? (Number(sentiment?.n_news || 0) + Number(sentiment?.n_reddit || 0))
+                                : (feed?.length ?? "—"))
+                            : "—"}
                         </p>
                       </div>
                     </div>
@@ -649,21 +927,55 @@ function App() {
                       Breakdown by source
                     </p>
 
-                    {Object.entries(sentiment.sources).map(([source, value]) => (
-                      <div key={source} className="flex items-center justify-between text-xs">
-                        <span className="text-[var(--text-muted)]">
-                          {source === "newsapi"
-                            ? "News"
-                            : source === "reddit"
-                            ? "Reddit"
-                            : source}
-                        </span>
+                    {Object.entries(sentiment.sources).map(([source, value]) => {
+                      const count =
+                        source === "newsapi"
+                          ? sentiment?.n_news ?? 0
+                          : source === "reddit"
+                          ? sentiment?.n_reddit ?? 0
+                          : null;
 
-                        <span className="font-medium tabular-nums">
-                          {(value ?? 0).toFixed(2)}
-                        </span>
-                      </div>
-                    ))}
+                      return (
+                        <div key={source} className="flex items-center justify-between text-xs">
+                          <span className="text-[var(--text-muted)]">
+                            {source === "newsapi" ? "News" : source === "reddit" ? "Reddit" : source}
+                            {count !== null ? ` (${count})` : ""}
+                          </span>
+
+                          <span className="font-medium tabular-nums">{formatSigned(value ?? 0, 3)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {sentiment?.computed_at && (
+                  <div className="mt-4 pt-3 border-t border-[var(--card-border)]">
+                    <p className="text-[10px] text-[var(--text-muted)] mb-2">Data quality</p>
+
+                    <div className="flex flex-wrap gap-2">
+                      <Chip
+                        label="Updated"
+                        value={timeAgoFromIso(sentiment.computed_at)}
+                        hint={formatAsOf(sentiment.computed_at)}
+                      />
+
+                      <Chip
+                        label="Coverage"
+                        value={`News ${sentiment?.n_news ?? 0} • Reddit ${sentiment?.n_reddit ?? 0}`}
+                      />
+
+                      <Chip
+                        label="Agreement"
+                        value={agreementLabel(sentiment?.confidence_drivers?.agreement)}
+                        hint={pct(sentiment?.confidence_drivers?.agreement)}
+                      />
+
+                      <Chip
+                        label="Dispersion"
+                        value={dispersionLabel(sentiment?.confidence_drivers?.std)}
+                        hint={`σ ${(Number(sentiment?.confidence_drivers?.std) || 0).toFixed(3)}`}
+                      />
+                    </div>
                   </div>
                 )}
               </div>
@@ -713,46 +1025,46 @@ function App() {
               )}
 
               {!chartLoading && historyChartData && (
-                <Line
-                  data={historyChartData}
-                  options={{
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    animation: {
-                      duration: 450,
-                      easing: "easeOutQuad",
-                    },
-                    scales: {
-                      x: {
-                        grid: { color: "rgba(0,0,0,0.05)" },
-                        ticks: { color: "var(--text-muted)", font: { size: 10 } },
+                <div className="w-full h-56 sm:h-64">
+                  <Line
+                    data={historyChartData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: { legend: { display: false } },
+                      animation: {
+                        duration: 450,
+                        easing: "easeOutQuad",
                       },
-                      y: {
-                        grid: { color: "rgba(0,0,0,0.05)" },
-                        ticks: { color: "var(--text-muted)", font: { size: 10 } },
+                      scales: {
+                        x: {
+                          grid: { color: "rgba(0,0,0,0.05)" },
+                          ticks: { color: "var(--text-muted)", font: { size: 10 } },
+                        },
+                        y: {
+                          grid: { color: "rgba(0,0,0,0.05)" },
+                          ticks: { color: "var(--text-muted)", font: { size: 10 } },
+                        },
                       },
-                    },
-                  }}
-                />
-              )}
-
-              {!chartLoading && !historyChartData && sentiment && (
-                <div className="w-full h-56 flex items-center justify-center">
-                  <EmptyStatePanel
-                    variant="history"
-                    title="No history for this ticker"
-                    body="The mock backend only returns a short window for some tickers while building."
+                    }}
                   />
                 </div>
               )}
 
-              {!chartLoading && !sentiment && (
-                <div className="w-full h-56 flex items-center justify-center">
-                  <EmptyStatePanel
-                    variant="search"
-                    title="No ticker selected"
-                    body="Enter a stock symbol on the left to see its recent sentiment trend."
-                  />
+              {!chartLoading && !historyChartData && sentiment && (
+                <EmptyStatePanel
+                  variant="history"
+                  title="No history for this ticker"
+                  body="The mock backend only returns a short window for some tickers while building."
+                />
+              )}
+
+              {!chartLoading && !sentiment && <TrendEmptyPreview />}
+
+              {sentiment && !chartLoading && (
+                <div className="mt-5 pt-4 border-t border-[var(--card-border)] space-y-4">
+                  <TrendSummary stats={trendStats} />
+                  <TrendDrivers items={driverItems} />
                 </div>
               )}
             </div>
