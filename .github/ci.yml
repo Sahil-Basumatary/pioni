@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('src/backend/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        cd src/backend
+        pip install -r requirements.txt
+
+    - name: Run backend tests
+      env:
+        MOCK: "true"
+        FINBERT_ENABLED: "false"
+      run: |
+        cd src/backend
+        PYTHONPATH=$GITHUB_WORKSPACE/src pytest tests/ -v
+
+  frontend-build:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Cache node_modules
+      uses: actions/cache@v4
+      with:
+        path: src/frontend/node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles('src/frontend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+
+    - name: Install dependencies
+      run: |
+        cd src/frontend
+        npm ci
+
+    - name: Lint frontend
+      run: |
+        cd src/frontend
+        npm run lint
+
+    - name: Build frontend
+      env:
+        VITE_API_BASE_URL: https://api.placeholder.com
+      run: |
+        cd src/frontend
+        npm run build
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-dist
+        path: src/frontend/dist
+        retention-days: 7
