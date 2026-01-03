@@ -3,6 +3,7 @@ import time
 from datetime import datetime
 import aiohttp
 import pytest
+import pytest_asyncio
 
 TICKERS = [
     "AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "AMD",
@@ -18,7 +19,7 @@ async def _is_up(session: aiohttp.ClientSession, base_url: str) -> bool:
         return False
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def session():
     async with aiohttp.ClientSession() as s:
         yield s
