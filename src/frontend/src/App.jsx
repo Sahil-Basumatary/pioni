@@ -404,7 +404,7 @@ function App() {
     try {
       localStorage.setItem("pioni_recent_tickers", JSON.stringify(next));
     } catch {
-  
+      return;
     }
   };
 
@@ -421,6 +421,7 @@ function App() {
     try {
       localStorage.removeItem("pioni_recent_tickers");
     } catch {
+      return;
     }
   };
 
@@ -486,7 +487,9 @@ function App() {
         let payload = null;
         try {
           payload = await response.json();
-        } catch {}
+        } catch {
+          payload = null;
+        }
 
         const errorCode = payload?.error || payload?.detail?.error || null;
 
@@ -550,7 +553,7 @@ function App() {
       setSentiment(data);
       pushRecentTicker(symbol);
 
-    } catch (err) {
+    } catch {
       setRequestError("SERVER_OFFLINE");
     } finally {
       setLoading(false);
