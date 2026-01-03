@@ -7,7 +7,12 @@ from newsapi import NewsApiClient
 import praw
 from backend.settings import is_mock_mode
 from backend.core.errors import raise_api_error
-from backend.services.scoring import score_items, compute_confidence_details, FinbertUnavailable
+from backend.services.scoring import (
+    score_items,
+    compute_confidence_details,
+    compute_confidence,
+    FinbertUnavailable,
+)
 from backend.core.cache import TTLCache
 import hashlib
 
