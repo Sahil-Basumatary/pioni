@@ -36,6 +36,7 @@ jobs:
       env:
         MOCK: "true"
         FINBERT_ENABLED: "false"
+        RATE_LIMIT_ENABLED: "false"
       run: |
         cd src/backend
         PYTHONPATH=$GITHUB_WORKSPACE/src pytest tests/ -v
