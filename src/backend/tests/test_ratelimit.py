@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 
 def test_rate_limit_returns_429(monkeypatch):
     monkeypatch.setenv("MOCK", "true")
+    monkeypatch.setenv("RATE_LIMIT_ENABLED", "true")
     monkeypatch.setenv("RATE_LIMIT_MAX_REQUESTS", "1")
     monkeypatch.setenv("RATE_LIMIT_WINDOW_SECONDS", "60")
 

@@ -25,6 +25,14 @@ def test_sentiment_cache_miss_then_hit(monkeypatch):
             self.source = source
             self.text = text
             self.score = score
+            self.provider = "newsapi" if source == "news" else "reddit"
+            self.item_id = None
+            self.url = None
+            self.ts = None
+            self.vader = None
+            self.finbert = None
+            self.blended = None
+            self.weight = None
 
     def fake_score_items(items, finbert_top_n=12):
         return [FakeScored(it["source"], it["text"], 0.2 if it["source"] == "news" else -0.1) for it in items]

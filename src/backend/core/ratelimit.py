@@ -27,6 +27,9 @@ WINDOW_SECONDS = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
 
 limiter = RateLimiter(max_requests=MAX_REQUESTS, window_seconds=WINDOW_SECONDS)
 
+def _rate_limit_enabled() -> bool:
+    return os.getenv("RATE_LIMIT_ENABLED", "true").lower() == "true"
+
 def _cors_headers_for(request: Request) -> dict:
     origin = request.headers.get("origin")
     if not origin:
@@ -46,6 +49,9 @@ def _cors_headers_for(request: Request) -> dict:
 
 async def rate_limit_middleware(request: Request, call_next):
     if request.method == "OPTIONS":
+        return await call_next(request)
+
+    if not _rate_limit_enabled():
         return await call_next(request)
 
     ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (
