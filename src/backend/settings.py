@@ -21,3 +21,12 @@ def cors_origins() -> list[str]:
         "http://127.0.0.1:5175",
         "http://127.0.0.1:5174"
     ]
+
+
+def prewarm_tickers() -> list[str]:
+    raw = os.getenv("PREWARM_TICKERS", "TSLA,AAPL,NVDA,AMZN,GOOGL")
+    return [t.strip().upper() for t in raw.split(",") if t.strip()]
+
+
+def prewarm_enabled() -> bool:
+    return os.getenv("PREWARM_ENABLED", "true").lower() == "true"

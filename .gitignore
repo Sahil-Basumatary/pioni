@@ -14,3 +14,5 @@ __pycache__/
 venv/
 src/frontend/node_modules/
 .env
+coldish.txt
+warm.txt
