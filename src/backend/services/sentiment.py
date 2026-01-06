@@ -1,5 +1,6 @@
 import os
 import logging
+import asyncio
 from typing import Dict
 from datetime import datetime, timezone
 from fastapi import Request
@@ -161,8 +162,19 @@ async def get_sentiment(ticker: str, request: Request):
     cache_key = f"sentiment:{ticker}"
 
     async def compute():
-        news_items = fetch_news_items(ticker)
-        reddit_items = fetch_reddit_items(ticker)
+        results = await asyncio.gather(
+            asyncio.to_thread(fetch_news_items, ticker),
+            asyncio.to_thread(fetch_reddit_items, ticker),
+            return_exceptions=True,
+        )
+
+        news_items = results[0] if not isinstance(results[0], Exception) else []
+        reddit_items = results[1] if not isinstance(results[1], Exception) else []
+
+        if isinstance(results[0], Exception):
+            logging.warning(f"NewsAPI fetch failed for {ticker}: {results[0]}")
+        if isinstance(results[1], Exception):
+            logging.warning(f"Reddit fetch failed for {ticker}: {results[1]}")
 
         if not news_items and reddit_items:
             raise_api_error(request, 422, "NO_NEWS", f"No recent news articles found for {ticker}.")
