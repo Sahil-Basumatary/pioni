@@ -21,12 +21,15 @@ def test_sentiment_cache_miss_then_hit(monkeypatch):
         return [{"source": "reddit", "text": f"{ticker} bad reddit", "ts": None}]
 
     class FakeScored:
+        _counter = 0
+
         def __init__(self, source, text, score):
+            FakeScored._counter += 1
             self.source = source
             self.text = text
             self.score = score
             self.provider = "newsapi" if source == "news" else "reddit"
-            self.item_id = None
+            self.item_id = f"{source}:{FakeScored._counter}"
             self.url = None
             self.ts = None
             self.vader = None
@@ -35,15 +38,25 @@ def test_sentiment_cache_miss_then_hit(monkeypatch):
             self.weight = None
 
     def fake_score_items(items, finbert_top_n=12):
+        FakeScored._counter = 0
         return [FakeScored(it["source"], it["text"], 0.2 if it["source"] == "news" else -0.1) for it in items]
 
-    def fake_confidence(scores, has_news, has_reddit):
-        return 0.9
+    def fake_confidence_details(scores, has_news, has_reddit):
+        drivers = {
+            "n": len(scores),
+            "mean": 0.05,
+            "std": 0.15,
+            "volume": 0.5,
+            "agreement": 0.6,
+            "strength": 0.4,
+            "mix": 0.5,
+        }
+        return 0.9, drivers
 
     monkeypatch.setattr(sentiment_mod, "fetch_news_items", fake_news)
     monkeypatch.setattr(sentiment_mod, "fetch_reddit_items", fake_reddit)
     monkeypatch.setattr(sentiment_mod, "score_items", fake_score_items)
-    monkeypatch.setattr(sentiment_mod, "compute_confidence", fake_confidence)
+    monkeypatch.setattr(sentiment_mod, "compute_confidence_details", fake_confidence_details)
 
     client = TestClient(main_mod.app)
 

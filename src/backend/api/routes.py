@@ -41,6 +41,14 @@ class CoverageWindow(BaseModel):
     start: Optional[str] = None
     end: Optional[str] = None
 
+class FeedItem(BaseModel):
+    id: str
+    type: str
+    title: str
+    source: str
+    score: float
+    ago: str
+
 class SentimentResponse(BaseModel):
     ticker: str
     sentiment: float
@@ -53,14 +61,7 @@ class SentimentResponse(BaseModel):
     confidence_drivers: ConfidenceDrivers
     evidence: Optional[List[EvidenceItem]] = None
     coverage_window: Optional[CoverageWindow] = None
-
-class FeedItem(BaseModel):
-    id: str
-    type: str
-    title: str
-    source: str
-    score: float
-    ago: str
+    feed: Optional[List[FeedItem]] = None
 
 class FeedResponse(BaseModel):
     ticker: str

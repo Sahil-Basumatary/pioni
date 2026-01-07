@@ -44,6 +44,19 @@ def _iso(dt: datetime | None) -> str | None:
     return dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def _ago(ts: datetime | None) -> str:
+    if not ts:
+        return ""
+    now = datetime.now(timezone.utc)
+    if ts.tzinfo is None:
+        ts = ts.replace(tzinfo=timezone.utc)
+    mins = int((now - ts).total_seconds() // 60)
+    if mins < 60:
+        return f"{mins} min ago"
+    hrs = mins // 60
+    return f"{hrs} h ago"
+
+
 def _stable_id(prefix: str, raw: str) -> str:
     h = hashlib.sha1(raw.encode("utf-8")).hexdigest()[:16]
     return f"{prefix}:{h}"
@@ -157,6 +170,7 @@ async def get_sentiment(ticker: str, request: Request):
         }
         mock_payload["evidence"] = []
         mock_payload["coverage_window"] = {"start": None, "end": None}
+        mock_payload["feed"] = []
         return mock_payload, "MOCK"
 
     cache_key = f"sentiment:{ticker}"
@@ -245,6 +259,23 @@ async def get_sentiment(ticker: str, request: Request):
             "end": _iso(max(ts_all)) if ts_all else None,
         }
 
+        feed_items = sorted(
+            scored,
+            key=lambda s: s.ts or datetime.min.replace(tzinfo=timezone.utc),
+            reverse=True,
+        )[:12]
+        feed = [
+            {
+                "id": s.item_id,
+                "type": s.source,
+                "title": s.text,
+                "source": s.provider or SOURCE_LABEL.get(s.source, s.source),
+                "score": round(float(s.score), 2),
+                "ago": _ago(s.ts),
+            }
+            for s in feed_items
+        ]
+
         return {
             "ticker": ticker,
             "sentiment": combined_score,
@@ -257,6 +288,7 @@ async def get_sentiment(ticker: str, request: Request):
             "confidence_drivers": drivers,
             "evidence": evidence,
             "coverage_window": window,
+            "feed": feed,
         }
 
     return await _cache.get_or_compute_swr(
