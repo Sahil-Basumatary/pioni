@@ -141,8 +141,7 @@ pioni/
 │       └── package.json
 │
 ├── docs/
-│   ├── build_log.md               # Development journal
-│   └── problem_statement.md       # Project motivation
+│   └── ui_sketches/               # UI design references
 │
 ├── .github/workflows/
 │   └── ci.yml                     # GitHub Actions pipeline
