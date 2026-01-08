@@ -574,15 +574,15 @@ function App() {
       style={{ background: "var(--bg)", color: "var(--text-primary)" }}
     >
       <div className="mx-auto w-full max-w-[1320px] space-y-10">
-        <header className="header-premium flex items-center justify-between pb-5">
+        <header className="header-premium flex items-start justify-between pb-2">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Pioni Sentiment</h1>
-            <p className="text-sm text-[var(--text-muted)] mt-2">
+            <img src="/logo.svg" alt="Pioni" className="h-28 -mt-6 -ml-8" />
+            <p className="text-base text-[var(--text-secondary)] -mt-1">
               Quick read on how the market is feeling about a ticker.
             </p>
           </div>
 
-          <div className="hidden md:flex items-center gap-2 text-xs px-3 py-1 rounded-full border border-[var(--card-border)] bg-[var(--card-bg)]">
+          <div className="hidden md:flex items-center gap-2 text-xs px-3 py-1 rounded-full border border-[var(--card-border)] bg-[var(--card-bg)] mt-4">
             <span className={`h-2 w-2 rounded-full ${appMode === "LIVE" ? "bg-emerald-400" : appMode === "MOCK" ? "bg-zinc-400" : "bg-zinc-400"}`}></span>
             <span className="font-medium text-[var(--text-secondary)]">
               {appMode ? appMode : "—"}
