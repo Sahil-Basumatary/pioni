@@ -15,8 +15,6 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8003
 
 ChartJS.register(LineElement, PointElement, CategoryScale, LinearScale);
 
-// --- Trend helpers and UI components ---
-
 const cacheLabel = (status) => {
   switch (String(status || "").toUpperCase()) {
     case "MISS":
@@ -386,9 +384,8 @@ function App() {
   const [history, setHistory] = useState([]);
   const [chartLoading, setChartLoading] = useState(false);
   const [feed, setFeed] = useState([]);
-  const [feedLoading, setFeedLoading] = useState(false);
-  const [cacheStatus, setCacheStatus] = useState(null); // x-cache header from backend
-  const [appMode, setAppMode] = useState(null); // x-mode header (LIVE/MOCK)
+  const [cacheStatus, setCacheStatus] = useState(null);
+  const [appMode, setAppMode] = useState(null);
 
   const [recentTickers, setRecentTickers] = useState(() => {
     try {
@@ -425,8 +422,7 @@ function App() {
     }
   };
 
-  const QUICK_PICKS = ["TSLA", "AAPL", "NVDA", "MSFT", "AMZN", "GOOGL"]; 
-  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const QUICK_PICKS = ["TSLA", "AAPL", "NVDA", "MSFT", "AMZN", "GOOGL"];
 
   const handleTickerChange = (e) => {
     let value = e.target.value.toUpperCase();
@@ -447,7 +443,6 @@ function App() {
   };
 
   const isTickerValid = (val) => {
-  // for development testing purposes
     const devBypass = ["NONEWS", "TOOFEW", "ZEROSENT", "LIMIT", "NORED"];
 
     if (devBypass.includes(val)) return true;
@@ -472,11 +467,8 @@ function App() {
     setHistory([]);
     setChartLoading(false);
     setFeed([]);
-    setFeedLoading(false);
 
     try {
-      const start = Date.now();
-
       const response = await fetch(`${API_BASE_URL}/sentiment/${symbol}`)
       const xCache = response.headers.get("x-cache");
       const xMode = response.headers.get("x-mode");
@@ -516,20 +508,10 @@ function App() {
 
       const data = await response.json();
 
-      setFeedLoading(true);
-      try {
-        const feedResponse = await fetch(`${API_BASE_URL}/sentiment/feed/${symbol}`)
-        if (feedResponse.ok) {
-          const feedJson = await feedResponse.json();
-          setFeed(feedJson.items ?? []);
-        } else {
-          setFeed([]);
-        }
-      } catch {
-        setFeed([]);
-      } finally {
-        setFeedLoading(false);
-      }
+      setSentiment(data);
+      setFeed(data.feed ?? []);
+      pushRecentTicker(symbol);
+      setLoading(false);
 
       setChartLoading(true);
       try {
@@ -545,13 +527,6 @@ function App() {
       } finally {
         setChartLoading(false);
       }
-
-      const elapsed = Date.now() - start;
-      const MIN_LOAD = 600;
-      if (elapsed < MIN_LOAD) await wait(MIN_LOAD - elapsed);
-
-      setSentiment(data);
-      pushRecentTicker(symbol);
 
     } catch {
       setRequestError("SERVER_OFFLINE");
@@ -593,15 +568,12 @@ function App() {
 
     const landing = !sentiment && !loading && !requestError;
 
-  /* main UI */
-
    return (
     <div
       className="min-h-screen w-full px-6 lg:px-12 py-10"
       style={{ background: "var(--bg)", color: "var(--text-primary)" }}
     >
       <div className="mx-auto w-full max-w-[1320px] space-y-10">
-        {/* Header */}
         <header className="header-premium flex items-center justify-between pb-5">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">Pioni Sentiment</h1>
@@ -623,17 +595,13 @@ function App() {
           </div>
         </header>
 
-        {/* HERO / MAIN GRID */}
         <section
           className={`relative ${landing ? "lg:min-h-[62vh] flex items-center justify-center" : ""}`}
         >
           <div aria-hidden className="hero-glow" />
 
           <div className="relative grid gap-10 lg:gap-12 lg:grid-cols-2 w-full items-stretch">
-          {/* Left column: input + sentiment */}
           <div className="flex flex-col gap-5 h-full">
-
-            {/* INPUT CARD */}
             <div
               className={`card-premium rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] backdrop-blur-xl p-6 flex flex-col ${
                 landing ? "min-h-[320px] sm:min-h-[360px]" : ""
@@ -649,7 +617,6 @@ function App() {
                   </div>
 
                   <div className={landing ? "flex-1 flex flex-col justify-center" : ""}>
-                    {/* Core controls */}
                     <div className="space-y-2">
                       <label className="sr-only" htmlFor="ticker-input">
                         Ticker
@@ -723,9 +690,7 @@ function App() {
                           Mentions
                         </p>
                         <p className="mt-1 text-sm font-semibold tabular-nums text-[var(--text-primary)]">
-                          {feedLoading
-                            ? "…"
-                            : sentiment
+                          {sentiment
                             ? (Number.isFinite(sentiment?.n_news) || Number.isFinite(sentiment?.n_reddit)
                                 ? (Number(sentiment?.n_news || 0) + Number(sentiment?.n_reddit || 0))
                                 : (feed?.length ?? "—"))
@@ -869,11 +834,11 @@ function App() {
 
             {loading && (
               <div className="card-premium mt-3 w-full rounded-xl p-5 border border-[var(--card-border)] space-y-4">
-                <div className="h-4 w-20 skeleton"></div>   {/* Ticker label */}
-                <div className="h-8 w-32 skeleton"></div>   {/* Big number */}
-                <div className="h-3 w-full skeleton"></div> {/* Description line */}
-                <div className="h-3 w-4/5 skeleton"></div> {/* Description line */}
-                <div className="h-2 w-full skeleton mt-3"></div> {/* Confidence bar */}
+                <div className="h-4 w-20 skeleton"></div>
+                <div className="h-8 w-32 skeleton"></div>
+                <div className="h-3 w-full skeleton"></div>
+                <div className="h-3 w-4/5 skeleton"></div>
+                <div className="h-2 w-full skeleton mt-3"></div>
               </div>
             )}
 
@@ -899,7 +864,6 @@ function App() {
                   Combined mood from recent news and Reddit sources.
                 </p>
 
-                {/* Confidence */}
                 <div className="pt-3">
                   <div className="flex items-center justify-between mb-1">
                     <p className="text-[10px] text-[var(--text-muted)]">Confidence</p>
@@ -923,7 +887,6 @@ function App() {
                   </p>
                 </div>
 
-                {/* Sources */}
                 {sentiment?.sources && (
                   <div className="mt-4 pt-3 border-t border-[var(--card-border)]">
                     <p className="text-[10px] text-[var(--text-muted)] mb-2">
@@ -985,7 +948,6 @@ function App() {
             )}
           </div>
 
-          {/* Right column: chart */}
           <div className="flex flex-col h-full">
             <div className="card-premium chart-card flex-1 min-h-[320px] sm:min-h-[360px] rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] backdrop-blur-2xl p-5">
               <div className="mb-4">
@@ -999,14 +961,11 @@ function App() {
 
               {chartLoading && (
                 <div className="w-full h-64 relative overflow-hidden rounded-xl bg-[var(--card-bg)] skeleton-chart">
-                  {/* light grid */}
                   <div className="absolute inset-0 grid grid-cols-6 grid-rows-4 opacity-[0.15]">
                     {Array.from({ length: 24 }).map((_, i) => (
                       <div key={i} className="border border-black/5"></div>
                     ))}
                   </div>
-
-                  {/* hint of a line */}
                   <svg
                     className="absolute inset-0 w-full h-full opacity-30"
                     viewBox="0 0 100 40"
@@ -1021,8 +980,6 @@ function App() {
                       points="0,25 20,10 40,30 60,15 80,28 100,12"
                     />
                   </svg>
-
-                  {/* shimmer */}
                   <div className="absolute inset-0 shimmer" />
                 </div>
               )}
@@ -1076,8 +1033,7 @@ function App() {
         </section>
 
 
-        {/* Feed panel (full-width under both columns) */}
-        {(sentiment || feedLoading) && (
+        {sentiment && (
           <div className="card-premium rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] backdrop-blur-xl p-5">
             <div className="mb-4 flex items-center justify-between">
               <div>
@@ -1090,21 +1046,7 @@ function App() {
               </div>
             </div>
 
-            {feedLoading && (
-              <div className="space-y-3">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="flex items-start gap-3 py-2">
-                    <div className="h-8 w-8 rounded-full skeleton" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-3 w-3/4 skeleton" />
-                      <div className="h-3 w-1/2 skeleton" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {!feedLoading && feed && feed.length > 0 && (
+            {feed && feed.length > 0 && (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {feed.map((item) => (
                   <div
@@ -1149,7 +1091,7 @@ function App() {
               </div>
             )}
 
-            {!feedLoading && sentiment && feed && feed.length === 0 && (
+            {sentiment && feed && feed.length === 0 && (
               <EmptyStatePanel
                 variant="history"
                 title="No posts to show yet"
