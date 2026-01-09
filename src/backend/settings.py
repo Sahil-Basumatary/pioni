@@ -30,3 +30,11 @@ def prewarm_tickers() -> list[str]:
 
 def prewarm_enabled() -> bool:
     return os.getenv("PREWARM_ENABLED", "true").lower() == "true"
+
+
+def redis_url() -> str | None:
+    return os.getenv("UPSTASH_REDIS_REST_URL")
+
+
+def redis_token() -> str | None:
+    return os.getenv("UPSTASH_REDIS_REST_TOKEN")
