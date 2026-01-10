@@ -708,7 +708,7 @@ function App() {
                           <button
                             type="button"
                             onClick={clearRecentTickers}
-                            className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
+                            className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)] transition bg-transparent border-none p-0"
                           >
                             Clear
                           </button>
