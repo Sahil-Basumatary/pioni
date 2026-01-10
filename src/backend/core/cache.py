@@ -7,32 +7,32 @@ import time
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, Dict, Optional, Tuple
 
-from upstash_redis import Redis
+import redis
 
-from backend.settings import redis_url, redis_token
+from backend.settings import redis_url
 
 logger = logging.getLogger(__name__)
 
-_redis_instance: Optional[Redis] = None
+_redis_instance: Optional[redis.Redis] = None
 _redis_checked: bool = False
 
 
-def _redis_client() -> Optional[Redis]:
+def _redis_client() -> Optional[redis.Redis]:
     global _redis_instance, _redis_checked
     if _redis_checked:
         return _redis_instance
 
     _redis_checked = True
     url = redis_url()
-    token = redis_token()
 
-    if not url or not token:
+    if not url:
         logger.info("Redis credentials not configured; using in-memory cache only")
         return None
 
     try:
-        _redis_instance = Redis(url=url, token=token)
-        logger.info("Upstash Redis client initialized")
+        _redis_instance = redis.Redis.from_url(url, decode_responses=True)
+        _redis_instance.ping()
+        logger.info("Redis Enterprise client initialized")
     except Exception as e:
         logger.warning(f"Failed to initialize Redis client: {e}")
         _redis_instance = None

@@ -33,8 +33,4 @@ def prewarm_enabled() -> bool:
 
 
 def redis_url() -> str | None:
-    return os.getenv("UPSTASH_REDIS_REST_URL")
-
-
-def redis_token() -> str | None:
-    return os.getenv("UPSTASH_REDIS_REST_TOKEN")
+    return os.getenv("REDIS_URL")
