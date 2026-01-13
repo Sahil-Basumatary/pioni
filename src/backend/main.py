@@ -1,4 +1,3 @@
-import os
 import logging
 import asyncio
 import time
@@ -9,16 +8,11 @@ from fastapi.middleware.cors import CORSMiddleware
 import httpx
 from backend.api.routes import router
 from backend.core.middleware import attach_request_id
+from backend.core.logging import setup_logging
 from backend.settings import cors_origins, is_mock_mode, prewarm_enabled, prewarm_tickers
 from backend.core.ratelimit import rate_limit_middleware
 
-os.makedirs("logs", exist_ok=True)
-logging.basicConfig(
-    filename="logs/app.log",
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
-
+setup_logging()
 logger = logging.getLogger(__name__)
 
 
