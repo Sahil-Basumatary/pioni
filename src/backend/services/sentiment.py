@@ -64,7 +64,7 @@ def _stable_id(prefix: str, raw: str) -> str:
 def fetch_news_items(ticker: str):
     api_key = os.getenv("NEWS_API_KEY")
     if not api_key:
-        logging.warning("NEWS_API_KEY missing; returning no news items.")
+        logging.warning("NEWS_API_KEY missing; returning no news items", extra={"ticker": ticker})
         return []
 
     newsapi = NewsApiClient(api_key=api_key)
@@ -105,7 +105,7 @@ def fetch_reddit_items(ticker: str):
     client_id = os.getenv("REDDIT_CLIENT_ID")
     client_secret = os.getenv("REDDIT_CLIENT_SECRET")
     if not client_id or not client_secret:
-        logging.warning("Reddit credentials missing; returning no reddit items.")
+        logging.warning("Reddit credentials missing; returning no reddit items", extra={"ticker": ticker})
         return []
 
     reddit = praw.Reddit(
@@ -145,7 +145,7 @@ def fetch_reddit_items(ticker: str):
 
 async def get_sentiment(ticker: str, request: Request):
     ticker = ticker.upper()
-    logging.info(f"Request received for sentiment: {ticker}")
+    logging.info("Request received", extra={"ticker": ticker})
 
     if is_mock_mode():
         mock = MOCK_DATA.get(ticker)
@@ -186,9 +186,9 @@ async def get_sentiment(ticker: str, request: Request):
         reddit_items = results[1] if not isinstance(results[1], Exception) else []
 
         if isinstance(results[0], Exception):
-            logging.warning(f"NewsAPI fetch failed for {ticker}: {results[0]}")
+            logging.warning("NewsAPI fetch failed", extra={"ticker": ticker, "error": str(results[0])})
         if isinstance(results[1], Exception):
-            logging.warning(f"Reddit fetch failed for {ticker}: {results[1]}")
+            logging.warning("Reddit fetch failed", extra={"ticker": ticker, "error": str(results[1])})
 
         if not news_items and reddit_items:
             raise_api_error(request, 422, "NO_NEWS", f"No recent news articles found for {ticker}.")

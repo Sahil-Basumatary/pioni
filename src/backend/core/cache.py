@@ -26,15 +26,15 @@ def _redis_client() -> Optional[redis.Redis]:
     url = redis_url()
 
     if not url:
-        logger.info("Redis credentials not configured; using in-memory cache only")
+        logger.info("Redis credentials not configured; using in-memory cache only", extra={"component": "redis"})
         return None
 
     try:
         _redis_instance = redis.Redis.from_url(url, decode_responses=True)
         _redis_instance.ping()
-        logger.info("Redis Enterprise client initialized")
+        logger.info("Redis Enterprise client initialized", extra={"component": "redis"})
     except Exception as e:
-        logger.warning(f"Failed to initialize Redis client: {e}")
+        logger.warning("Failed to initialize Redis client", extra={"component": "redis", "error": str(e)})
         _redis_instance = None
 
     return _redis_instance
@@ -89,7 +89,7 @@ class TTLCache:
 
             return entry
         except Exception as e:
-            logger.warning(f"Redis GET failed for {key}: {e}")
+            logger.warning("Redis GET failed", extra={"key": key, "error": str(e)})
             return None
 
     def _try_redis_set(self, key: str, entry: CacheEntry, ttl_seconds: int) -> None:
@@ -101,7 +101,7 @@ class TTLCache:
             payload = json.dumps(entry.to_dict())
             redis.set(key, payload, ex=ttl_seconds)
         except Exception as e:
-            logger.warning(f"Redis SET failed for {key}: {e}")
+            logger.warning("Redis SET failed", extra={"key": key, "error": str(e)})
 
     def get_entry(self, key: str) -> Optional[CacheEntry]:
         redis_entry = self._try_redis_get(key)
