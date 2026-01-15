@@ -5,11 +5,10 @@ from datetime import datetime, timezone
 from typing import Iterable, Optional
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import os
-import httpx
+from huggingface_hub import InferenceClient
 from backend.settings import hf_api_token
 
 logger = logging.getLogger(__name__)
-HF_INFERENCE_URL = "https://api-inference.huggingface.co/models/ProsusAI/finbert"
 
 _vader = None
 
@@ -40,29 +39,24 @@ async def hf_finbert_score(texts: list[str]) -> list[float]:
     token = hf_api_token()
     if not token:
         raise FinbertUnavailable("HF_API_TOKEN not configured")
-    headers = {"Authorization": f"Bearer {token}"}
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        resp = await client.post(HF_INFERENCE_URL, headers=headers, json={"inputs": texts})
-        if resp.status_code == 503:
-            raise FinbertUnavailable("HuggingFace model is loading, try again shortly")
-        if resp.status_code == 429:
-            raise FinbertUnavailable("HuggingFace rate limit exceeded")
-        if resp.status_code != 200:
-            logger.warning("HF API error", extra={"status": resp.status_code, "body": resp.text[:200]})
-            raise FinbertUnavailable(f"HuggingFace API error: {resp.status_code}")
-        results = resp.json()
-    scores: list[float] = []
-    for item_results in results:
-        best = max(item_results, key=lambda x: x.get("score", 0))
-        label = (best.get("label") or "").lower()
-        prob = float(best.get("score") or 0.0)
-        if "positive" in label:
-            scores.append(prob)
-        elif "negative" in label:
-            scores.append(-prob)
-        else:
-            scores.append(0.0)
-    return scores
+    try:
+        client = InferenceClient(token=token)
+        scores: list[float] = []
+        for text in texts:
+            result = client.text_classification(text, model="ProsusAI/finbert")
+            best = max(result, key=lambda x: x.score)
+            label = (best.label or "").lower()
+            prob = float(best.score)
+            if "positive" in label:
+                scores.append(prob)
+            elif "negative" in label:
+                scores.append(-prob)
+            else:
+                scores.append(0.0)
+        return scores
+    except Exception as e:
+        logger.warning("HF Inference error", extra={"error": str(e)})
+        raise FinbertUnavailable(f"HuggingFace API error: {e}")
 
 
 def _age_weight(ts: Optional[datetime], half_life_hours: float = 48.0) -> float:
