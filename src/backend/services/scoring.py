@@ -1,16 +1,17 @@
 import math
-import threading
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Iterable, Optional
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import os
-import time
+import httpx
+from backend.settings import hf_api_token
 
-_finbert_disabled = False
+logger = logging.getLogger(__name__)
+HF_INFERENCE_URL = "https://api-inference.huggingface.co/models/ProsusAI/finbert"
+
 _vader = None
-_finbert = None
-_lock = threading.Lock()
 
 @dataclass(frozen=True)
 class ScoredItem:
@@ -32,41 +33,36 @@ def _get_vader() -> SentimentIntensityAnalyzer:
         _vader = SentimentIntensityAnalyzer()
     return _vader
 
-def _finbert_is_enabled() -> bool:
-    global _finbert_disabled
-    if _finbert_disabled:
-        return False
-    return os.getenv("FINBERT_ENABLED", "true").lower() == "true"
-
 class FinbertUnavailable(Exception):
     pass
 
-def _get_finbert():
-    global _finbert
-    if not _finbert_is_enabled():
-        raise FinbertUnavailable("FinBERT disabled")
-
-    if _finbert is not None:
-        return _finbert
-
-    with _lock:
-        if _finbert is not None:
-            return _finbert
-
-        try:
-            from transformers import pipeline
-        except ModuleNotFoundError as e:
-            raise FinbertUnavailable("transformers not installed") from e
-
-        try:
-            _finbert = pipeline(
-                "sentiment-analysis",
-                model="ProsusAI/finbert",
-                tokenizer="ProsusAI/finbert",
-            )
-            return _finbert
-        except Exception as e:
-            raise FinbertUnavailable(f"FinBERT failed to load: {e}") from e
+async def hf_finbert_score(texts: list[str]) -> list[float]:
+    token = hf_api_token()
+    if not token:
+        raise FinbertUnavailable("HF_API_TOKEN not configured")
+    headers = {"Authorization": f"Bearer {token}"}
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.post(HF_INFERENCE_URL, headers=headers, json={"inputs": texts})
+        if resp.status_code == 503:
+            raise FinbertUnavailable("HuggingFace model is loading, try again shortly")
+        if resp.status_code == 429:
+            raise FinbertUnavailable("HuggingFace rate limit exceeded")
+        if resp.status_code != 200:
+            logger.warning("HF API error", extra={"status": resp.status_code, "body": resp.text[:200]})
+            raise FinbertUnavailable(f"HuggingFace API error: {resp.status_code}")
+        results = resp.json()
+    scores: list[float] = []
+    for item_results in results:
+        best = max(item_results, key=lambda x: x.get("score", 0))
+        label = (best.get("label") or "").lower()
+        prob = float(best.get("score") or 0.0)
+        if "positive" in label:
+            scores.append(prob)
+        elif "negative" in label:
+            scores.append(-prob)
+        else:
+            scores.append(0.0)
+    return scores
 
 
 def _age_weight(ts: Optional[datetime], half_life_hours: float = 48.0) -> float:
@@ -85,34 +81,6 @@ def _age_weight(ts: Optional[datetime], half_life_hours: float = 48.0) -> float:
 def vader_score(text: str) -> float:
     v = _get_vader()
     return float(v.polarity_scores(text)["compound"])
-
-def finbert_score(texts: list[str]) -> list[float]:
-    global _finbert_disabled
-
-    clf = _get_finbert()
-
-    max_ms = int(os.getenv("FINBERT_MAX_LATENCY_MS", "9000"))
-    t0 = time.perf_counter()
-    out = clf(texts, truncation=True)
-    elapsed_ms = (time.perf_counter() - t0) * 1000
-
-    if elapsed_ms > max_ms:
-        _finbert_disabled = True
-        raise FinbertUnavailable(f"FinBERT too slow ({int(elapsed_ms)}ms > {max_ms}ms), auto-disabled")
-
-    scores: list[float] = []
-    for r in out:
-        label = (r.get("label") or "").lower()
-        prob = float(r.get("score") or 0.0)
-
-        if "positive" in label:
-            scores.append(prob)
-        elif "negative" in label:
-            scores.append(-prob)
-        else:
-            scores.append(0.0)
-
-    return scores
 
 def blend(vader: float, finbert: Optional[float]) -> float:
     if finbert is None:
@@ -165,30 +133,26 @@ def compute_confidence(scores: list[float], has_news: bool, has_reddit: bool) ->
     conf, _ = compute_confidence_details(scores, has_news=has_news, has_reddit=has_reddit)
     return conf
 
-def score_items(items: Iterable[dict], finbert_top_n: int = 12) -> list[ScoredItem]:
+async def score_items(items: Iterable[dict], finbert_top_n: int = 12) -> list[ScoredItem]:
     items_list = list(items)
     if not items_list:
         return []
-
     vader_scored = []
     for it in items_list:
         text = it["text"]
         vs = vader_score(text)
         vader_scored.append((it, vs))
-
     vader_scored.sort(key=lambda t: abs(t[1]), reverse=True)
     top = vader_scored[:finbert_top_n]
-
     fin_map = {}
     try:
         fin_texts = [t[0]["text"] for t in top]
-        fin_scores = finbert_score(fin_texts)
+        fin_scores = await hf_finbert_score(fin_texts)
         fin_map = {id(top[i][0]): fin_scores[i] for i in range(len(top))}
     except FinbertUnavailable:
         if os.getenv("FINBERT_REQUIRED", "false").lower() == "true":
             raise
         fin_map = {}
-
     scored: list[ScoredItem] = []
     for it, vs in vader_scored:
         fb = fin_map.get(id(it))
@@ -196,7 +160,6 @@ def score_items(items: Iterable[dict], finbert_top_n: int = 12) -> list[ScoredIt
         w = _age_weight(it.get("ts"))
         final = round(blended * w, 4)
         provider = it.get("provider") or ("newsapi" if it.get("source") == "news" else "reddit")
-
         scored.append(
             ScoredItem(
                 source=it["source"],
@@ -212,5 +175,4 @@ def score_items(items: Iterable[dict], finbert_top_n: int = 12) -> list[ScoredIt
                 weight=round(float(w), 4),
             )
         )
-
     return scored

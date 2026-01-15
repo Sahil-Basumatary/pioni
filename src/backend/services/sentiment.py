@@ -198,7 +198,7 @@ async def get_sentiment(ticker: str, request: Request):
             raise_api_error(request, 404, "NO_DATA", f"OOPS! No sentiment data found for {ticker}.")
 
         try:
-            scored = score_items([*news_items, *reddit_items], finbert_top_n=12)
+            scored = await score_items([*news_items, *reddit_items], finbert_top_n=12)
         except FinbertUnavailable as e:
             raise_api_error(request, 503, "FINBERT_UNAVAILABLE", str(e))
 
