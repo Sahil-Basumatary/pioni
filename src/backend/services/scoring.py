@@ -6,6 +6,8 @@ from typing import Iterable, Optional
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import os
 from huggingface_hub import InferenceClient
+from huggingface_hub.errors import HfHubHTTPError
+from tenacity import retry, stop_after_attempt, wait_exponential_jitter, retry_if_exception, RetryCallState
 from backend.settings import hf_api_token
 
 logger = logging.getLogger(__name__)
@@ -35,27 +37,66 @@ def _get_vader() -> SentimentIntensityAnalyzer:
 class FinbertUnavailable(Exception):
     pass
 
+def _is_retryable_hf_error(exc: BaseException) -> bool:
+    if isinstance(exc, HfHubHTTPError):
+        response = getattr(exc, 'response', None)
+        if response is not None:
+            code = getattr(response, 'status_code', 0)
+            return code == 429 or code >= 500
+        return True
+    if isinstance(exc, (ConnectionError, TimeoutError, OSError)):
+        return True
+    return False
+
+def _log_retry_attempt(retry_state: RetryCallState) -> None:
+    exc = retry_state.outcome.exception() if retry_state.outcome else None
+    logger.warning(
+        "HF API retry attempt",
+        extra={
+            "attempt": retry_state.attempt_number,
+            "error": str(exc) if exc else "unknown",
+        }
+    )
+
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential_jitter(initial=1, max=10),
+    retry=retry_if_exception(_is_retryable_hf_error),
+    before_sleep=_log_retry_attempt,
+    reraise=True,
+)
+async def _hf_inference_call(texts: list[str], token: str) -> list[float]:
+    client = InferenceClient(token=token)
+    scores: list[float] = []
+    for text in texts:
+        result = client.text_classification(text, model="ProsusAI/finbert")
+        best = max(result, key=lambda x: x.score)
+        label = (best.label or "").lower()
+        prob = float(best.score)
+        if "positive" in label:
+            scores.append(prob)
+        elif "negative" in label:
+            scores.append(-prob)
+        else:
+            scores.append(0.0)
+    return scores
+
 async def hf_finbert_score(texts: list[str]) -> list[float]:
     token = hf_api_token()
     if not token:
         raise FinbertUnavailable("HF_API_TOKEN not configured")
     try:
-        client = InferenceClient(token=token)
-        scores: list[float] = []
-        for text in texts:
-            result = client.text_classification(text, model="ProsusAI/finbert")
-            best = max(result, key=lambda x: x.score)
-            label = (best.label or "").lower()
-            prob = float(best.score)
-            if "positive" in label:
-                scores.append(prob)
-            elif "negative" in label:
-                scores.append(-prob)
-            else:
-                scores.append(0.0)
-        return scores
+        return await _hf_inference_call(texts, token)
+    except HfHubHTTPError as e:
+        response = getattr(e, 'response', None)
+        status = getattr(response, 'status_code', 0) if response else 0
+        logger.warning("HF API failed after retries", extra={"status": status, "error": str(e)})
+        raise FinbertUnavailable(f"HuggingFace API error (HTTP {status}): {e}")
+    except (ConnectionError, TimeoutError, OSError) as e:
+        logger.warning("HF API connection failed after retries", extra={"error": str(e)})
+        raise FinbertUnavailable(f"HuggingFace API connection error: {e}")
     except Exception as e:
-        logger.warning("HF Inference error", extra={"error": str(e)})
+        logger.warning("HF API unexpected error", extra={"error": str(e)})
         raise FinbertUnavailable(f"HuggingFace API error: {e}")
 
 
@@ -143,9 +184,10 @@ async def score_items(items: Iterable[dict], finbert_top_n: int = 12) -> list[Sc
         fin_texts = [t[0]["text"] for t in top]
         fin_scores = await hf_finbert_score(fin_texts)
         fin_map = {id(top[i][0]): fin_scores[i] for i in range(len(top))}
-    except FinbertUnavailable:
+    except FinbertUnavailable as e:
         if os.getenv("FINBERT_REQUIRED", "false").lower() == "true":
             raise
+        logger.info("Falling back to VADER-only scoring", extra={"reason": str(e)})
         fin_map = {}
     scored: list[ScoredItem] = []
     for it, vs in vader_scored:
