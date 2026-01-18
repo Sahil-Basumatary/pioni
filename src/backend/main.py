@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 import httpx
 from backend.api.routes import router
 from backend.core.middleware import attach_request_id
@@ -75,6 +76,7 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["X-Cache", "X-Mode", "X-Request-ID"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 app.include_router(router)
 

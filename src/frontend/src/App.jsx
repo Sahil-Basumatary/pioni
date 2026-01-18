@@ -9,143 +9,12 @@ import {
   LinearScale,
 } from "chart.js";
 import "./App.css";
+import { cacheLabel, formatSigned, formatAsOf, timeAgoFromIso, pct } from "./utils/formatters";
+import { agreementLabel, dispersionLabel, deriveTrendStats, pickDrivers, getConfidenceLabel, getSentimentLabel } from "./utils/sentiment";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8003";
 
-
 ChartJS.register(LineElement, PointElement, CategoryScale, LinearScale);
-
-const cacheLabel = (status) => {
-  switch (String(status || "").toUpperCase()) {
-    case "MISS":
-      return "Fresh";
-    case "HIT":
-      return "Cached";
-    case "STALE":
-      return "Refreshing";
-    case "MOCK":
-      return "Mock";
-    default:
-      return "—";
-  }
-};
-
-const formatSigned = (n, decimals = 2) => {
-  const num = Number(n);
-  if (!Number.isFinite(num)) return "—";
-  const sign = num > 0 ? "+" : "";
-  return `${sign}${num.toFixed(decimals)}`;
-};
-
-const formatAsOf = (iso) => {
-  if (!iso) return "—";
-  try {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return "—";
-    const yyyy = d.getUTCFullYear();
-    const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-    const dd = String(d.getUTCDate()).padStart(2, "0");
-    const hh = String(d.getUTCHours()).padStart(2, "0");
-    const mi = String(d.getUTCMinutes()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd} ${hh}:${mi} UTC`;
-  } catch {
-    return "—";
-  }
-};
-
-const timeAgoFromIso = (iso) => {
-  if (!iso) return "—";
-  const t = new Date(iso).getTime();
-  if (!Number.isFinite(t)) return "—";
-
-  const diffSec = Math.max(0, Math.floor((Date.now() - t) / 1000));
-  if (diffSec < 60) return `${diffSec}s ago`;
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin}m ago`;
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h ago`;
-  const diffDay = Math.floor(diffHr / 24);
-  return `${diffDay}d ago`;
-};
-
-const clamp01 = (x) => Math.max(0, Math.min(1, Number(x) || 0));
-const pct = (x) => `${Math.round(clamp01(x) * 100)}%`;
-
-const agreementLabel = (a) => {
-  const v = clamp01(a);
-  if (v >= 0.85) return "High agreement";
-  if (v >= 0.7) return "Medium agreement";
-  return "Low agreement";
-};
-
-const dispersionLabel = (std) => {
-  const v = Number(std) || 0;
-  if (v <= 0.12) return "Low dispersion";
-  if (v <= 0.25) return "Medium dispersion";
-  return "High dispersion";
-};
-
-const deriveTrendStats = (history = []) => {
-  if (!Array.isArray(history) || history.length < 2) return null;
-
-  const values = history
-    .map((p) => Number(p?.score))
-    .filter((n) => Number.isFinite(n));
-
-  if (values.length < 2) return null;
-
-  const first = values[0];
-  const last = values[values.length - 1];
-  const avg = values.reduce((a, b) => a + b, 0) / values.length;
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min;
-
-  const variance = values.reduce((acc, v) => acc + Math.pow(v - avg, 2), 0) / values.length;
-  const vol = Math.sqrt(variance);
-
-  const delta = last - first;
-
-  const bias = avg > 0.05 ? "Positive" : avg < -0.05 ? "Negative" : "Neutral";
-  const direction = delta > 0.02 ? "Improving" : delta < -0.02 ? "Weakening" : "Stable";
-
-  return {
-    first,
-    last,
-    avg,
-    min,
-    max,
-    range,
-    vol,
-    delta,
-    bias,
-    direction,
-  };
-};
-
-const pickDrivers = ({ sentiment, feed }) => {
-  const highlights = Array.isArray(sentiment?.highlights) ? sentiment.highlights : [];
-  if (highlights.length) {
-    return highlights
-      .filter((h) => typeof h?.score === "number" && h?.text)
-      .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
-      .slice(0, 4)
-      .map((h, idx) => ({
-        id: `hl-${idx}`,
-        type: h.source === "reddit" ? "reddit" : "news",
-        title: h.text,
-        source: h.source || "",
-        score: h.score,
-        ago: "",
-      }));
-  }
-
-  const items = Array.isArray(feed) ? feed : [];
-  return items
-    .filter((i) => typeof i?.score === "number" && i?.title)
-    .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
-    .slice(0, 4);
-};
 
 function Metric({ label, value, hint }) {
   return (
@@ -533,18 +402,6 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getConfidenceLabel = (value) => {
-    if (value < 0.33) return "Low confidence";
-    if (value < 0.66) return "Medium confidence";
-    return "High confidence";
-  };
-
-  const getSentimentLabel = (value) => {
-    if (value > 0.10) return "Positive";
-    if (value < -0.10) return "Negative";
-    return "Neutral";
   };
 
   const historyChartData = history.length
