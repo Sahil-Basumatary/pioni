@@ -7,126 +7,14 @@ import Metric from "./components/Metric";
 import Chip from "./components/Chip";
 import EmptyStatePanel from "./components/EmptyStatePanel";
 import ChartSkeleton from "./components/ChartSkeleton";
+import TrendSummary from "./components/TrendSummary";
+import TrendDrivers from "./components/TrendDrivers";
+import TrendEmptyPreview from "./components/TrendEmptyPreview";
+import FeedCard from "./components/FeedCard";
 
 const SentimentChart = lazy(() => import("./components/SentimentChart"));
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8003";
-
-function TrendSummary({ stats }) {
-  if (!stats) return null;
-
-  const fmt = (n) => (Number.isFinite(n) ? n.toFixed(2) : "—");
-  const deltaPrefix = stats.delta > 0 ? "+" : "";
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-[var(--text-primary)]">Trend summary</p>
-        <p className="text-[11px] text-[var(--text-muted)]">
-          {stats.bias} bias • {stats.direction} • Range {fmt(stats.range)}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-        <Metric label="Last" value={fmt(stats.last)} />
-        <Metric label="7D Δ" value={`${deltaPrefix}${fmt(stats.delta)}`} />
-        <Metric label="7D Avg" value={fmt(stats.avg)} />
-        <Metric label="Range" value={fmt(stats.range)} />
-        <Metric label="Vol (σ)" value={fmt(stats.vol)} hint="Dispersion" />
-      </div>
-    </div>
-  );
-}
-
-function TrendDrivers({ items }) {
-  if (!items || !items.length) return null;
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-[var(--text-primary)]">Key drivers</p>
-        <p className="text-[11px] text-[var(--text-muted)]">Largest-magnitude items</p>
-      </div>
-
-      <div className="grid gap-2">
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className="rounded-xl border border-[var(--card-border)] bg-[var(--bg)] px-3 py-2"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--card-bg)] border border-[var(--card-border)]">
-                    {item.type === "news" ? "News" : "Reddit"}
-                  </span>
-                  <p className="text-[11px] text-[var(--text-muted)] truncate">
-                    {item.source || ""}{item.ago ? ` • ${item.ago}` : ""}
-                  </p>
-                </div>
-                <p className="mt-1 text-sm text-[var(--text-primary)] leading-snug line-clamp-2">
-                  {item.title}
-                </p>
-              </div>
-
-              {typeof item.score === "number" && (
-                <span
-                  className={
-                    item.score > 0.1
-                      ? "text-emerald-600 text-xs font-semibold tabular-nums"
-                      : item.score < -0.1
-                      ? "text-red-500 text-xs font-semibold tabular-nums"
-                      : "text-[var(--text-muted)] text-xs font-semibold tabular-nums"
-                  }
-                >
-                  {formatSigned(item.score, 2)}
-                </span>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function TrendEmptyPreview() {
-  return (
-    <div className="space-y-4">
-      <div className="w-full h-56 relative overflow-hidden rounded-xl bg-[var(--card-bg)]">
-        <div className="absolute inset-0 grid grid-cols-6 grid-rows-4 opacity-[0.12]">
-          {Array.from({ length: 24 }).map((_, i) => (
-            <div key={i} className="border border-black/5"></div>
-          ))}
-        </div>
-        <svg className="absolute inset-0 w-full h-full opacity-25" viewBox="0 0 100 40" preserveAspectRatio="none">
-          <polyline
-            fill="none"
-            stroke="black"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            points="0,26 18,18 36,24 54,12 72,16 90,10 100,14"
-          />
-        </svg>
-      </div>
-
-      <div className="rounded-xl border border-[var(--card-border)] bg-[var(--bg)] px-4 py-3">
-        <p className="text-sm font-medium text-[var(--text-primary)]">Waiting for you bruv</p>
-        <p className="mt-1 text-xs text-[var(--text-muted)]">
-          Enter a ticker to unlock a compact trend read: bias, direction, and the biggest drivers behind the move.
-        </p>
-
-        <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <Metric label="Bias" value="—" />
-          <Metric label="7D Δ" value="—" />
-          <Metric label="Range" value="—" />
-          <Metric label="Drivers" value="—" />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function App() {
   const [ticker, setTicker] = useState("");
@@ -746,44 +634,7 @@ function App() {
             {feed && feed.length > 0 && (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {feed.map((item) => (
-                  <div
-                    key={item.id}
-                    className="rounded-2xl border border-[var(--card-border)] bg-[var(--bg)] p-4 hover:shadow-lg transition"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] px-2 py-1 rounded-full bg-[var(--card-bg)] border border-[var(--card-border)]">
-                        {item.type === "news" ? "News" : "Reddit"}
-                      </span>
-
-                      {typeof item.score === "number" && (
-                        <span
-                          className={
-                            item.score > 0.1
-                              ? "text-emerald-600 text-xs font-medium"
-                              : item.score < -0.1
-                              ? "text-red-500 text-xs font-medium"
-                              : "text-[var(--text-muted)] text-xs font-medium"
-                          }
-                        >
-                          {item.score.toFixed(2)}
-                        </span>
-                      )}
-                    </div>
-
-                    <p className="mt-3 text-sm text-[var(--text-primary)] leading-snug line-clamp-3">
-                      {item.title}
-                    </p>
-
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[var(--text-muted)]">
-                      {item.source && <span>{item.source}</span>}
-                      {item.ago && (
-                        <>
-                          <span>•</span>
-                          <span>{item.ago}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
+                  <FeedCard key={item.id} item={item} />
                 ))}
               </div>
             )}
