@@ -3,7 +3,6 @@ import "./loader.css";
 import "./App.css";
 import { cacheLabel, formatSigned, formatAsOf, timeAgoFromIso, pct } from "./utils/formatters";
 import { agreementLabel, dispersionLabel, deriveTrendStats, pickDrivers, getConfidenceLabel, getSentimentLabel } from "./utils/sentiment";
-import Metric from "./components/Metric";
 import Chip from "./components/Chip";
 import EmptyStatePanel from "./components/EmptyStatePanel";
 import ChartSkeleton from "./components/ChartSkeleton";
