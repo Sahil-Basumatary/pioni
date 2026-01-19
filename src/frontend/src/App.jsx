@@ -1,23 +1,16 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import "./loader.css";
-import { Line } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  LineElement,
-  PointElement,
-  CategoryScale,
-  LinearScale,
-} from "chart.js";
 import "./App.css";
 import { cacheLabel, formatSigned, formatAsOf, timeAgoFromIso, pct } from "./utils/formatters";
 import { agreementLabel, dispersionLabel, deriveTrendStats, pickDrivers, getConfidenceLabel, getSentimentLabel } from "./utils/sentiment";
 import Metric from "./components/Metric";
 import Chip from "./components/Chip";
 import EmptyStatePanel from "./components/EmptyStatePanel";
+import ChartSkeleton from "./components/ChartSkeleton";
+
+const SentimentChart = lazy(() => import("./components/SentimentChart"));
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8003";
-
-ChartJS.register(LineElement, PointElement, CategoryScale, LinearScale);
 
 function TrendSummary({ stats }) {
   if (!stats) return null;
@@ -707,56 +700,12 @@ function App() {
                 </p>
               </div>
 
-              {chartLoading && (
-                <div className="w-full h-64 relative overflow-hidden rounded-xl bg-[var(--card-bg)] skeleton-chart">
-                  <div className="absolute inset-0 grid grid-cols-6 grid-rows-4 opacity-[0.15]">
-                    {Array.from({ length: 24 }).map((_, i) => (
-                      <div key={i} className="border border-black/5"></div>
-                    ))}
-                  </div>
-                  <svg
-                    className="absolute inset-0 w-full h-full opacity-30"
-                    viewBox="0 0 100 40"
-                    preserveAspectRatio="none"
-                  >
-                    <polyline
-                      fill="none"
-                      stroke="black"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      points="0,25 20,10 40,30 60,15 80,28 100,12"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 shimmer" />
-                </div>
-              )}
+              {chartLoading && <ChartSkeleton />}
 
               {!chartLoading && historyChartData && (
-                <div className="w-full h-56 sm:h-64">
-                  <Line
-                    data={historyChartData}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: { legend: { display: false } },
-                      animation: {
-                        duration: 450,
-                        easing: "easeOutQuad",
-                      },
-                      scales: {
-                        x: {
-                          grid: { color: "rgba(0,0,0,0.05)" },
-                          ticks: { color: "var(--text-muted)", font: { size: 10 } },
-                        },
-                        y: {
-                          grid: { color: "rgba(0,0,0,0.05)" },
-                          ticks: { color: "var(--text-muted)", font: { size: 10 } },
-                        },
-                      },
-                    }}
-                  />
-                </div>
+                <Suspense fallback={<ChartSkeleton />}>
+                  <SentimentChart data={historyChartData} />
+                </Suspense>
               )}
 
               {!chartLoading && !historyChartData && sentiment && (
