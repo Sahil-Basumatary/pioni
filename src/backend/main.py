@@ -12,6 +12,7 @@ from backend.core.middleware import attach_request_id
 from backend.core.logging import setup_logging
 from backend.settings import cors_origins, is_mock_mode, prewarm_enabled, prewarm_tickers
 from backend.core.ratelimit import rate_limit_middleware
+from backend.core.cache import init_redis_pool, close_redis_pool
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -57,9 +58,11 @@ async def _warm_cache() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await init_redis_pool()
     if prewarm_enabled() and not is_mock_mode():
         asyncio.create_task(_warm_cache())
     yield
+    await close_redis_pool()
 
 
 app = FastAPI(title="Pioni API", version="0.3.0", lifespan=lifespan)

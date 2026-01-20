@@ -35,5 +35,8 @@ def prewarm_enabled() -> bool:
 def redis_url() -> str | None:
     return os.getenv("REDIS_URL")
 
+def redis_max_connections() -> int:
+    return int(os.getenv("REDIS_MAX_CONNECTIONS", "10"))
+
 def hf_api_token() -> str | None:
     return os.getenv("HF_API_TOKEN")
