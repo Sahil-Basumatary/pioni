@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Request, Response
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Dict, List, Optional
 from backend.services.sentiment import get_sentiment
 from backend.services.history import get_history
 from backend.services.feed import get_feed
+from backend.services.health import get_health_status
 from backend.settings import is_mock_mode
 
 router = APIRouter()
@@ -69,7 +71,16 @@ class FeedResponse(BaseModel):
 
 @router.get("/health")
 def health_check():
-    return {"status": "running"}
+    return {"status": "ok"}
+
+@router.get("/health/live")
+def health_live():
+    return {"status": "ok"}
+
+@router.get("/health/ready")
+async def health_ready():
+    body, status_code = await get_health_status()
+    return JSONResponse(content=body, status_code=status_code)
 
 @router.get("/sentiment/{ticker}", response_model=SentimentResponse)
 async def sentiment(ticker: str, request: Request, response: Response):

@@ -48,6 +48,17 @@ async def close_redis_pool() -> None:
         _pool = None
         logger.info("Redis pool closed", extra={"component": "redis"})
 
+async def ping_redis() -> tuple[bool, float | None, str | None]:
+    if not _redis_instance:
+        return False, None, "not_configured"
+    try:
+        start = time.perf_counter()
+        await _redis_instance.ping()
+        latency_ms = (time.perf_counter() - start) * 1000
+        return True, round(latency_ms, 2), None
+    except Exception as e:
+        return False, None, str(e)
+
 
 @dataclass
 class CacheEntry:
