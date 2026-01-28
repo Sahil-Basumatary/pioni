@@ -1,6 +1,6 @@
 import os
 import time
-from collections import defaultdict, deque
+from collections import deque
 from typing import Callable
 from fastapi import Request
 from starlette.responses import JSONResponse
@@ -10,17 +10,30 @@ class RateLimiter:
     def __init__(self, max_requests: int, window_seconds: int) -> None:
         self.max_requests = max_requests
         self.window_seconds = window_seconds
-        self.hits = defaultdict(deque)
+        self.hits: dict[str, deque] = {}
+        self._call_count = 0
 
     def allow(self, key: str) -> bool:
         now = time.time()
+        self._call_count += 1
+        if key not in self.hits:
+            self.hits[key] = deque()
         q = self.hits[key]
         while q and (now - q[0]) > self.window_seconds:
             q.popleft()
         if len(q) >= self.max_requests:
             return False
         q.append(now)
+        if self._call_count >= 1000:
+            self._cleanup(now)
         return True
+
+    def _cleanup(self, now: float) -> None:
+        stale = [k for k, v in self.hits.items()
+                 if not v or (now - v[-1]) > self.window_seconds]
+        for k in stale:
+            del self.hits[k]
+        self._call_count = 0
 
 
 def _rate_limit_enabled() -> bool:
@@ -72,4 +85,3 @@ def create_rate_limit_middleware(
         return await call_next(request)
 
     return rate_limit_middleware
-
