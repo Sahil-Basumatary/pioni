@@ -37,7 +37,7 @@ def test_sentiment_cache_miss_then_hit(monkeypatch):
             self.blended = None
             self.weight = None
 
-    def fake_score_items(items, finbert_top_n=12):
+    async def fake_score_items(items, finbert_top_n=12):
         FakeScored._counter = 0
         return [FakeScored(it["source"], it["text"], 0.2 if it["source"] == "news" else -0.1) for it in items]
 
