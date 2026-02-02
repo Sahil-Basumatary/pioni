@@ -1,29 +1,41 @@
 # Gateway
 
-API gateway. Routes requests, handles rate limiting, injects request IDs.
+API gateway. Routes requests to backend services, handles CORS, rate limiting, and injects request IDs.
 
 ## Setup
 
 ```bash
 cd services/gateway
 pip install -r requirements.txt
+uvicorn gateway.main:app --reload
 ```
 
-During migration, sentiment services still live in `src/backend/services/`. Set PYTHONPATH:
+## Dependencies
+
+The gateway proxies requests to the sentiment service. Ensure the sentiment service is running:
 
 ```bash
-export PYTHONPATH="${PYTHONPATH}:../../src"
-uvicorn gateway.main:app --reload
+cd services/sentiment
+uvicorn sentiment.main:app --reload --port 8001
 ```
 
 ## Endpoints
 
 - `/health`, `/health/live`, `/health/ready` - health checks
-- `/sentiment/{ticker}` - sentiment analysis
+- `/sentiment/{ticker}` - sentiment analysis (proxied to sentiment service)
 - `/sentiment/history/{ticker}` - 7-day history
 - `/sentiment/feed/{ticker}` - recent news/reddit feed
 
 ## Config
 
-Uses env vars for CORS, rate limits, Redis, etc. See `settings.py`.
+Environment variables:
 
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SENTIMENT_SERVICE_URL` | `http://localhost:8001` | Sentiment service base URL |
+| `CORS_ORIGINS` | localhost dev ports | Comma-separated allowed origins |
+| `REDIS_URL` | none | Redis connection URL |
+| `PREWARM_ENABLED` | `true` | Enable cache prewarming on startup |
+| `PREWARM_TICKERS` | `TSLA,AAPL,NVDA,AMZN,GOOGL` | Tickers to prewarm |
+
+See `settings.py` for full configuration.

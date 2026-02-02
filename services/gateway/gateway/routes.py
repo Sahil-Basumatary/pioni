@@ -1,73 +1,41 @@
-from fastapi import APIRouter, Request, Response
+import logging
+import httpx
+from fastapi import APIRouter, Request, Response, HTTPException
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-from typing import Dict, List, Optional
-from backend.services.sentiment import get_sentiment
-from backend.services.history import get_history
-from backend.services.feed import get_feed
-from backend.services.health import get_health_status
-from gateway.settings import is_mock_mode
+from gateway.settings import sentiment_service_url
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
+_http_client: httpx.AsyncClient | None = None
 
-class HighlightItem(BaseModel):
-    source: str
-    text: str
-    score: float
+async def get_http_client() -> httpx.AsyncClient:
+    global _http_client
+    if _http_client is None:
+        _http_client = httpx.AsyncClient(
+            base_url=sentiment_service_url(),
+            timeout=30.0,
+        )
+    return _http_client
 
-class ConfidenceDrivers(BaseModel):
-    n: int
-    mean: float
-    std: float
-    volume: float
-    agreement: float
-    strength: float
-    mix: float
-    n_news: int
-    n_reddit: int
+async def close_http_client() -> None:
+    global _http_client
+    if _http_client:
+        await _http_client.aclose()
+        _http_client = None
 
-class EvidenceItem(BaseModel):
-    source: str
-    id: Optional[str] = None
-    url: Optional[str] = None
-    text: str
-    score: float
-    published_at: Optional[str] = None
-    retrieved_at: Optional[str] = None
-    vader: Optional[float] = None
-    finbert: Optional[float] = None
-    blended: Optional[float] = None
-    weight: Optional[float] = None
-
-class CoverageWindow(BaseModel):
-    start: Optional[str] = None
-    end: Optional[str] = None
-
-class FeedItem(BaseModel):
-    id: str
-    type: str
-    title: str
-    source: str
-    score: float
-    ago: str
-
-class SentimentResponse(BaseModel):
-    ticker: str
-    sentiment: float
-    sources: Dict[str, float]
-    confidence: float
-    highlights: Optional[List[HighlightItem]] = None
-    n_news: int
-    n_reddit: int
-    computed_at: str
-    confidence_drivers: ConfidenceDrivers
-    evidence: Optional[List[EvidenceItem]] = None
-    coverage_window: Optional[CoverageWindow] = None
-    feed: Optional[List[FeedItem]] = None
-
-class FeedResponse(BaseModel):
-    ticker: str
-    items: List[FeedItem]
+async def _proxy_to_sentiment(path: str, response: Response) -> dict:
+    client = await get_http_client()
+    try:
+        resp = await client.get(path)
+        for header in ("X-Cache", "X-Mode"):
+            if header in resp.headers:
+                response.headers[header] = resp.headers[header]
+        if resp.status_code >= 400:
+            raise HTTPException(status_code=resp.status_code, detail=resp.json())
+        return resp.json()
+    except httpx.RequestError as e:
+        logger.error(f"sentiment service unreachable: {e}")
+        raise HTTPException(status_code=503, detail={"error": "SERVICE_UNAVAILABLE", "message": "Sentiment service unreachable"})
 
 @router.get("/health")
 def health_check():
@@ -79,27 +47,21 @@ def health_live():
 
 @router.get("/health/ready")
 async def health_ready():
-    body, status_code = await get_health_status()
-    return JSONResponse(content=body, status_code=status_code)
+    client = await get_http_client()
+    try:
+        resp = await client.get("/health/ready")
+        return JSONResponse(content=resp.json(), status_code=resp.status_code)
+    except httpx.RequestError:
+        return JSONResponse(content={"status": "degraded", "sentiment": False}, status_code=503)
 
-@router.get("/sentiment/{ticker}", response_model=SentimentResponse)
+@router.get("/sentiment/{ticker}")
 async def sentiment(ticker: str, request: Request, response: Response):
-    payload, cache_status = await get_sentiment(ticker, request)
-    response.headers["X-Cache"] = cache_status
-    response.headers["X-Mode"] = "MOCK" if cache_status == "MOCK" else "LIVE"
-    return payload
+    return await _proxy_to_sentiment(f"/analyze/{ticker}", response)
 
 @router.get("/sentiment/history/{ticker}")
 async def sentiment_history(ticker: str, request: Request, response: Response):
-    payload, cache_status = await get_history(ticker, request)
-    response.headers["X-Cache"] = cache_status
-    response.headers["X-Mode"] = "MOCK" if cache_status == "MOCK" else "LIVE"
-    return payload
+    return await _proxy_to_sentiment(f"/history/{ticker}", response)
 
-@router.get("/sentiment/feed/{ticker}", response_model=FeedResponse)
+@router.get("/sentiment/feed/{ticker}")
 async def sentiment_feed(ticker: str, request: Request, response: Response):
-    payload, cache_status = await get_feed(ticker, request)
-    response.headers["X-Cache"] = cache_status
-    response.headers["X-Mode"] = "MOCK" if is_mock_mode() else "LIVE"
-    return payload
-
+    return await _proxy_to_sentiment(f"/feed/{ticker}", response)

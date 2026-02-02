@@ -9,7 +9,7 @@ from starlette.middleware.gzip import GZipMiddleware
 import httpx
 from common import setup_logging, attach_request_id, init_redis_pool, close_redis_pool
 from common import create_rate_limit_middleware
-from gateway.routes import router
+from gateway.routes import router, close_http_client
 from gateway.settings import cors_origins, is_mock_mode, prewarm_enabled, prewarm_tickers
 
 setup_logging()
@@ -54,6 +54,7 @@ async def lifespan(app: FastAPI):
     if prewarm_enabled() and not is_mock_mode():
         asyncio.create_task(_warm_cache())
     yield
+    await close_http_client()
     await close_redis_pool()
 
 app = FastAPI(title="Pioni API", version="0.3.0", lifespan=lifespan)

@@ -35,3 +35,6 @@ def redis_max_connections() -> int:
 def hf_api_token() -> str | None:
     return os.getenv("HF_API_TOKEN")
 
+def sentiment_service_url() -> str:
+    return os.getenv("SENTIMENT_SERVICE_URL", "http://localhost:8001")
+
