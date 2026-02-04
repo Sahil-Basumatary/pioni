@@ -23,14 +23,19 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('src/backend/requirements.txt') }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('services/*/requirements.txt', 'libs/common/pyproject.toml') }}
         restore-keys: |
           ${{ runner.os }}-pip-
 
     - name: Install dependencies
       run: |
-        cd src/backend
-        pip install -r requirements.txt
+        pip install -e libs/common
+        pip install pytest pytest-asyncio httpx
+        pip install -r services/sentiment/requirements.txt --no-deps
+        pip install -r services/gateway/requirements.txt --no-deps
+        pip install -r services/market-data/requirements.txt --no-deps
+        pip install -r services/orders/requirements.txt --no-deps
+        pip install -r services/portfolio/requirements.txt --no-deps
 
     - name: Run backend tests
       env:
@@ -38,8 +43,7 @@ jobs:
         FINBERT_ENABLED: "false"
         RATE_LIMIT_ENABLED: "false"
       run: |
-        cd src/backend
-        PYTHONPATH=$GITHUB_WORKSPACE/src pytest tests/ -v
+        pytest services/ -v
 
   frontend-build:
     name: Frontend Build
@@ -56,31 +60,31 @@ jobs:
     - name: Cache node_modules
       uses: actions/cache@v4
       with:
-        path: src/frontend/node_modules
-        key: ${{ runner.os }}-node-${{ hashFiles('src/frontend/package-lock.json') }}
+        path: frontend/node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
         restore-keys: |
           ${{ runner.os }}-node-
 
     - name: Install dependencies
       run: |
-        cd src/frontend
+        cd frontend
         npm ci
 
     - name: Lint frontend
       run: |
-        cd src/frontend
+        cd frontend
         npm run lint
 
     - name: Build frontend
       env:
         VITE_API_BASE_URL: https://api.placeholder.com
       run: |
-        cd src/frontend
+        cd frontend
         npm run build
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: frontend-dist
-        path: src/frontend/dist
+        path: frontend/dist
         retention-days: 7
