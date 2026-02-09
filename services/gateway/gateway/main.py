@@ -20,7 +20,7 @@ async def _warm_cache() -> None:
     tickers = prewarm_tickers()
     base_url = "http://127.0.0.1:8000"
     async with httpx.AsyncClient(base_url=base_url, timeout=60.0) as client:
-        for attempt in range(5):
+        for _attempt in range(5):
             try:
                 resp = await client.get("/health")
                 if resp.status_code == 200:

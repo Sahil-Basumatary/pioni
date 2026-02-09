@@ -11,7 +11,6 @@ from common import raise_api_error, TTLCache
 from sentiment.scoring import (
     score_items,
     compute_confidence_details,
-    compute_confidence,
     FinbertUnavailable,
 )
 import hashlib

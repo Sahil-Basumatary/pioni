@@ -9,7 +9,7 @@ def _stable_jitter(ticker: str, day_iso: str) -> float:
     digest = hashlib.sha256(f"{ticker}:{day_iso}".encode("utf-8")).hexdigest()
     n = int(digest[:8], 16)
     r = (n % 1000) / 999.0
-    return (r - 0.5) * 0.24  
+    return (r - 0.5) * 0.24
 
 async def get_history(ticker: str, request: Request) -> Tuple[Dict[str, Any], str]:
     ticker = ticker.upper()

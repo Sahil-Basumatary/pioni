@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Iterable, Optional
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-import os
 from huggingface_hub import InferenceClient
 from huggingface_hub.errors import HfHubHTTPError
 from tenacity import retry, stop_after_attempt, wait_exponential_jitter, retry_if_exception, RetryCallState
@@ -16,9 +15,9 @@ _vader = None
 
 @dataclass(frozen=True)
 class ScoredItem:
-    source: str               
+    source: str
     text: str
-    score: float              
+    score: float
     ts: Optional[datetime] = None
     item_id: Optional[str] = None
     url: Optional[str] = None
@@ -91,13 +90,13 @@ async def hf_finbert_score(texts: list[str]) -> list[float]:
         response = getattr(e, 'response', None)
         status = getattr(response, 'status_code', 0) if response else 0
         logger.warning("HF API failed after retries", extra={"status": status, "error": str(e)})
-        raise FinbertUnavailable(f"HuggingFace API error (HTTP {status}): {e}")
+        raise FinbertUnavailable(f"HuggingFace API error (HTTP {status}): {e}") from e
     except (ConnectionError, TimeoutError, OSError) as e:
         logger.warning("HF API connection failed after retries", extra={"error": str(e)})
-        raise FinbertUnavailable(f"HuggingFace API connection error: {e}")
+        raise FinbertUnavailable(f"HuggingFace API connection error: {e}") from e
     except Exception as e:
         logger.warning("HF API unexpected error", extra={"error": str(e)})
-        raise FinbertUnavailable(f"HuggingFace API error: {e}")
+        raise FinbertUnavailable(f"HuggingFace API error: {e}") from e
 
 def _age_weight(ts: Optional[datetime], half_life_hours: float = 48.0) -> float:
     if ts is None:

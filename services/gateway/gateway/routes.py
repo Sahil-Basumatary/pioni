@@ -35,7 +35,7 @@ async def _proxy_to_sentiment(path: str, response: Response) -> dict:
         return resp.json()
     except httpx.RequestError as e:
         logger.error(f"sentiment service unreachable: {e}")
-        raise HTTPException(status_code=503, detail={"error": "SERVICE_UNAVAILABLE", "message": "Sentiment service unreachable"})
+        raise HTTPException(status_code=503, detail={"error": "SERVICE_UNAVAILABLE", "message": "Sentiment service unreachable"}) from None
 
 @router.get("/health")
 def health_check():

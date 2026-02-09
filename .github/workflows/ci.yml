@@ -7,18 +7,29 @@ on:
     branches: [ main ]
 
 jobs:
+  backend-lint:
+    name: Python Lint
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Install ruff
+      run: pip install ruff
+    - name: Lint Python
+      run: ruff check services/ libs/
+
   backend-test:
     name: Backend Tests
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
-
-    - name: Set up Python 3.11
+    - name: Set up Python 3.12
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-
+        python-version: '3.12'
     - name: Cache pip dependencies
       uses: actions/cache@v4
       with:
@@ -26,37 +37,34 @@ jobs:
         key: ${{ runner.os }}-pip-${{ hashFiles('services/*/requirements.txt', 'libs/common/pyproject.toml') }}
         restore-keys: |
           ${{ runner.os }}-pip-
-
     - name: Install dependencies
       run: |
         pip install -e libs/common
         pip install pytest pytest-asyncio httpx
-        pip install -r services/sentiment/requirements.txt --no-deps
-        pip install -r services/gateway/requirements.txt --no-deps
-        pip install -r services/market-data/requirements.txt --no-deps
-        pip install -r services/orders/requirements.txt --no-deps
-        pip install -r services/portfolio/requirements.txt --no-deps
-
+        pip install -r services/sentiment/requirements.txt
+        pip install -r services/gateway/requirements.txt
+        pip install -r services/market-data/requirements.txt
+        pip install -r services/orders/requirements.txt
+        pip install -r services/portfolio/requirements.txt
     - name: Run backend tests
       env:
         MOCK: "true"
         FINBERT_ENABLED: "false"
         RATE_LIMIT_ENABLED: "false"
-      run: |
-        pytest services/ -v
+      run: pytest services/ -v
 
   frontend-build:
     name: Frontend Build
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: frontend
     steps:
     - uses: actions/checkout@v4
-
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-
     - name: Cache node_modules
       uses: actions/cache@v4
       with:
@@ -64,24 +72,14 @@ jobs:
         key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
         restore-keys: |
           ${{ runner.os }}-node-
-
     - name: Install dependencies
-      run: |
-        cd frontend
-        npm ci
-
+      run: npm ci
     - name: Lint frontend
-      run: |
-        cd frontend
-        npm run lint
-
+      run: npm run lint
     - name: Build frontend
       env:
         VITE_API_BASE_URL: https://api.placeholder.com
-      run: |
-        cd frontend
-        npm run build
-
+      run: npm run build
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
