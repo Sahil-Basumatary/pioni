@@ -1,6 +1,3 @@
-import os
-os.environ.setdefault("MOCK", "true")
-os.environ.setdefault("REDIS_URL", "redis://localhost:6379")
 from fastapi.testclient import TestClient
 from gateway.main import app
 

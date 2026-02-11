@@ -1,4 +1,4 @@
-.PHONY: help install dev-gateway dev-sentiment dev-market-data dev-orders dev-portfolio dev-frontend test lint build
+.PHONY: help install dev-gateway dev-sentiment dev-market-data dev-orders dev-portfolio dev-frontend test lint lint-python build
 
 help:
 	@echo "Pioni Development Commands"
@@ -13,7 +13,8 @@ help:
 	@echo "Frontend:"
 	@echo "  make dev-frontend     Run Vite dev server"
 	@echo "  make build            Build frontend for production"
-	@echo "  make lint             Run ESLint on frontend"
+	@echo "  make lint             Run all linters"
+	@echo "  make lint-python      Run ruff on Python code"
 	@echo ""
 	@echo "Testing & Setup:"
 	@echo "  make test             Run all service tests"
@@ -43,8 +44,11 @@ dev-frontend:
 test:
 	pytest services/ -v
 
-lint:
+lint: lint-python
 	cd frontend && npm run lint
+
+lint-python:
+	ruff check services/ libs/
 
 build:
 	cd frontend && npm run build
