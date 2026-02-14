@@ -1,0 +1,69 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pioni-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-pioni}
+      POSTGRES_USER: ${POSTGRES_USER:-pioni}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pioni_dev_pass}
+    volumes:
+      - pioni-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pioni} -d ${POSTGRES_DB:-pioni}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - pioni-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: pioni-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - pioni-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - pioni-net
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: pioni-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-pioni}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-pioni_dev_pass}
+    volumes:
+      - pioni-rabbitmq:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - pioni-net
+
+volumes:
+  pioni-pgdata:
+  pioni-redis:
+  pioni-rabbitmq:
+
+networks:
+  pioni-net:
+    driver: bridge
