@@ -1,4 +1,4 @@
-.PHONY: help install dev-gateway dev-sentiment dev-market-data dev-orders dev-portfolio dev-frontend test lint lint-python build
+.PHONY: help install dev-gateway dev-sentiment dev-market-data dev-orders dev-portfolio dev-frontend test lint lint-python build infra infra-stop infra-logs infra-clean
 
 help:
 	@echo "Pioni Development Commands"
@@ -15,6 +15,12 @@ help:
 	@echo "  make build            Build frontend for production"
 	@echo "  make lint             Run all linters"
 	@echo "  make lint-python      Run ruff on Python code"
+	@echo ""
+	@echo "Infrastructure:"
+	@echo "  make infra            Start Postgres, Redis, RabbitMQ"
+	@echo "  make infra-stop       Stop infrastructure containers"
+	@echo "  make infra-logs       Tail infrastructure logs"
+	@echo "  make infra-clean      Stop and remove volumes (wipes data)"
 	@echo ""
 	@echo "Testing & Setup:"
 	@echo "  make test             Run all service tests"
@@ -52,4 +58,16 @@ lint-python:
 
 build:
 	cd frontend && npm run build
+
+infra:
+	docker compose up -d postgres redis rabbitmq
+
+infra-stop:
+	docker compose stop
+
+infra-logs:
+	docker compose logs -f
+
+infra-clean:
+	docker compose down -v
 
