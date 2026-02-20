@@ -12,6 +12,14 @@ _engine: AsyncEngine | None = None
 _session_factory: async_sessionmaker[AsyncSession] | None = None
 
 
+def _normalize_db_url(raw: str) -> str:
+    """Render and Heroku provide postgres:// but asyncpg needs postgresql+asyncpg://"""
+    if raw.startswith("postgres://"):
+        return raw.replace("postgres://", "postgresql+asyncpg://", 1)
+    if raw.startswith("postgresql://"):
+        return raw.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return raw
+
 def get_engine(url: str | None = None, echo: bool = False) -> AsyncEngine:
     global _engine
     if _engine is not None:
@@ -19,6 +27,7 @@ def get_engine(url: str | None = None, echo: bool = False) -> AsyncEngine:
     db_url = url or os.getenv("DATABASE_URL")
     if not db_url:
         raise RuntimeError("DATABASE_URL is not set")
+    db_url = _normalize_db_url(db_url)
     _engine = create_async_engine(db_url, echo=echo, pool_size=5, max_overflow=10)
     return _engine
 

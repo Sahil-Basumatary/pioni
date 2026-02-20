@@ -2,15 +2,19 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-from common import setup_logging, attach_request_id
+from sqlalchemy import text
+from common import setup_logging, attach_request_id, get_session_factory, dispose_engine
+import portfolio.settings  # noqa: F401 — triggers dotenv load before anything reads env
 
 setup_logging()
 logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    get_session_factory()
     logger.info("portfolio service started")
     yield
+    await dispose_engine()
     logger.info("portfolio service stopped")
 
 app = FastAPI(title="Pioni Portfolio Service", version="0.1.0", lifespan=lifespan)
@@ -27,5 +31,12 @@ async def liveness():
 
 @app.get("/health/ready")
 async def readiness():
-    return JSONResponse({"status": "ready"})
+    try:
+        factory = get_session_factory()
+        async with factory() as session:
+            await session.execute(text("SELECT 1"))
+        return JSONResponse({"status": "ready"})
+    except Exception:
+        logger.exception("readiness check failed")
+        return JSONResponse({"status": "not_ready"}, status_code=503)
 

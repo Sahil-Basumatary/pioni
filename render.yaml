@@ -1,0 +1,57 @@
+services:
+  - type: web
+    name: pioni-gateway
+    runtime: docker
+    plan: free
+    dockerfilePath: ./services/gateway/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: CORS_ORIGINS
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: MOCK
+        value: "false"
+      - key: PREWARM_ENABLED
+        value: "true"
+      - key: PREWARM_TICKERS
+        value: TSLA,AAPL,NVDA,AMZN,GOOGL
+      - key: SENTIMENT_SERVICE_HOST
+        fromService:
+          name: pioni-sentiment
+          type: pserv
+          property: hostport
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pioni-db
+          property: connectionString
+
+  - type: pserv
+    name: pioni-sentiment
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./services/sentiment/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: REDIS_URL
+        sync: false
+      - key: MOCK
+        value: "false"
+      - key: HF_API_TOKEN
+        sync: false
+      - key: NEWS_API_KEY
+        sync: false
+      - key: REDDIT_CLIENT_ID
+        sync: false
+      - key: REDDIT_CLIENT_SECRET
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pioni-db
+          property: connectionString
+
+databases:
+  - name: pioni-db
+    databaseName: pioni
+    plan: basic-256mb

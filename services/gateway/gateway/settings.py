@@ -36,5 +36,8 @@ def hf_api_token() -> str | None:
     return os.getenv("HF_API_TOKEN")
 
 def sentiment_service_url() -> str:
+    hostport = os.getenv("SENTIMENT_SERVICE_HOST")
+    if hostport:
+        return f"http://{hostport}"
     return os.getenv("SENTIMENT_SERVICE_URL", "http://localhost:8001")
 
