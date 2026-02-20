@@ -1,4 +1,4 @@
-.PHONY: help install dev-gateway dev-sentiment dev-market-data dev-orders dev-portfolio dev-frontend test lint lint-python build infra infra-stop infra-logs infra-clean
+.PHONY: help install dev-gateway dev-sentiment dev-market-data dev-orders dev-portfolio dev-frontend test lint lint-python build infra infra-stop infra-logs infra-clean db-migrate db-upgrade db-downgrade db-current
 
 help:
 	@echo "Pioni Development Commands"
@@ -21,6 +21,12 @@ help:
 	@echo "  make infra-stop       Stop infrastructure containers"
 	@echo "  make infra-logs       Tail infrastructure logs"
 	@echo "  make infra-clean      Stop and remove volumes (wipes data)"
+	@echo ""
+	@echo "Database:"
+	@echo "  make db-migrate msg=  Generate a new Alembic migration"
+	@echo "  make db-upgrade       Apply all pending migrations"
+	@echo "  make db-downgrade     Rollback one migration"
+	@echo "  make db-current       Show current migration version"
 	@echo ""
 	@echo "Testing & Setup:"
 	@echo "  make test             Run all service tests"
@@ -70,4 +76,16 @@ infra-logs:
 
 infra-clean:
 	docker compose down -v
+
+db-migrate:
+	alembic revision --autogenerate -m "$(msg)"
+
+db-upgrade:
+	alembic upgrade head
+
+db-downgrade:
+	alembic downgrade -1
+
+db-current:
+	alembic current
 
