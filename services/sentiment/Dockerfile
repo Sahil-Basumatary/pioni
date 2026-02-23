@@ -19,6 +19,7 @@ RUN chown -R appuser:appuser /home/appuser/.local
 WORKDIR /app
 COPY --chown=appuser:appuser services/sentiment/sentiment ./sentiment
 USER appuser
-EXPOSE 8001
-CMD ["uvicorn", "sentiment.main:app", "--host", "0.0.0.0", "--port", "8001"]
+ENV PORT=8001
+EXPOSE ${PORT}
+CMD sh -c "uvicorn sentiment.main:app --host 0.0.0.0 --port ${PORT}"
 
