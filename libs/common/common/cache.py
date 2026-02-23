@@ -13,8 +13,9 @@ _pool: Optional[aioredis.ConnectionPool] = None
 _redis_instance: Optional[aioredis.Redis] = None
 
 
-async def init_redis_pool(url: str | None, max_connections: int = 10) -> None:
+async def init_redis_pool(url: str | None = None, max_connections: int = 10) -> None:
     global _pool, _redis_instance
+    url = url or os.getenv("REDIS_URL")
     if not url:
         logger.info("Redis credentials not configured; using in-memory cache only", extra={"component": "redis"})
         return
