@@ -7,13 +7,62 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 import httpx
-from common import setup_logging, attach_request_id, init_redis_pool, close_redis_pool
+import redis.asyncio as aioredis
+from common import (
+    setup_logging, attach_request_id, init_redis_pool,
+    close_redis_pool, MarketSubscriber,
+)
 from common import create_rate_limit_middleware
 from gateway.routes import router, close_http_client
-from gateway.settings import cors_origins, is_mock_mode, prewarm_enabled, prewarm_tickers
+from gateway.market_routes import market_router, close_market_client
+from gateway.ws import ws_router, get_manager
+from gateway.settings import (
+    cors_origins, is_mock_mode, prewarm_enabled,
+    prewarm_tickers, redis_url,
+)
 
 setup_logging()
 logger = logging.getLogger(__name__)
+
+_pubsub_redis: aioredis.Redis | None = None
+_subscriber: MarketSubscriber | None = None
+
+
+async def _init_pubsub() -> None:
+    global _pubsub_redis, _subscriber
+    url = redis_url()
+    if not url:
+        logger.info("redis not configured, market data streaming disabled")
+        return
+    try:
+        _pubsub_redis = aioredis.from_url(url, decode_responses=True)
+        await _pubsub_redis.ping()
+        manager = get_manager()
+        _subscriber = MarketSubscriber(
+            redis=_pubsub_redis,
+            on_trade=manager.broadcast_trade,
+            on_kline=manager.broadcast_kline,
+        )
+        await _subscriber.start()
+        logger.info("market data pub/sub subscriber started")
+    except Exception as e:
+        logger.warning(
+            "failed to start market data subscriber",
+            extra={"error": str(e)},
+        )
+        _pubsub_redis = None
+        _subscriber = None
+
+
+async def _close_pubsub() -> None:
+    global _pubsub_redis, _subscriber
+    if _subscriber:
+        await _subscriber.stop()
+        _subscriber = None
+    if _pubsub_redis:
+        await _pubsub_redis.aclose()
+        _pubsub_redis = None
+
 
 async def _warm_cache() -> None:
     await asyncio.sleep(3)
@@ -48,16 +97,20 @@ async def _warm_cache() -> None:
                 logger.warning(f"prewarm: {ticker} failed after {elapsed_ms:.0f}ms - {e}")
         logger.info(f"prewarm: completed {warmed}/{len(tickers)} tickers")
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_redis_pool()
+    await _init_pubsub()
     if prewarm_enabled() and not is_mock_mode():
         asyncio.create_task(_warm_cache())
     yield
     await close_http_client()
+    await close_market_client()
+    await _close_pubsub()
     await close_redis_pool()
 
-app = FastAPI(title="Pioni API", version="0.3.0", lifespan=lifespan)
+app = FastAPI(title="Pioni API", version="0.4.0", lifespan=lifespan)
 
 app.middleware("http")(attach_request_id)
 
@@ -75,6 +128,9 @@ app.add_middleware(
 app.add_middleware(GZipMiddleware, minimum_size=500)
 
 app.include_router(router)
+app.include_router(market_router)
+app.include_router(ws_router)
+
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
@@ -88,4 +144,3 @@ async def http_exception_handler(request: Request, exc: HTTPException):
             "request_id": getattr(request.state, "request_id", None),
         },
     )
-
