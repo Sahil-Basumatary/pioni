@@ -4,12 +4,11 @@ import time
 from collections import defaultdict
 from decimal import Decimal
 import redis.asyncio as aioredis
+from common import CHANNEL_TRADE, CHANNEL_KLINE
 from market_data.schemas import NormalizedTrade, NormalizedKline, TickerSnapshot
 
 logger = logging.getLogger(__name__)
 
-CHANNEL_TRADE = "market:trade:{symbol}"
-CHANNEL_KLINE = "market:kline:{symbol}:{interval}"
 MAX_BUFFERED_KLINES = 500
 
 
