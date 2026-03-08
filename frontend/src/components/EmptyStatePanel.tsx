@@ -1,4 +1,10 @@
-export default function EmptyStatePanel({ variant, title, body }) {
+interface EmptyStatePanelProps {
+  variant: "search" | "history" | "warning";
+  title: string;
+  body?: string;
+}
+
+export default function EmptyStatePanel({ variant, title, body }: EmptyStatePanelProps) {
   const renderIcon = () => {
     if (variant === "search") {
       return (
@@ -77,4 +83,3 @@ export default function EmptyStatePanel({ variant, title, body }) {
     </div>
   );
 }
-

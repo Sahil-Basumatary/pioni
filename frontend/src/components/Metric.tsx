@@ -1,4 +1,10 @@
-export default function Metric({ label, value, hint }) {
+interface MetricProps {
+  label: string;
+  value: string;
+  hint?: string;
+}
+
+export default function Metric({ label, value, hint }: MetricProps) {
   return (
     <div className="rounded-xl border border-[var(--card-border)] bg-[var(--bg)] px-3 py-2">
       <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">{label}</p>
@@ -9,4 +15,3 @@ export default function Metric({ label, value, hint }) {
     </div>
   );
 }
-
