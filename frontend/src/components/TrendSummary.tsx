@@ -1,8 +1,13 @@
 import Metric from "./Metric";
+import type { TrendStats } from "../types/sentiment";
 
-export default function TrendSummary({ stats }) {
+interface TrendSummaryProps {
+  stats: TrendStats | null;
+}
+
+export default function TrendSummary({ stats }: TrendSummaryProps) {
   if (!stats) return null;
-  const fmt = (n) => (Number.isFinite(n) ? n.toFixed(2) : "—");
+  const fmt = (n: number) => (Number.isFinite(n) ? n.toFixed(2) : "—");
   const deltaPrefix = stats.delta > 0 ? "+" : "";
   return (
     <div className="space-y-3">
@@ -22,4 +27,3 @@ export default function TrendSummary({ stats }) {
     </div>
   );
 }
-

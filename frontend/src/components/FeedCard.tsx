@@ -1,4 +1,10 @@
-export default function FeedCard({ item }) {
+import type { FeedItem } from "../types/sentiment";
+
+interface FeedCardProps {
+  item: FeedItem;
+}
+
+export default function FeedCard({ item }: FeedCardProps) {
   return (
     <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--bg)] p-4 hover:shadow-lg transition">
       <div className="flex items-center justify-between">
@@ -34,4 +40,3 @@ export default function FeedCard({ item }) {
     </div>
   );
 }
-

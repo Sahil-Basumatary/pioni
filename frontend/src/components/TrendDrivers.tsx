@@ -1,6 +1,11 @@
 import { formatSigned } from "../utils/formatters";
+import type { DriverItem } from "../types/sentiment";
 
-export default function TrendDrivers({ items }) {
+interface TrendDriversProps {
+  items: DriverItem[];
+}
+
+export default function TrendDrivers({ items }: TrendDriversProps) {
   if (!items || !items.length) return null;
   return (
     <div className="space-y-2">
@@ -48,4 +53,3 @@ export default function TrendDrivers({ items }) {
     </div>
   );
 }
-
