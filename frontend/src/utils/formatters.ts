@@ -1,4 +1,4 @@
-export const cacheLabel = (status) => {
+export const cacheLabel = (status: string | null | undefined): string => {
   switch (String(status || "").toUpperCase()) {
     case "MISS":
       return "Fresh";
@@ -13,14 +13,14 @@ export const cacheLabel = (status) => {
   }
 };
 
-export const formatSigned = (n, decimals = 2) => {
+export const formatSigned = (n: number | string, decimals = 2): string => {
   const num = Number(n);
   if (!Number.isFinite(num)) return "—";
   const sign = num > 0 ? "+" : "";
   return `${sign}${num.toFixed(decimals)}`;
 };
 
-export const formatAsOf = (iso) => {
+export const formatAsOf = (iso: string | null | undefined): string => {
   if (!iso) return "—";
   try {
     const d = new Date(iso);
@@ -36,7 +36,7 @@ export const formatAsOf = (iso) => {
   }
 };
 
-export const timeAgoFromIso = (iso) => {
+export const timeAgoFromIso = (iso: string | null | undefined): string => {
   if (!iso) return "—";
   const t = new Date(iso).getTime();
   if (!Number.isFinite(t)) return "—";
@@ -50,9 +50,8 @@ export const timeAgoFromIso = (iso) => {
   return `${diffDay}d ago`;
 };
 
-export const clamp01 = (x) => Math.max(0, Math.min(1, Number(x) || 0));
+export const clamp01 = (x: number | null | undefined): number =>
+  Math.max(0, Math.min(1, Number(x) || 0));
 
-export const pct = (x) => `${Math.round(clamp01(x) * 100)}%`;
-
-
-
+export const pct = (x: number | null | undefined): string =>
+  `${Math.round(clamp01(x) * 100)}%`;
