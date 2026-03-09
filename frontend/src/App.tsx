@@ -1,8 +1,10 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense, type ChangeEvent, type KeyboardEvent } from "react";
+import type { ChartData } from "chart.js";
 import "./loader.css";
 import "./App.css";
 import { cacheLabel, formatSigned, formatAsOf, timeAgoFromIso, pct } from "./utils/formatters";
 import { agreementLabel, dispersionLabel, deriveTrendStats, pickDrivers, getConfidenceLabel, getSentimentLabel } from "./utils/sentiment";
+import type { SentimentData, FeedItem, HistoryPoint } from "./types/sentiment";
 import Chip from "./components/Chip";
 import EmptyStatePanel from "./components/EmptyStatePanel";
 import ChartSkeleton from "./components/ChartSkeleton";
@@ -15,19 +17,38 @@ const SentimentChart = lazy(() => import("./components/SentimentChart"));
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8003";
 
+type RequestErrorCode =
+  | "NOT_FOUND"
+  | "NO_NEWS"
+  | "NO_REDDIT"
+  | "ZERO_SENTIMENT"
+  | "TOO_FEW_POSTS"
+  | "RATE_LIMIT"
+  | "SERVER_DOWN"
+  | "SERVER_OFFLINE"
+  | "GENERIC";
+
+const QUICK_PICKS = ["TSLA", "AAPL", "NVDA", "MSFT", "AMZN", "GOOGL"] as const;
+const DEV_BYPASS = ["NONEWS", "NORED", "TOOFEW", "ZEROSENT", "LIMIT"] as const;
+
+function isTickerValid(val: string): boolean {
+  if ((DEV_BYPASS as readonly string[]).includes(val)) return true;
+  return /^[A-Z]{1,5}$/.test(val);
+}
+
 function App() {
   const [ticker, setTicker] = useState("");
-  const [sentiment, setSentiment] = useState(null);
+  const [sentiment, setSentiment] = useState<SentimentData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [tickerError, setTickerError] = useState(""); 
-  const [requestError, setRequestError] = useState("");
-  const [history, setHistory] = useState([]);
+  const [tickerError, setTickerError] = useState("");
+  const [requestError, setRequestError] = useState<RequestErrorCode | "">("");
+  const [history, setHistory] = useState<HistoryPoint[]>([]);
   const [chartLoading, setChartLoading] = useState(false);
-  const [feed, setFeed] = useState([]);
-  const [cacheStatus, setCacheStatus] = useState(null);
-  const [appMode, setAppMode] = useState(null);
+  const [feed, setFeed] = useState<FeedItem[]>([]);
+  const [cacheStatus, setCacheStatus] = useState<string | null>(null);
+  const [appMode, setAppMode] = useState<string | null>(null);
 
-  const [recentTickers, setRecentTickers] = useState(() => {
+  const [recentTickers, setRecentTickers] = useState<string[]>(() => {
     try {
       const raw = localStorage.getItem("pioni_recent_tickers");
       return raw ? JSON.parse(raw) : [];
@@ -36,7 +57,7 @@ function App() {
     }
   });
 
-  const saveRecentTickers = (next) => {
+  const saveRecentTickers = (next: string[]) => {
     setRecentTickers(next);
     try {
       localStorage.setItem("pioni_recent_tickers", JSON.stringify(next));
@@ -45,10 +66,9 @@ function App() {
     }
   };
 
-  const pushRecentTicker = (symbol) => {
+  const pushRecentTicker = (symbol: string) => {
     const clean = String(symbol || "").toUpperCase();
     if (!clean) return;
-
     const next = [clean, ...recentTickers.filter((t) => t !== clean)].slice(0, 6);
     saveRecentTickers(next);
   };
@@ -62,35 +82,23 @@ function App() {
     }
   };
 
-  const QUICK_PICKS = ["TSLA", "AAPL", "NVDA", "MSFT", "AMZN", "GOOGL"];
-
-  const handleTickerChange = (e) => {
+  const handleTickerChange = (e: ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.toUpperCase();
-    value = value.replace(/\s+/g, "");     
-    value = value.replace(/[^A-Z]/g, "");  
+    value = value.replace(/\s+/g, "");
+    value = value.replace(/[^A-Z]/g, "");
 
-    const devBypass = ["NONEWS", "NORED", "TOOFEW", "ZEROSENT", "LIMIT"];
-
-    if (!devBypass.includes(value) && value.length > 5) {
+    if (!(DEV_BYPASS as readonly string[]).includes(value) && value.length > 5) {
       setTickerError("Tickers must be 1-5 letters (A-Z).");
       value = value.slice(0, 5);
     } else {
       setTickerError("");
     }
 
-    setRequestError("");   
+    setRequestError("");
     setTicker(value);
   };
 
-  const isTickerValid = (val) => {
-    const devBypass = ["NONEWS", "TOOFEW", "ZEROSENT", "LIMIT", "NORED"];
-
-    if (devBypass.includes(val)) return true;
-
-    return /^[A-Z]{1,5}$/.test(val);
-  };
-
-  const fetchSentiment = async (symbolOverride) => {
+  const fetchSentiment = async (symbolOverride?: string) => {
     const symbol = (symbolOverride ?? ticker).toUpperCase();
     if (!isTickerValid(symbol)) {
       setTickerError("Ticker looks invalid. Use 1-5 letters (A-Z).");
@@ -116,14 +124,15 @@ function App() {
       if (xMode) setAppMode(xMode.toUpperCase());
 
       if (!response.ok) {
-        let payload = null;
+        let payload: Record<string, unknown> | null = null;
         try {
           payload = await response.json();
         } catch {
           payload = null;
         }
 
-        const errorCode = payload?.error || payload?.detail?.error || null;
+        const detail = payload?.detail as Record<string, unknown> | undefined;
+        const errorCode = (payload?.error ?? detail?.error ?? null) as string | null;
 
         if (errorCode === "INVALID_TICKER" || errorCode === "NO_DATA") {
           setRequestError("NOT_FOUND");
@@ -146,7 +155,7 @@ function App() {
         return;
       }
 
-      const data = await response.json();
+      const data: SentimentData = await response.json();
 
       setSentiment(data);
       setFeed(data.feed ?? []);
@@ -157,7 +166,7 @@ function App() {
       try {
         const historyResponse = await fetch(`${API_BASE_URL}/sentiment/history/${symbol}`)
         if (historyResponse.ok) {
-          const hist = await historyResponse.json();
+          const hist: { history?: HistoryPoint[] } = await historyResponse.json();
           setHistory(hist.history ?? []);
         } else {
           setHistory([]);
@@ -175,7 +184,7 @@ function App() {
     }
   };
 
-  const historyChartData = history.length
+  const historyChartData: ChartData<"line"> | null = history.length
     ? {
         labels: history.map((i) => i.date),
         datasets: [
@@ -184,7 +193,7 @@ function App() {
             data: history.map((i) => i.score),
             borderWidth: 2,
             tension: 0.25,
-            borderColor: "#2A2A2A", 
+            borderColor: "#2A2A2A",
             pointBackgroundColor: "#2A2A2A",
           },
         ],
@@ -194,9 +203,9 @@ function App() {
   const trendStats = deriveTrendStats(history);
   const driverItems = pickDrivers({ sentiment, feed });
 
-    const landing = !sentiment && !loading && !requestError;
+  const landing = !sentiment && !loading && !requestError;
 
-   return (
+  return (
     <div
       className="min-h-screen w-full px-6 lg:px-12 py-10"
       style={{ background: "var(--bg)", color: "var(--text-primary)" }}
@@ -211,7 +220,7 @@ function App() {
           </div>
 
           <div className="hidden md:flex items-center gap-2 text-xs px-3 py-1 rounded-full border border-[var(--card-border)] bg-[var(--card-bg)] mt-4">
-            <span className={`h-2 w-2 rounded-full ${appMode === "LIVE" ? "bg-emerald-400" : appMode === "MOCK" ? "bg-zinc-400" : "bg-zinc-400"}`}></span>
+            <span className={`h-2 w-2 rounded-full ${appMode === "LIVE" ? "bg-emerald-400" : "bg-zinc-400"}`}></span>
             <span className="font-medium text-[var(--text-secondary)]">
               {appMode ? appMode : "—"}
             </span>
@@ -256,7 +265,7 @@ function App() {
                         placeholder="Example: TSLA"
                         value={ticker}
                         onChange={handleTickerChange}
-                        onKeyDown={(e) => {
+                        onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
                           if (e.key === "Enter") fetchSentiment();
                         }}
                         className="w-full px-4 py-2.5 rounded-xl bg-[#EDEDED]
@@ -289,7 +298,7 @@ function App() {
                     </div>
 
                     <button
-                      onClick={fetchSentiment}
+                      onClick={() => fetchSentiment()}
                       disabled={loading || ticker.length === 0}
                       className="btn-premium w-full mt-5 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
                     >
@@ -472,7 +481,6 @@ function App() {
 
             {sentiment && (
               <div className="card-premium mt-3 w-full rounded-xl p-5 border border-[var(--card-border)]">
-                
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs uppercase tracking-wider text-[var(--text-muted)]">
@@ -495,7 +503,6 @@ function App() {
                 <div className="pt-3">
                   <div className="flex items-center justify-between mb-1">
                     <p className="text-[10px] text-[var(--text-muted)]">Confidence</p>
-
                     <p className="text-[10px] font-medium text-[var(--text-primary)] tabular-nums">
                       {Math.round((sentiment?.confidence ?? 0) * 100)}%
                     </p>
@@ -535,7 +542,6 @@ function App() {
                             {source === "newsapi" ? "News" : source === "reddit" ? "Reddit" : source}
                             {count !== null ? ` (${count})` : ""}
                           </span>
-
                           <span className="font-medium tabular-nums">{formatSigned(value ?? 0, 3)}</span>
                         </div>
                       );
@@ -615,7 +621,6 @@ function App() {
           </div>
           </div>
         </section>
-
 
         {sentiment && (
           <div className="card-premium rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] backdrop-blur-xl p-5">
