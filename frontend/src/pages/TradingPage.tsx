@@ -3,6 +3,7 @@ import CandlestickChart, {
   type CandlestickChartHandle,
 } from "../components/trading/CandlestickChart";
 import PriceTicker from "../components/trading/PriceTicker";
+import SymbolSelector from "../components/trading/SymbolSelector";
 import {
   useMarketWebSocket,
   type ConnectionStatus,
@@ -23,7 +24,7 @@ const STATUS_LABELS: Record<ConnectionStatus, string> = {
 };
 
 export default function TradingPage() {
-  const [symbol] = useState(DEFAULT_SYMBOL);
+  const [symbol, setSymbol] = useState(DEFAULT_SYMBOL);
   const [latestTrade, setLatestTrade] = useState<Trade | null>(null);
   const chartRef = useRef<CandlestickChartHandle>(null);
   const prevSymbolRef = useRef<string | null>(null);
@@ -60,11 +61,9 @@ export default function TradingPage() {
 
   return (
     <div className="flex flex-col gap-4 h-[calc(100vh-7.5rem)]">
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-3">
-          <h1 className="text-lg font-semibold text-[var(--text-primary)]">
-            {symbol}
-          </h1>
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <SymbolSelector selected={symbol} onSelect={setSymbol} />
           <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
             <span className={`inline-block h-2 w-2 rounded-full ${STATUS_COLORS[status]}`} />
             {STATUS_LABELS[status]}
