@@ -21,8 +21,8 @@ import {
 } from "lightweight-charts";
 import type { Kline } from "../../types/market";
 
-const INTERVALS = ["1m", "5m", "15m", "1h", "4h", "1d"] as const;
-type Interval = (typeof INTERVALS)[number];
+export const INTERVALS = ["1m", "5m", "15m", "1h", "4h", "1d"] as const;
+export type Interval = (typeof INTERVALS)[number];
 
 const DEFAULT_GATEWAY_URL = "http://localhost:8000";
 
