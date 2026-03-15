@@ -2,8 +2,7 @@ FROM python:3.12 AS builder
 WORKDIR /build
 COPY libs/common ./libs/common
 COPY services/sentiment/requirements.txt .
-RUN sed -i 's|-e ../../libs/common|./libs/common|' requirements.txt
-RUN pip install --user --no-cache-dir -r requirements.txt
+RUN pip install --user --no-cache-dir ./libs/common -r requirements.txt
 RUN python -m nltk.downloader -d /usr/share/nltk_data vader_lexicon
 
 FROM python:3.12-slim
