@@ -107,6 +107,17 @@ class OrderBook:
         # Negate bid prices so the highest bid sits at index 0
         return -price if side == OrderSide.BUY else price
 
+    def _pop_best_order(self, side: OrderSide) -> BookOrder | None:
+        book = self._side_book(side)
+        if not book:
+            return None
+        key, queue = book.peekitem(0)
+        order = queue.popleft()
+        self._orders.pop(order.order_id, None)
+        if not queue:
+            del book[key]
+        return order
+
     def _best_price(self, side: OrderSide) -> Decimal | None:
         book = self._side_book(side)
         if not book:

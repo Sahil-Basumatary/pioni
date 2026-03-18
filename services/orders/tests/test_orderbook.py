@@ -170,6 +170,47 @@ def test_volume_at(book: OrderBook):
     assert book.volume_at(OrderSide.SELL, Decimal("999.00")) == Decimal("0")
 
 
+def test_pop_best_order_returns_fifo(book: OrderBook):
+    o1 = _order(OrderSide.BUY, "100.00", qty="5")
+    o2 = _order(OrderSide.BUY, "100.00", qty="10")
+    book.add(o1)
+    book.add(o2)
+    popped = book._pop_best_order(OrderSide.BUY)
+    assert popped is not None
+    assert popped.order_id == o1.order_id
+    assert len(book) == 1
+
+
+def test_pop_best_order_cleans_empty_level(book: OrderBook):
+    order = _order(OrderSide.SELL, "101.00")
+    book.add(order)
+    book._pop_best_order(OrderSide.SELL)
+    assert len(book._asks) == 0
+    assert len(book) == 0
+
+
+def test_pop_best_order_empty_side(book: OrderBook):
+    assert book._pop_best_order(OrderSide.BUY) is None
+    assert book._pop_best_order(OrderSide.SELL) is None
+
+
+def test_pop_best_order_respects_price_priority(book: OrderBook):
+    low_ask = _order(OrderSide.SELL, "100.00")
+    high_ask = _order(OrderSide.SELL, "105.00")
+    book.add(high_ask)
+    book.add(low_ask)
+    popped = book._pop_best_order(OrderSide.SELL)
+    assert popped.order_id == low_ask.order_id
+    assert book.best_ask == Decimal("105.00")
+
+
+def test_pop_best_order_walks_levels(book: OrderBook):
+    book.add(_order(OrderSide.BUY, "100.00"))
+    book.add(_order(OrderSide.BUY, "99.00"))
+    book._pop_best_order(OrderSide.BUY)
+    assert book.best_bid == Decimal("99.00")
+
+
 def test_bulk_insert_cancel_no_level_leak(book: OrderBook):
     orders = []
     for i in range(100):
