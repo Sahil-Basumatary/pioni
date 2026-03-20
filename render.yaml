@@ -22,6 +22,11 @@ services:
           name: pioni-sentiment
           type: pserv
           property: hostport
+      - key: MARKET_DATA_SERVICE_HOST
+        fromService:
+          name: pioni-market-data
+          type: pserv
+          property: hostport
       - key: DATABASE_URL
         fromDatabase:
           name: pioni-db
@@ -50,6 +55,20 @@ services:
         fromDatabase:
           name: pioni-db
           property: connectionString
+
+  - type: pserv
+    name: pioni-market-data
+    runtime: docker
+    plan: free
+    dockerfilePath: ./services/market-data/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: REDIS_URL
+        sync: false
+      - key: TRADING_SYMBOLS
+        value: BTCUSDT,ETHUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT
+      - key: KLINE_INTERVALS
+        value: 1m,5m,15m,1h,4h,1d
 
 databases:
   - name: pioni-db
