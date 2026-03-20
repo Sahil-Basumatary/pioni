@@ -59,7 +59,7 @@ services:
   - type: pserv
     name: pioni-market-data
     runtime: docker
-    plan: free
+    plan: starter
     dockerfilePath: ./services/market-data/Dockerfile
     dockerContext: .
     envVars:
