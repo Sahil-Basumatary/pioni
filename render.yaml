@@ -65,6 +65,8 @@ services:
     envVars:
       - key: REDIS_URL
         sync: false
+      - key: BINANCE_WS_URL
+        value: "wss://stream.binance.us:9443"
       - key: TRADING_SYMBOLS
         value: BTCUSDT,ETHUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT
       - key: KLINE_INTERVALS
