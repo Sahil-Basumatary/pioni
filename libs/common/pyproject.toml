@@ -12,6 +12,7 @@ dependencies = [
     "python-json-logger>=3.0.0",
     "sqlalchemy[asyncio]>=2.0.0",
     "asyncpg>=0.30.0",
+    "aio-pika>=9.4.0",
 ]
 
 [project.optional-dependencies]
