@@ -16,6 +16,11 @@ from common.pubsub import (
     CHANNEL_TRADE_PATTERN,
     CHANNEL_KLINE_PATTERN,
 )
+from common.messaging import (
+    RabbitMQManager,
+    EXCHANGE_ORDERS,
+    EXCHANGE_TRADES,
+)
 from common.database import (
     Base,
     get_engine,
@@ -50,6 +55,9 @@ __all__ = [
     "CHANNEL_KLINE",
     "CHANNEL_TRADE_PATTERN",
     "CHANNEL_KLINE_PATTERN",
+    "RabbitMQManager",
+    "EXCHANGE_ORDERS",
+    "EXCHANGE_TRADES",
     "Base",
     "get_engine",
     "get_session_factory",

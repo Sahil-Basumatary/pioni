@@ -121,6 +121,75 @@ class RabbitMQManager:
             },
         )
 
+    async def declare_queue(
+        self,
+        queue_name: str,
+        exchange_name: str,
+        binding_key: str,
+        *,
+        durable: bool = True,
+    ) -> AbstractRobustQueue:
+        """Declare a queue and bind it to an exchange.
+        Consumers call this to set up their own queues."""
+        if not self.connected:
+            await self.connect()
+        if not self._channel:
+            raise RuntimeError("channel not available")
+        queue = await self._channel.declare_queue(queue_name, durable=durable)
+        exchange = self._exchanges.get(exchange_name)
+        if not exchange:
+            raise ValueError(f"unknown exchange: {exchange_name}")
+        await queue.bind(exchange, routing_key=binding_key)
+        logger.info(
+            "queue declared and bound",
+            extra={
+                "component": "rabbitmq",
+                "queue": queue_name,
+                "exchange": exchange_name,
+                "binding_key": binding_key,
+            },
+        )
+        return queue
+
+    async def consume(
+        self,
+        queue_name: str,
+        exchange_name: str,
+        binding_key: str,
+        callback: EventCallback,
+    ) -> None:
+        """Declare a queue, bind it, and start consuming messages."""
+        queue = await self.declare_queue(
+            queue_name, exchange_name, binding_key
+        )
+
+        async def _on_message(
+            message: aio_pika.abc.AbstractIncomingMessage,
+        ) -> None:
+            async with message.process():
+                try:
+                    data = json.loads(message.body.decode())
+                    await callback(data)
+                except Exception:
+                    logger.exception(
+                        "failed to process message",
+                        extra={
+                            "component": "rabbitmq",
+                            "queue": queue_name,
+                            "routing_key": message.routing_key,
+                        },
+                    )
+
+        await queue.consume(_on_message)
+        logger.info(
+            "consumer started",
+            extra={
+                "component": "rabbitmq",
+                "queue": queue_name,
+                "binding_key": binding_key,
+            },
+        )
+
     async def close(self) -> None:
         if self._channel and not self._channel.is_closed:
             await self._channel.close()
