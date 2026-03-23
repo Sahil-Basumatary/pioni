@@ -47,11 +47,38 @@ class RabbitMQManager:
     async def connect(self) -> None:
         if self.connected:
             return
-        self._connection = await aio_pika.connect_robust(self._url)
-        self._channel = await self._connection.channel()
-        await self._channel.set_qos(prefetch_count=10)
-        await self._declare_topology()
-        logger.info("rabbitmq connected", extra={"component": "rabbitmq"})
+        async with self._lock:
+            if self.connected:
+                return
+            await self._connect_with_retry()
+
+    async def _connect_with_retry(self) -> None:
+        while True:
+            try:
+                self._connection = await aio_pika.connect_robust(self._url)
+                self._channel = await self._connection.channel()
+                await self._channel.set_qos(prefetch_count=10)
+                await self._declare_topology()
+                self._reconnect_delay = INITIAL_RECONNECT_DELAY
+                logger.info(
+                    "rabbitmq connected",
+                    extra={"component": "rabbitmq"},
+                )
+                return
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                logger.exception(
+                    "rabbitmq connection failed, retrying",
+                    extra={
+                        "component": "rabbitmq",
+                        "delay_s": self._reconnect_delay,
+                    },
+                )
+                await asyncio.sleep(self._reconnect_delay)
+                self._reconnect_delay = min(
+                    self._reconnect_delay * 2, MAX_RECONNECT_DELAY
+                )
 
     async def _declare_topology(self) -> None:
         if not self._channel:
@@ -63,6 +90,36 @@ class RabbitMQManager:
                 durable=True,
             )
             self._exchanges[name] = exchange
+
+    async def publish(
+        self,
+        exchange_name: str,
+        routing_key: str,
+        body: dict[str, Any],
+        *,
+        persistent: bool = True,
+    ) -> None:
+        if not self.connected:
+            await self.connect()
+        exchange = self._exchanges.get(exchange_name)
+        if not exchange:
+            raise ValueError(f"unknown exchange: {exchange_name}")
+        message = Message(
+            body=json.dumps(body, default=str).encode(),
+            content_type="application/json",
+            delivery_mode=(
+                DeliveryMode.PERSISTENT if persistent else DeliveryMode.NOT_PERSISTENT
+            ),
+        )
+        await exchange.publish(message, routing_key=routing_key)
+        logger.debug(
+            "published event",
+            extra={
+                "component": "rabbitmq",
+                "exchange": exchange_name,
+                "routing_key": routing_key,
+            },
+        )
 
     async def close(self) -> None:
         if self._channel and not self._channel.is_closed:
