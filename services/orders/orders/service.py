@@ -2,20 +2,25 @@ from __future__ import annotations
 import asyncio
 import logging
 import uuid
+from collections import defaultdict
+from datetime import datetime, timezone
 from decimal import Decimal
+from typing import Any
 import redis.asyncio as aioredis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from common import (
     RabbitMQManager,
     Order,
+    Trade,
     Portfolio,
+    OrderSide,
     OrderType,
     OrderStatus,
 )
-from orders.book_types import BookOrder, BookSnapshot
+from orders.book_types import BookOrder, BookSnapshot, OrderResult
 from orders.engine import MatchingEngine
-from orders.schemas import OrderResponse
+from orders.schemas import SubmitOrderRequest, OrderResponse
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +77,118 @@ class OrderService:
         if symbol not in self._symbol_locks:
             self._symbol_locks[symbol] = asyncio.Lock()
         return self._symbol_locks[symbol]
+
+    async def submit_order(
+        self, req: SubmitOrderRequest, session: AsyncSession,
+    ) -> OrderResponse:
+        portfolio = await session.get(Portfolio, req.portfolio_id)
+        if not portfolio or not portfolio.is_active:
+            raise PortfolioNotFoundError(req.portfolio_id)
+        order_id = uuid.uuid4()
+        now = datetime.now(timezone.utc)
+        db_order = Order(
+            id=order_id,
+            portfolio_id=req.portfolio_id,
+            symbol=req.symbol,
+            side=req.side,
+            order_type=req.order_type,
+            time_in_force=req.time_in_force,
+            quantity=req.quantity,
+            price=req.price,
+            stop_price=req.stop_price,
+            status=OrderStatus.PENDING,
+            filled_quantity=Decimal("0"),
+        )
+        session.add(db_order)
+        book_order = BookOrder(
+            order_id=order_id,
+            symbol=req.symbol,
+            side=req.side,
+            order_type=req.order_type,
+            price=req.price or Decimal("0"),
+            quantity=req.quantity,
+            remaining=req.quantity,
+            timestamp=now,
+            time_in_force=req.time_in_force,
+            stop_price=req.stop_price,
+        )
+        async with self._get_lock(req.symbol):
+            self._order_portfolios[order_id] = req.portfolio_id
+            result = self._get_engine(req.symbol).submit(book_order)
+            db_order.status = result.status
+            if result.fills:
+                await self._process_fills(result, order_id, req, session)
+                taker_qty = sum(f.quantity for f in result.fills)
+                taker_value = sum(f.quantity * f.price for f in result.fills)
+                db_order.filled_quantity = taker_qty
+                db_order.average_fill_price = taker_value / taker_qty
+            if result.status in (
+                OrderStatus.FILLED, OrderStatus.REJECTED, OrderStatus.CANCELLED,
+            ):
+                self._order_portfolios.pop(order_id, None)
+        await session.flush()
+        await session.refresh(db_order)
+        return OrderResponse.model_validate(db_order)
+
+    async def _process_fills(
+        self,
+        result: OrderResult,
+        taker_order_id: uuid.UUID,
+        req: SubmitOrderRequest,
+        session: AsyncSession,
+    ) -> None:
+        maker_fill_groups: dict[uuid.UUID, list] = defaultdict(list)
+        for fill in result.fills:
+            maker_fill_groups[fill.maker_order_id].append(fill)
+        maker_ids = list(maker_fill_groups.keys())
+        stmt = select(Order).where(Order.id.in_(maker_ids))
+        rows = await session.execute(stmt)
+        maker_orders = {o.id: o for o in rows.scalars().all()}
+        for fill in result.fills:
+            session.add(Trade(
+                order_id=taker_order_id,
+                portfolio_id=req.portfolio_id,
+                symbol=req.symbol,
+                side=req.side,
+                quantity=fill.quantity,
+                price=fill.price,
+                fee=Decimal("0"),
+                executed_at=fill.timestamp,
+            ))
+            maker_portfolio = self._order_portfolios.get(fill.maker_order_id)
+            if maker_portfolio:
+                maker_side = (
+                    OrderSide.SELL if req.side == OrderSide.BUY else OrderSide.BUY
+                )
+                session.add(Trade(
+                    order_id=fill.maker_order_id,
+                    portfolio_id=maker_portfolio,
+                    symbol=req.symbol,
+                    side=maker_side,
+                    quantity=fill.quantity,
+                    price=fill.price,
+                    fee=Decimal("0"),
+                    executed_at=fill.timestamp,
+                ))
+        for maker_id, fills in maker_fill_groups.items():
+            maker = maker_orders.get(maker_id)
+            if not maker:
+                logger.warning(
+                    "maker order not found in DB during fill processing",
+                    extra={"maker_order_id": str(maker_id)},
+                )
+                continue
+            batch_qty = sum(f.quantity for f in fills)
+            batch_value = sum(f.quantity * f.price for f in fills)
+            old_filled = maker.filled_quantity or Decimal("0")
+            old_value = (maker.average_fill_price or Decimal("0")) * old_filled
+            maker.filled_quantity = old_filled + batch_qty
+            maker.average_fill_price = (old_value + batch_value) / maker.filled_quantity
+            if maker.filled_quantity >= maker.quantity:
+                maker.status = OrderStatus.FILLED
+                self._order_portfolios.pop(maker_id, None)
+            else:
+                maker.status = OrderStatus.PARTIALLY_FILLED
 
     async def get_order(
         self,
