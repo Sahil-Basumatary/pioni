@@ -1,5 +1,6 @@
 from __future__ import annotations
 import asyncio
+import json
 import logging
 import uuid
 from collections import defaultdict
@@ -20,9 +21,18 @@ from common import (
 )
 from orders.book_types import BookOrder, BookSnapshot, OrderResult
 from orders.engine import MatchingEngine
-from orders.schemas import SubmitOrderRequest, OrderResponse
+from orders.events import (
+    OrderAccepted,
+    OrderFilled,
+    OrderRejected,
+    OrderCancelled,
+    TradeExecuted,
+)
+from orders.schemas import SubmitOrderRequest, OrderResponse, CancelOrderResponse
 
 logger = logging.getLogger(__name__)
+
+CHANNEL_ORDER_STATUS = "order:status:{portfolio_id}"
 
 
 class OrderError(Exception):
@@ -112,12 +122,15 @@ class OrderService:
             time_in_force=req.time_in_force,
             stop_price=req.stop_price,
         )
+        maker_updates: list[dict[str, Any]] = []
         async with self._get_lock(req.symbol):
             self._order_portfolios[order_id] = req.portfolio_id
             result = self._get_engine(req.symbol).submit(book_order)
             db_order.status = result.status
             if result.fills:
-                await self._process_fills(result, order_id, req, session)
+                maker_updates = await self._process_fills(
+                    result, order_id, req, session,
+                )
                 taker_qty = sum(f.quantity for f in result.fills)
                 taker_value = sum(f.quantity * f.price for f in result.fills)
                 db_order.filled_quantity = taker_qty
@@ -128,6 +141,18 @@ class OrderService:
                 self._order_portfolios.pop(order_id, None)
         await session.flush()
         await session.refresh(db_order)
+        filled_qty = db_order.filled_quantity
+        avg_price = db_order.average_fill_price
+        asyncio.create_task(
+            self._publish_submit_events(
+                req=req,
+                order_id=order_id,
+                result=result,
+                filled_quantity=filled_qty,
+                average_fill_price=avg_price,
+                maker_updates=maker_updates,
+            )
+        )
         return OrderResponse.model_validate(db_order)
 
     async def _process_fills(
@@ -136,7 +161,8 @@ class OrderService:
         taker_order_id: uuid.UUID,
         req: SubmitOrderRequest,
         session: AsyncSession,
-    ) -> None:
+    ) -> list[dict[str, Any]]:
+        maker_updates: list[dict[str, Any]] = []
         maker_fill_groups: dict[uuid.UUID, list] = defaultdict(list)
         for fill in result.fills:
             maker_fill_groups[fill.maker_order_id].append(fill)
@@ -189,6 +215,55 @@ class OrderService:
                 self._order_portfolios.pop(maker_id, None)
             else:
                 maker.status = OrderStatus.PARTIALLY_FILLED
+            maker_updates.append({
+                "order_id": maker_id,
+                "portfolio_id": maker.portfolio_id,
+                "symbol": maker.symbol,
+                "status": maker.status,
+                "filled_quantity": maker.filled_quantity,
+                "average_fill_price": maker.average_fill_price,
+            })
+        return maker_updates
+
+    async def cancel_order(
+        self,
+        order_id: uuid.UUID,
+        portfolio_id: uuid.UUID,
+        session: AsyncSession,
+    ) -> CancelOrderResponse:
+        db_order = await session.get(Order, order_id)
+        if not db_order or db_order.portfolio_id != portfolio_id:
+            raise OrderNotFoundError(order_id)
+        cancellable = {
+            OrderStatus.OPEN, OrderStatus.PARTIALLY_FILLED, OrderStatus.PENDING,
+        }
+        if db_order.status not in cancellable:
+            raise OrderNotCancellableError(order_id, db_order.status)
+        async with self._get_lock(db_order.symbol):
+            self._get_engine(db_order.symbol).cancel(order_id)
+            self._order_portfolios.pop(order_id, None)
+        remaining = db_order.quantity - (db_order.filled_quantity or Decimal("0"))
+        db_order.status = OrderStatus.CANCELLED
+        await session.flush()
+        cancel_portfolio = db_order.portfolio_id
+        cancel_symbol = db_order.symbol
+        cancel_filled = db_order.filled_quantity or Decimal("0")
+        cancel_avg = db_order.average_fill_price
+        asyncio.create_task(
+            self._publish_cancel_event(
+                order_id=order_id,
+                portfolio_id=cancel_portfolio,
+                symbol=cancel_symbol,
+                remaining=remaining,
+                filled_quantity=cancel_filled,
+                average_fill_price=cancel_avg,
+            )
+        )
+        return CancelOrderResponse(
+            order_id=order_id,
+            status=OrderStatus.CANCELLED,
+            remaining_quantity=remaining,
+        )
 
     async def get_order(
         self,
@@ -259,6 +334,162 @@ class OrderService:
             extra={"restored_count": count},
         )
         return count
+
+
+    # ------------------------------------------------------------------
+    # Event publishing (fire-and-forget)
+    # ------------------------------------------------------------------
+
+    async def _publish_submit_events(
+        self,
+        *,
+        req: SubmitOrderRequest,
+        order_id: uuid.UUID,
+        result: OrderResult,
+        filled_quantity: Decimal,
+        average_fill_price: Decimal | None,
+        maker_updates: list[dict[str, Any]],
+    ) -> None:
+        try:
+            if result.status == OrderStatus.REJECTED:
+                evt = OrderRejected(
+                    order_id=order_id,
+                    portfolio_id=req.portfolio_id,
+                    symbol=req.symbol,
+                    side=req.side,
+                    order_type=req.order_type,
+                    reason=result.reject_reason,
+                )
+                await self._rmq.publish(
+                    EXCHANGE_ORDERS, evt.routing_key, evt.model_dump(mode="json"),
+                )
+            else:
+                accepted = OrderAccepted(
+                    order_id=order_id,
+                    portfolio_id=req.portfolio_id,
+                    symbol=req.symbol,
+                    side=req.side,
+                    order_type=req.order_type,
+                    time_in_force=req.time_in_force,
+                    quantity=req.quantity,
+                    price=req.price,
+                    stop_price=req.stop_price,
+                )
+                await self._rmq.publish(
+                    EXCHANGE_ORDERS,
+                    accepted.routing_key,
+                    accepted.model_dump(mode="json"),
+                )
+                if result.status == OrderStatus.FILLED:
+                    filled_evt = OrderFilled(
+                        order_id=order_id,
+                        portfolio_id=req.portfolio_id,
+                        symbol=req.symbol,
+                        side=req.side,
+                        filled_quantity=filled_quantity,
+                        average_fill_price=average_fill_price or Decimal("0"),
+                    )
+                    await self._rmq.publish(
+                        EXCHANGE_ORDERS,
+                        filled_evt.routing_key,
+                        filled_evt.model_dump(mode="json"),
+                    )
+                for fill in result.fills:
+                    trade_evt = TradeExecuted(
+                        order_id=order_id,
+                        portfolio_id=req.portfolio_id,
+                        symbol=req.symbol,
+                        side=req.side,
+                        quantity=fill.quantity,
+                        price=fill.price,
+                        maker_order_id=fill.maker_order_id,
+                        taker_order_id=fill.taker_order_id,
+                    )
+                    await self._rmq.publish(
+                        EXCHANGE_TRADES,
+                        trade_evt.routing_key,
+                        trade_evt.model_dump(mode="json"),
+                    )
+            await self._publish_order_status(
+                order_id=order_id,
+                portfolio_id=req.portfolio_id,
+                symbol=req.symbol,
+                status=result.status,
+                filled_quantity=filled_quantity,
+                average_fill_price=average_fill_price,
+            )
+            for update in maker_updates:
+                await self._publish_order_status(
+                    order_id=update["order_id"],
+                    portfolio_id=update["portfolio_id"],
+                    symbol=update["symbol"],
+                    status=update["status"],
+                    filled_quantity=update["filled_quantity"],
+                    average_fill_price=update["average_fill_price"],
+                )
+        except Exception:
+            logger.exception("failed to publish order submission events")
+
+    async def _publish_cancel_event(
+        self,
+        *,
+        order_id: uuid.UUID,
+        portfolio_id: uuid.UUID,
+        symbol: str,
+        remaining: Decimal,
+        filled_quantity: Decimal,
+        average_fill_price: Decimal | None,
+    ) -> None:
+        try:
+            evt = OrderCancelled(
+                order_id=order_id,
+                portfolio_id=portfolio_id,
+                symbol=symbol,
+                remaining_quantity=remaining,
+            )
+            await self._rmq.publish(
+                EXCHANGE_ORDERS, evt.routing_key, evt.model_dump(mode="json"),
+            )
+            await self._publish_order_status(
+                order_id=order_id,
+                portfolio_id=portfolio_id,
+                symbol=symbol,
+                status=OrderStatus.CANCELLED,
+                filled_quantity=filled_quantity,
+                average_fill_price=average_fill_price,
+            )
+        except Exception:
+            logger.exception("failed to publish cancel event")
+
+    async def _publish_order_status(
+        self,
+        *,
+        order_id: uuid.UUID,
+        portfolio_id: uuid.UUID,
+        symbol: str,
+        status: OrderStatus,
+        filled_quantity: Decimal | None,
+        average_fill_price: Decimal | None,
+    ) -> None:
+        if not self._redis:
+            return
+        channel = CHANNEL_ORDER_STATUS.format(portfolio_id=portfolio_id)
+        payload = json.dumps({
+            "type": "order_update",
+            "order_id": str(order_id),
+            "portfolio_id": str(portfolio_id),
+            "symbol": symbol,
+            "status": status.value,
+            "filled_quantity": str(filled_quantity or 0),
+            "average_fill_price": str(average_fill_price or 0),
+        })
+        try:
+            await self._redis.publish(channel, payload)
+        except Exception:
+            logger.warning(
+                "failed to publish order status to redis",
+                extra={"order_id": str(order_id)},
+            )
 
 
 _service: OrderService | None = None
