@@ -12,6 +12,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from common import (
     RabbitMQManager,
+    EXCHANGE_ORDERS,
+    EXCHANGE_TRADES,
     Order,
     Trade,
     Portfolio,
