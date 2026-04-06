@@ -10,12 +10,12 @@ import httpx
 import redis.asyncio as aioredis
 from common import (
     setup_logging, attach_request_id, init_redis_pool,
-    close_redis_pool, MarketSubscriber,
+    close_redis_pool, MarketSubscriber, OrderSubscriber,
 )
 from common import create_rate_limit_middleware
 from gateway.routes import router, close_http_client
 from gateway.market_routes import market_router, close_market_client
-from gateway.ws import ws_router, get_manager
+from gateway.ws import ws_router, get_manager, get_order_manager
 from gateway.settings import (
     cors_origins, is_mock_mode, prewarm_enabled,
     prewarm_tickers, redis_url,
@@ -26,10 +26,11 @@ logger = logging.getLogger(__name__)
 
 _pubsub_redis: aioredis.Redis | None = None
 _subscriber: MarketSubscriber | None = None
+_order_subscriber: OrderSubscriber | None = None
 
 
 async def _init_pubsub() -> None:
-    global _pubsub_redis, _subscriber
+    global _pubsub_redis, _subscriber, _order_subscriber
     url = redis_url()
     if not url:
         logger.info("redis not configured, market data streaming disabled")
@@ -45,17 +46,28 @@ async def _init_pubsub() -> None:
         )
         await _subscriber.start()
         logger.info("market data pub/sub subscriber started")
+        order_mgr = get_order_manager()
+        _order_subscriber = OrderSubscriber(
+            redis=_pubsub_redis,
+            on_order_status=order_mgr.broadcast_order_update,
+        )
+        await _order_subscriber.start()
+        logger.info("order status pub/sub subscriber started")
     except Exception as e:
         logger.warning(
-            "failed to start market data subscriber",
+            "failed to start pub/sub subscribers",
             extra={"error": str(e)},
         )
         _pubsub_redis = None
         _subscriber = None
+        _order_subscriber = None
 
 
 async def _close_pubsub() -> None:
-    global _pubsub_redis, _subscriber
+    global _pubsub_redis, _subscriber, _order_subscriber
+    if _order_subscriber:
+        await _order_subscriber.stop()
+        _order_subscriber = None
     if _subscriber:
         await _subscriber.stop()
         _subscriber = None
