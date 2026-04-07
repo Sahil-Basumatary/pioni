@@ -15,6 +15,7 @@ from common import (
 from common import create_rate_limit_middleware
 from gateway.routes import router, close_http_client
 from gateway.market_routes import market_router, close_market_client
+from gateway.order_routes import order_router, orderbook_router, close_order_client
 from gateway.ws import ws_router, get_manager, get_order_manager
 from gateway.settings import (
     cors_origins, is_mock_mode, prewarm_enabled,
@@ -119,6 +120,7 @@ async def lifespan(app: FastAPI):
     yield
     await close_http_client()
     await close_market_client()
+    await close_order_client()
     await _close_pubsub()
     await close_redis_pool()
 
@@ -141,6 +143,8 @@ app.add_middleware(GZipMiddleware, minimum_size=500)
 
 app.include_router(router)
 app.include_router(market_router)
+app.include_router(order_router)
+app.include_router(orderbook_router)
 app.include_router(ws_router)
 
 
