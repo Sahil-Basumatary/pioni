@@ -137,35 +137,42 @@ class MatchingEngine:
         consumed, preserving FIFO time-priority within each price level.
         """
         opposite = OrderSide.SELL if order.side == OrderSide.BUY else OrderSide.BUY
+        side_book = self._book._side_book(opposite)
+        if not side_book:
+            return []
+        is_buy = order.side == OrderSide.BUY
+        orders_map = self._book._orders
+        taker_id = order.order_id
+        remaining = order.remaining
+        now = datetime.now(timezone.utc)
         fills: list[Fill] = []
-        while order.remaining > 0:
-            side_book = self._book._side_book(opposite)
+        while remaining > 0:
             if not side_book:
                 break
             key, queue = side_book.peekitem(0)
             resting_price = abs(key)
             if price_limit is not None:
-                if order.side == OrderSide.BUY and resting_price > price_limit:
+                if is_buy and resting_price > price_limit:
                     break
-                if order.side == OrderSide.SELL and resting_price < price_limit:
+                if not is_buy and resting_price < price_limit:
                     break
             resting = queue[0]
-            fill_qty = min(order.remaining, resting.remaining)
-            now = datetime.now(timezone.utc)
+            fill_qty = min(remaining, resting.remaining)
             fills.append(Fill(
                 maker_order_id=resting.order_id,
-                taker_order_id=order.order_id,
+                taker_order_id=taker_id,
                 price=resting_price,
                 quantity=fill_qty,
                 timestamp=now,
             ))
-            order.remaining -= fill_qty
+            remaining -= fill_qty
             resting.remaining -= fill_qty
             if resting.remaining <= 0:
                 queue.popleft()
-                self._book._orders.pop(resting.order_id, None)
+                orders_map.pop(resting.order_id, None)
                 if not queue:
                     del side_book[key]
+        order.remaining = remaining
         if fills:
             self._last_trade_price = fills[-1].price
         return fills
