@@ -21,7 +21,7 @@ from common import (
     OrderType,
     OrderStatus,
 )
-from orders.book_types import BookOrder, BookSnapshot, OrderResult
+from orders.book_types import BookOrder, BookSnapshot, Fill, OrderResult
 from orders.engine import MatchingEngine
 from orders.events import (
     OrderAccepted,

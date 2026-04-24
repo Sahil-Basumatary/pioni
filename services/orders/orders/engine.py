@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
 from common import OrderSide, OrderType, OrderStatus, TimeInForce
-from orders.book_types import BookOrder, Fill, OrderResult, RejectReason
+from orders.book_types import BookOrder, _FastFill, OrderResult, RejectReason
 from orders.orderbook import OrderBook
 
 
@@ -130,7 +130,7 @@ class MatchingEngine:
 
     def _match(
         self, order: BookOrder, price_limit: Decimal | None = None,
-    ) -> list[Fill]:
+    ) -> list[_FastFill]:
         """Walk the opposite side of the book, filling aggressively.
 
         Resting orders are modified in-place and only removed when fully
@@ -145,7 +145,7 @@ class MatchingEngine:
         taker_id = order.order_id
         remaining = order.remaining
         now = datetime.now(timezone.utc)
-        fills: list[Fill] = []
+        fills: list[_FastFill] = []
         while remaining > 0:
             if not side_book:
                 break
@@ -158,12 +158,8 @@ class MatchingEngine:
                     break
             resting = queue[0]
             fill_qty = min(remaining, resting.remaining)
-            fills.append(Fill(
-                maker_order_id=resting.order_id,
-                taker_order_id=taker_id,
-                price=resting_price,
-                quantity=fill_qty,
-                timestamp=now,
+            fills.append(_FastFill(
+                resting.order_id, taker_id, resting_price, fill_qty, now,
             ))
             remaining -= fill_qty
             resting.remaining -= fill_qty
