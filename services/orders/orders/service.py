@@ -21,7 +21,7 @@ from common import (
     OrderType,
     OrderStatus,
 )
-from orders.book_types import BookOrder, BookSnapshot, Fill, OrderResult
+from orders.book_types import BookOrder, BookSnapshot, Fill, _FastResult
 from orders.engine import MatchingEngine
 from orders.events import (
     OrderAccepted,
@@ -159,7 +159,7 @@ class OrderService:
 
     async def _process_fills(
         self,
-        result: OrderResult,
+        result: _FastResult,
         taker_order_id: uuid.UUID,
         req: SubmitOrderRequest,
         session: AsyncSession,
@@ -347,7 +347,7 @@ class OrderService:
         *,
         req: SubmitOrderRequest,
         order_id: uuid.UUID,
-        result: OrderResult,
+        result: _FastResult,
         filled_quantity: Decimal,
         average_fill_price: Decimal | None,
         maker_updates: list[dict[str, Any]],

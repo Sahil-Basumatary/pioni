@@ -1,6 +1,7 @@
 from __future__ import annotations
 import enum
 import uuid
+from collections import namedtuple
 from datetime import datetime
 from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, Field
@@ -34,32 +35,10 @@ class Fill(BaseModel):
     timestamp: datetime
 
 
-class _FastFill:
-    """Lightweight fill used inside the matching loop to avoid Pydantic overhead."""
-    __slots__ = ("maker_order_id", "taker_order_id", "price", "quantity", "timestamp")
-
-    def __init__(
-        self,
-        maker_order_id: uuid.UUID,
-        taker_order_id: uuid.UUID,
-        price: Decimal,
-        quantity: Decimal,
-        timestamp: datetime,
-    ) -> None:
-        self.maker_order_id = maker_order_id
-        self.taker_order_id = taker_order_id
-        self.price = price
-        self.quantity = quantity
-        self.timestamp = timestamp
-
-    def to_fill(self) -> Fill:
-        return Fill(
-            maker_order_id=self.maker_order_id,
-            taker_order_id=self.taker_order_id,
-            price=self.price,
-            quantity=self.quantity,
-            timestamp=self.timestamp,
-        )
+_FastFill = namedtuple(
+    "_FastFill",
+    ["maker_order_id", "taker_order_id", "price", "quantity", "timestamp"],
+)
 
 
 class RejectReason(str, enum.Enum):
@@ -75,6 +54,25 @@ class OrderResult(BaseModel):
     fills: list = Field(default_factory=list)
     remaining_quantity: Decimal
     reject_reason: RejectReason | None = None
+
+
+class _FastResult:
+    """Hot-path replacement for OrderResult — avoids Pydantic frozen model overhead."""
+    __slots__ = ("order_id", "status", "fills", "remaining_quantity", "reject_reason")
+
+    def __init__(
+        self,
+        order_id: uuid.UUID,
+        status: OrderStatus,
+        remaining_quantity: Decimal,
+        fills: list | None = None,
+        reject_reason: RejectReason | None = None,
+    ) -> None:
+        self.order_id = order_id
+        self.status = status
+        self.fills = fills or []
+        self.remaining_quantity = remaining_quantity
+        self.reject_reason = reject_reason
 
 
 class PriceLevelView(BaseModel):

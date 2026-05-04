@@ -104,7 +104,6 @@ class OrderBook:
         return self._bids if side == OrderSide.BUY else self._asks
 
     def _price_key(self, side: OrderSide, price: Decimal) -> Decimal:
-        # Negate bid prices so the highest bid sits at index 0
         return -price if side == OrderSide.BUY else price
 
     def _pop_best_order(self, side: OrderSide) -> BookOrder | None:

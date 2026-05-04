@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
 from common import OrderSide, OrderType, OrderStatus, TimeInForce
-from orders.book_types import BookOrder, _FastFill, OrderResult, RejectReason
+from orders.book_types import BookOrder, _FastFill, _FastResult, RejectReason
 from orders.orderbook import OrderBook
 
 
@@ -31,20 +31,20 @@ class MatchingEngine:
     def last_trade_price(self) -> Decimal | None:
         return self._last_trade_price
 
-    def submit(self, order: BookOrder) -> OrderResult:
+    def submit(self, order: BookOrder) -> _FastResult:
         if order.quantity <= 0 or order.remaining <= 0:
-            return OrderResult(
+            return _FastResult(
                 order_id=order.order_id,
                 status=OrderStatus.REJECTED,
                 remaining_quantity=order.remaining,
                 reject_reason=RejectReason.INVALID_QUANTITY,
             )
-        handlers = {
-            OrderType.MARKET: self._execute_market,
-            OrderType.LIMIT: self._execute_limit,
-            OrderType.STOP_LOSS: self._register_stop,
-        }
-        return handlers[order.order_type](order)
+        otype = order.order_type
+        if otype == OrderType.LIMIT:
+            return self._execute_limit(order)
+        if otype == OrderType.MARKET:
+            return self._execute_market(order)
+        return self._register_stop(order)
 
     def cancel(self, order_id: uuid.UUID) -> BookOrder | None:
         stop = self._stops.pop(order_id, None)
@@ -52,7 +52,7 @@ class MatchingEngine:
             return stop
         return self._book.cancel(order_id)
 
-    def check_stops(self, market_price: Decimal) -> list[OrderResult]:
+    def check_stops(self, market_price: Decimal) -> list[_FastResult]:
         """Scan registered stops and execute any whose threshold is crossed.
 
         Does not cascade — triggered stops that produce fills won't
@@ -64,7 +64,7 @@ class MatchingEngine:
                 triggered.append(oid)
             elif stop.side == OrderSide.BUY and market_price >= stop.stop_price:
                 triggered.append(oid)
-        results: list[OrderResult] = []
+        results: list[_FastResult] = []
         for oid in triggered:
             order = self._stops.pop(oid)
             order.order_type = OrderType.MARKET
@@ -75,24 +75,24 @@ class MatchingEngine:
     # Order-type handlers
     # ------------------------------------------------------------------
 
-    def _execute_market(self, order: BookOrder) -> OrderResult:
+    def _execute_market(self, order: BookOrder) -> _FastResult:
         fills = self._match(order)
         if not fills:
-            return OrderResult(
+            return _FastResult(
                 order_id=order.order_id,
                 status=OrderStatus.REJECTED,
                 remaining_quantity=order.remaining,
                 reject_reason=RejectReason.NO_LIQUIDITY,
             )
         status = OrderStatus.FILLED if order.remaining <= 0 else OrderStatus.PARTIALLY_FILLED
-        return OrderResult(
+        return _FastResult(
             order_id=order.order_id,
             status=status,
-            fills=fills,
             remaining_quantity=order.remaining,
+            fills=fills,
         )
 
-    def _execute_limit(self, order: BookOrder) -> OrderResult:
+    def _execute_limit(self, order: BookOrder) -> _FastResult:
         fills = self._match(order, price_limit=order.price)
         if order.remaining > 0:
             if order.time_in_force == TimeInForce.GTC:
@@ -102,23 +102,23 @@ class MatchingEngine:
                 status = OrderStatus.PARTIALLY_FILLED if fills else OrderStatus.CANCELLED
         else:
             status = OrderStatus.FILLED
-        return OrderResult(
+        return _FastResult(
             order_id=order.order_id,
             status=status,
-            fills=fills,
             remaining_quantity=order.remaining,
+            fills=fills,
         )
 
-    def _register_stop(self, order: BookOrder) -> OrderResult:
+    def _register_stop(self, order: BookOrder) -> _FastResult:
         if order.stop_price is None:
-            return OrderResult(
+            return _FastResult(
                 order_id=order.order_id,
                 status=OrderStatus.REJECTED,
                 remaining_quantity=order.remaining,
                 reject_reason=RejectReason.INVALID_PRICE,
             )
         self._stops[order.order_id] = order
-        return OrderResult(
+        return _FastResult(
             order_id=order.order_id,
             status=OrderStatus.OPEN,
             remaining_quantity=order.remaining,
@@ -146,28 +146,54 @@ class MatchingEngine:
         remaining = order.remaining
         now = datetime.now(timezone.utc)
         fills: list[_FastFill] = []
-        while remaining > 0:
-            if not side_book:
-                break
-            key, queue = side_book.peekitem(0)
-            resting_price = abs(key)
-            if price_limit is not None:
+        if price_limit is None:
+            while remaining > 0:
+                if not side_book:
+                    break
+                key, queue = side_book.peekitem(0)
+                resting_price = abs(key)
+                resting = queue[0]
+                r_remaining = resting.remaining
+                if remaining < r_remaining:
+                    fill_qty = remaining
+                else:
+                    fill_qty = r_remaining
+                fills.append(_FastFill(
+                    resting.order_id, taker_id, resting_price, fill_qty, now,
+                ))
+                remaining -= fill_qty
+                resting.remaining -= fill_qty
+                if resting.remaining <= 0:
+                    queue.popleft()
+                    orders_map.pop(resting.order_id, None)
+                    if not queue:
+                        del side_book[key]
+        else:
+            while remaining > 0:
+                if not side_book:
+                    break
+                key, queue = side_book.peekitem(0)
+                resting_price = abs(key)
                 if is_buy and resting_price > price_limit:
                     break
                 if not is_buy and resting_price < price_limit:
                     break
-            resting = queue[0]
-            fill_qty = min(remaining, resting.remaining)
-            fills.append(_FastFill(
-                resting.order_id, taker_id, resting_price, fill_qty, now,
-            ))
-            remaining -= fill_qty
-            resting.remaining -= fill_qty
-            if resting.remaining <= 0:
-                queue.popleft()
-                orders_map.pop(resting.order_id, None)
-                if not queue:
-                    del side_book[key]
+                resting = queue[0]
+                r_remaining = resting.remaining
+                if remaining < r_remaining:
+                    fill_qty = remaining
+                else:
+                    fill_qty = r_remaining
+                fills.append(_FastFill(
+                    resting.order_id, taker_id, resting_price, fill_qty, now,
+                ))
+                remaining -= fill_qty
+                resting.remaining -= fill_qty
+                if resting.remaining <= 0:
+                    queue.popleft()
+                    orders_map.pop(resting.order_id, None)
+                    if not queue:
+                        del side_book[key]
         order.remaining = remaining
         if fills:
             self._last_trade_price = fills[-1].price
