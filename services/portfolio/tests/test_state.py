@@ -77,6 +77,15 @@ def test_sell_full_close_zeros_quantity():
     assert result.realized_pnl_delta == Decimal("50")
 
 
+def test_full_close_resets_avg_entry_price():
+    pos = _empty_position()
+    after_buy = apply_fill(pos, OrderSide.BUY, Decimal("5"), Decimal("100")).new_position
+    closed = apply_fill(after_buy, OrderSide.SELL, Decimal("5"), Decimal("110")).new_position
+    assert closed.avg_entry_price == Decimal("0")
+    reopened = apply_fill(closed, OrderSide.BUY, Decimal("2"), Decimal("250")).new_position
+    assert reopened.avg_entry_price == Decimal("250")
+
+
 def test_sell_with_fee_reduces_realized_pnl():
     pos = _empty_position()
     after_buy = apply_fill(pos, OrderSide.BUY, Decimal("1"), Decimal("100")).new_position
