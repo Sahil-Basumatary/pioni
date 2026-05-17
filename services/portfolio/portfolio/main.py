@@ -13,6 +13,7 @@ from common import (
 )
 import portfolio.settings  # noqa: F401 — triggers dotenv load before anything reads env
 from portfolio.consumer import TradeConsumer
+from portfolio.routes import router as portfolio_router
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -54,6 +55,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Pioni Portfolio Service", version="0.1.0", lifespan=lifespan)
 
 app.middleware("http")(attach_request_id)
+app.include_router(portfolio_router)
 
 @app.get("/health")
 async def health():
