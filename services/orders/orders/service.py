@@ -17,10 +17,11 @@ from common import (
     Order,
     Trade,
     Portfolio,
-    Position,
     OrderSide,
     OrderType,
     OrderStatus,
+    estimate_required_cash,
+    held_quantity,
 )
 from orders.book_types import BookOrder, BookSnapshot, Fill, _FastResult
 from orders.engine import MatchingEngine
@@ -187,50 +188,30 @@ class OrderService:
         session: AsyncSession,
     ) -> None:
         if req.side == OrderSide.BUY:
-            required = self._estimate_required_cash(req)
+            engine = self._engines.get(req.symbol)
+            best_ask = engine.book.best_ask if engine else None
+            required = estimate_required_cash(
+                side=req.side,
+                order_type=req.order_type,
+                quantity=req.quantity,
+                price=req.price,
+                stop_price=req.stop_price,
+                best_ask=best_ask,
+            )
             if required is not None and required > portfolio.cash_balance:
                 raise InsufficientBuyingPowerError(
                     required=required, available=portfolio.cash_balance,
                 )
             return
-        held = await self._held_quantity(session, req.portfolio_id, req.symbol)
+        held = await held_quantity(
+            session, req.portfolio_id, req.symbol, for_update=True,
+        )
         if req.quantity > held:
             raise InsufficientPositionError(
                 symbol=req.symbol,
                 required=req.quantity,
                 available=held,
             )
-
-    def _estimate_required_cash(
-        self, req: SubmitOrderRequest,
-    ) -> Decimal | None:
-        if req.order_type == OrderType.LIMIT:
-            return req.quantity * (req.price or Decimal("0"))
-        if req.order_type == OrderType.STOP_LOSS:
-            return req.quantity * (req.stop_price or Decimal("0"))
-        # MARKET: estimate from current best ask. If the book is empty the engine will reject
-        # for NO_LIQUIDITY anyway, so we let it through.
-        engine = self._engines.get(req.symbol)
-        if engine is None:
-            return None
-        best_ask = engine.book.best_ask
-        if best_ask is None:
-            return None
-        return req.quantity * best_ask
-
-    async def _held_quantity(
-        self, session: AsyncSession, portfolio_id: uuid.UUID, symbol: str,
-    ) -> Decimal:
-        stmt = (
-            select(Position)
-            .where(
-                Position.portfolio_id == portfolio_id,
-                Position.symbol == symbol,
-            )
-            .with_for_update()
-        )
-        row = (await session.execute(stmt)).scalar_one_or_none()
-        return row.quantity if row else Decimal("0")
 
     async def _process_fills(
         self,

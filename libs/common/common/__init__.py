@@ -40,6 +40,7 @@ from common.database import (
     Trade,
     Position,
 )
+from common.trading import estimate_required_cash, held_quantity
 
 __all__ = [
     "setup_logging",
@@ -78,4 +79,6 @@ __all__ = [
     "Order",
     "Trade",
     "Position",
+    "estimate_required_cash",
+    "held_quantity",
 ]
