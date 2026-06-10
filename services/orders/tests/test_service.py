@@ -35,9 +35,10 @@ async def test_submit_limit_rests_on_empty_book(
 
 
 async def test_submit_market_fills_against_resting(
-    order_service, mock_session, active_portfolio, portfolio_id,
+    order_service, mock_session, active_portfolio, portfolio_id, position_with_qty,
 ):
     mock_session.get.return_value = active_portfolio
+    mock_session.execute.return_value = position_with_qty(qty="100")
     await order_service.submit_order(
         _limit_req(portfolio_id, OrderSide.SELL, price="100.00", qty="5"),
         mock_session,

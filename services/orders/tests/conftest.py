@@ -5,6 +5,7 @@ os.environ.setdefault("REDIS_URL", "redis://localhost:6379")
 
 import uuid
 from datetime import datetime, timezone
+from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 import pytest
 from orders.service import OrderService
@@ -51,4 +52,16 @@ def active_portfolio(portfolio_id):
     p = MagicMock()
     p.id = portfolio_id
     p.is_active = True
+    p.cash_balance = Decimal("100000")
     return p
+
+
+@pytest.fixture
+def position_with_qty():
+    def _make(qty: str = "100"):
+        result = MagicMock()
+        position = MagicMock()
+        position.quantity = Decimal(qty)
+        result.scalar_one_or_none.return_value = position
+        return result
+    return _make

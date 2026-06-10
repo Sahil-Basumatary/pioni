@@ -17,6 +17,7 @@ from common import (
     Order,
     Trade,
     Portfolio,
+    Position,
     OrderSide,
     OrderType,
     OrderStatus,
@@ -68,6 +69,22 @@ class OrderNotCancellableError(OrderError):
         )
 
 
+class InsufficientBuyingPowerError(OrderError):
+    def __init__(self, required: Decimal, available: Decimal):
+        super().__init__(
+            f"insufficient buying power: required {required}, available {available}",
+            code="INSUFFICIENT_BUYING_POWER",
+        )
+
+
+class InsufficientPositionError(OrderError):
+    def __init__(self, symbol: str, required: Decimal, available: Decimal):
+        super().__init__(
+            f"insufficient {symbol} position: required {required}, available {available}",
+            code="INSUFFICIENT_POSITION",
+        )
+
+
 class OrderService:
     def __init__(
         self,
@@ -93,9 +110,15 @@ class OrderService:
     async def submit_order(
         self, req: SubmitOrderRequest, session: AsyncSession,
     ) -> OrderResponse:
-        portfolio = await session.get(Portfolio, req.portfolio_id)
+        # Portfolio row is locked for the duration of this request to prevent two concurrent
+        # BUYs (or two concurrent SELLs that share a position) from both passing the
+        # availability check against the same balance/quantity.
+        portfolio = await session.get(
+            Portfolio, req.portfolio_id, with_for_update=True,
+        )
         if not portfolio or not portfolio.is_active:
             raise PortfolioNotFoundError(req.portfolio_id)
+        await self._enforce_availability(req, portfolio, session)
         order_id = uuid.uuid4()
         now = datetime.now(timezone.utc)
         db_order = Order(
@@ -156,6 +179,58 @@ class OrderService:
             )
         )
         return OrderResponse.model_validate(db_order)
+
+    async def _enforce_availability(
+        self,
+        req: SubmitOrderRequest,
+        portfolio: Portfolio,
+        session: AsyncSession,
+    ) -> None:
+        if req.side == OrderSide.BUY:
+            required = self._estimate_required_cash(req)
+            if required is not None and required > portfolio.cash_balance:
+                raise InsufficientBuyingPowerError(
+                    required=required, available=portfolio.cash_balance,
+                )
+            return
+        held = await self._held_quantity(session, req.portfolio_id, req.symbol)
+        if req.quantity > held:
+            raise InsufficientPositionError(
+                symbol=req.symbol,
+                required=req.quantity,
+                available=held,
+            )
+
+    def _estimate_required_cash(
+        self, req: SubmitOrderRequest,
+    ) -> Decimal | None:
+        if req.order_type == OrderType.LIMIT:
+            return req.quantity * (req.price or Decimal("0"))
+        if req.order_type == OrderType.STOP_LOSS:
+            return req.quantity * (req.stop_price or Decimal("0"))
+        # MARKET: estimate from current best ask. If the book is empty the engine will reject
+        # for NO_LIQUIDITY anyway, so we let it through.
+        engine = self._engines.get(req.symbol)
+        if engine is None:
+            return None
+        best_ask = engine.book.best_ask
+        if best_ask is None:
+            return None
+        return req.quantity * best_ask
+
+    async def _held_quantity(
+        self, session: AsyncSession, portfolio_id: uuid.UUID, symbol: str,
+    ) -> Decimal:
+        stmt = (
+            select(Position)
+            .where(
+                Position.portfolio_id == portfolio_id,
+                Position.symbol == symbol,
+            )
+            .with_for_update()
+        )
+        row = (await session.execute(stmt)).scalar_one_or_none()
+        return row.quantity if row else Decimal("0")
 
     async def _process_fills(
         self,
