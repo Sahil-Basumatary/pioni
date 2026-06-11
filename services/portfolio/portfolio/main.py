@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from contextlib import asynccontextmanager
+import redis.asyncio as aioredis
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
@@ -9,11 +10,14 @@ from common import (
     attach_request_id,
     get_session_factory,
     dispose_engine,
+    MarketSubscriber,
     RabbitMQManager,
 )
 import portfolio.settings  # noqa: F401 — triggers dotenv load before anything reads env
 from portfolio.consumer import TradeConsumer
+from portfolio.price_cache import PriceCache
 from portfolio.routes import router as portfolio_router
+from portfolio.settings import redis_url
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -31,17 +35,49 @@ async def _run_consumer(rmq: RabbitMQManager, consumer: TradeConsumer) -> None:
         logger.exception("trade consumer failed to start")
 
 
+async def _start_price_subscriber(app: FastAPI, cache: PriceCache) -> None:
+    url = redis_url()
+    if not url:
+        logger.info("redis not configured, price cache will return None for all symbols")
+        return
+    try:
+        redis = aioredis.from_url(url, decode_responses=True)
+        await redis.ping()
+        subscriber = MarketSubscriber(redis=redis, on_trade=cache.on_trade)
+        await subscriber.start()
+        app.state.price_redis = redis
+        app.state.price_subscriber = subscriber
+        logger.info("price cache subscriber started")
+    except Exception:
+        logger.exception("failed to start price subscriber")
+
+
+async def _stop_price_subscriber(app: FastAPI) -> None:
+    sub = getattr(app.state, "price_subscriber", None)
+    if sub:
+        await sub.stop()
+    redis = getattr(app.state, "price_redis", None)
+    if redis:
+        await redis.aclose()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     factory = get_session_factory()
     rmq = RabbitMQManager()
     consumer = TradeConsumer(rmq, factory)
     consumer_task = asyncio.create_task(_run_consumer(rmq, consumer))
+    # Cache is always created so route handlers can call .get() unconditionally —
+    # subscriber is best-effort and only starts if Redis is reachable.
+    price_cache = PriceCache()
+    app.state.price_cache = price_cache
+    await _start_price_subscriber(app, price_cache)
     app.state.rmq = rmq
     app.state.consumer = consumer
     app.state.consumer_task = consumer_task
     logger.info("portfolio service started")
     yield
+    await _stop_price_subscriber(app)
     consumer_task.cancel()
     try:
         await consumer_task
