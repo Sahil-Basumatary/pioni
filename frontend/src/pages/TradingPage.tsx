@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import CandlestickChart, {
   type CandlestickChartHandle,
-  type Interval,
 } from "../components/trading/CandlestickChart";
 import PriceTicker from "../components/trading/PriceTicker";
 import SymbolSelector from "../components/trading/SymbolSelector";
@@ -9,10 +8,14 @@ import {
   useMarketWebSocket,
   type ConnectionStatus,
 } from "../hooks/useMarketWebSocket";
+import { useAppDispatch, useAppSelector } from "../app/hooks";
+import {
+  intervalChanged,
+  selectInterval,
+  selectSymbol,
+  symbolSelected,
+} from "../features/instrument/instrumentSlice";
 import type { Kline, Trade } from "../types/market";
-
-const DEFAULT_SYMBOL = "BTCUSDT";
-const DEFAULT_INTERVAL: Interval = "1m";
 
 const STATUS_COLORS: Record<ConnectionStatus, string> = {
   connected: "bg-emerald-500",
@@ -26,8 +29,9 @@ const STATUS_LABELS: Record<ConnectionStatus, string> = {
 };
 
 export default function TradingPage() {
-  const [symbol, setSymbol] = useState(DEFAULT_SYMBOL);
-  const [interval, setInterval] = useState<Interval>(DEFAULT_INTERVAL);
+  const dispatch = useAppDispatch();
+  const symbol = useAppSelector(selectSymbol);
+  const interval = useAppSelector(selectInterval);
   const [latestTrade, setLatestTrade] = useState<Trade | null>(null);
   const chartRef = useRef<CandlestickChartHandle>(null);
   const prevSymbolRef = useRef<string | null>(null);
@@ -90,7 +94,10 @@ export default function TradingPage() {
     <div className="flex flex-col gap-4 h-[calc(100vh-7.5rem)]">
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <SymbolSelector selected={symbol} onSelect={setSymbol} />
+          <SymbolSelector
+            selected={symbol}
+            onSelect={(next) => dispatch(symbolSelected(next))}
+          />
           <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
             <span className={`inline-block h-2 w-2 rounded-full ${STATUS_COLORS[status]}`} />
             {STATUS_LABELS[status]}
@@ -103,7 +110,7 @@ export default function TradingPage() {
           ref={chartRef}
           symbol={symbol}
           interval={interval}
-          onIntervalChange={setInterval}
+          onIntervalChange={(next) => dispatch(intervalChanged(next))}
         />
       </div>
     </div>
