@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import CandlestickChart, {
   type CandlestickChartHandle,
 } from "../components/trading/CandlestickChart";
@@ -15,6 +15,11 @@ import {
   selectSymbol,
   symbolSelected,
 } from "../features/instrument/instrumentSlice";
+import {
+  selectMarketStatus,
+  statusChanged,
+  tradeReceived,
+} from "../features/market/marketSlice";
 import type { Kline, Trade } from "../types/market";
 
 const STATUS_COLORS: Record<ConnectionStatus, string> = {
@@ -32,7 +37,7 @@ export default function TradingPage() {
   const dispatch = useAppDispatch();
   const symbol = useAppSelector(selectSymbol);
   const interval = useAppSelector(selectInterval);
-  const [latestTrade, setLatestTrade] = useState<Trade | null>(null);
+  const status = useAppSelector(selectMarketStatus);
   const chartRef = useRef<CandlestickChartHandle>(null);
   const prevSymbolRef = useRef<string | null>(null);
   const tradeBufferRef = useRef<Trade | null>(null);
@@ -46,33 +51,32 @@ export default function TradingPage() {
     [interval],
   );
 
+  // HFTs are coalesced to one dispatch per frame to keep the
+  // store from thrashing React subscribers on every tick.
   const handleTrade = useCallback(
     (trade: Trade) => {
-      if (trade.symbol !== symbol) return;
       tradeBufferRef.current = trade;
       if (!rafIdRef.current) {
         rafIdRef.current = requestAnimationFrame(() => {
           rafIdRef.current = 0;
-          setLatestTrade(tradeBufferRef.current);
+          const buffered = tradeBufferRef.current;
+          if (buffered) dispatch(tradeReceived(buffered));
         });
       }
     },
-    [symbol],
+    [dispatch],
   );
 
-  const { status, subscribe, unsubscribe } = useMarketWebSocket({
+  const handleStatusChange = useCallback(
+    (next: ConnectionStatus) => dispatch(statusChanged(next)),
+    [dispatch],
+  );
+
+  const { subscribe, unsubscribe } = useMarketWebSocket({
     onKline: handleKline,
     onTrade: handleTrade,
+    onStatusChange: handleStatusChange,
   });
-
-  useEffect(() => {
-    setLatestTrade(null);
-    tradeBufferRef.current = null;
-    if (rafIdRef.current) {
-      cancelAnimationFrame(rafIdRef.current);
-      rafIdRef.current = 0;
-    }
-  }, [symbol]);
 
   useEffect(() => {
     return () => {
@@ -103,7 +107,7 @@ export default function TradingPage() {
             {STATUS_LABELS[status]}
           </div>
         </div>
-        <PriceTicker symbol={symbol} trade={latestTrade} />
+        <PriceTicker symbol={symbol} />
       </div>
       <div className="card-premium flex-1 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] backdrop-blur-xl p-4">
         <CandlestickChart

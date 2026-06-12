@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import type { Trade, TickerSnapshot } from "../../types/market";
+import { useAppSelector } from "../../app/hooks";
+import { selectLatestTrade } from "../../features/market/marketSlice";
+import type { TickerSnapshot } from "../../types/market";
 
 const DEFAULT_GATEWAY_URL = "http://localhost:8000";
 const SNAPSHOT_REFRESH_MS = 30_000;
@@ -7,7 +9,6 @@ const FLASH_DURATION_MS = 500;
 
 interface PriceTickerProps {
   symbol: string;
-  trade: Trade | null;
 }
 
 function priceDecimals(price: number): number {
@@ -50,7 +51,8 @@ async function fetchSnapshot(symbol: string): Promise<TickerSnapshot> {
   return res.json();
 }
 
-export default function PriceTicker({ symbol, trade }: PriceTickerProps) {
+export default function PriceTicker({ symbol }: PriceTickerProps) {
+  const trade = useAppSelector(selectLatestTrade(symbol));
   const [snapshot, setSnapshot] = useState<TickerSnapshot | null>(null);
   const [flashDir, setFlashDir] = useState<"up" | "down" | "">("");
   const prevPriceRef = useRef<number | null>(null);
