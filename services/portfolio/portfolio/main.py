@@ -35,28 +35,43 @@ async def _run_consumer(rmq: RabbitMQManager, consumer: TradeConsumer) -> None:
         logger.exception("trade consumer failed to start")
 
 
-async def _start_price_subscriber(app: FastAPI, cache: PriceCache) -> None:
+async def _init_redis(app: FastAPI) -> aioredis.Redis | None:
+    # Single Redis client shared by the price subscriber (uses .pubsub() for sub-connections)
+    # and by the trade consumer for publishing portfolio update events. Centralizing the
+    # client means one connection pool, one lifecycle to manage on shutdown.
     url = redis_url()
     if not url:
-        logger.info("redis not configured, price cache will return None for all symbols")
-        return
+        logger.info("redis not configured, pricing and portfolio updates disabled")
+        return None
     try:
         redis = aioredis.from_url(url, decode_responses=True)
         await redis.ping()
+        app.state.redis = redis
+        return redis
+    except Exception:
+        logger.exception("failed to connect to redis")
+        return None
+
+
+async def _start_price_subscriber(
+    app: FastAPI, cache: PriceCache, redis: aioredis.Redis | None,
+) -> None:
+    if redis is None:
+        return
+    try:
         subscriber = MarketSubscriber(redis=redis, on_trade=cache.on_trade)
         await subscriber.start()
-        app.state.price_redis = redis
         app.state.price_subscriber = subscriber
         logger.info("price cache subscriber started")
     except Exception:
         logger.exception("failed to start price subscriber")
 
 
-async def _stop_price_subscriber(app: FastAPI) -> None:
+async def _shutdown_redis(app: FastAPI) -> None:
     sub = getattr(app.state, "price_subscriber", None)
     if sub:
         await sub.stop()
-    redis = getattr(app.state, "price_redis", None)
+    redis = getattr(app.state, "redis", None)
     if redis:
         await redis.aclose()
 
@@ -64,20 +79,21 @@ async def _stop_price_subscriber(app: FastAPI) -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     factory = get_session_factory()
+    redis = await _init_redis(app)
     rmq = RabbitMQManager()
-    consumer = TradeConsumer(rmq, factory)
+    consumer = TradeConsumer(rmq, factory, redis=redis)
     consumer_task = asyncio.create_task(_run_consumer(rmq, consumer))
     # Cache is always created so route handlers can call .get() unconditionally —
     # subscriber is best-effort and only starts if Redis is reachable.
     price_cache = PriceCache()
     app.state.price_cache = price_cache
-    await _start_price_subscriber(app, price_cache)
+    await _start_price_subscriber(app, price_cache, redis)
     app.state.rmq = rmq
     app.state.consumer = consumer
     app.state.consumer_task = consumer_task
     logger.info("portfolio service started")
     yield
-    await _stop_price_subscriber(app)
+    await _shutdown_redis(app)
     consumer_task.cancel()
     try:
         await consumer_task
