@@ -1,7 +1,7 @@
 from __future__ import annotations
 import uuid
 from decimal import Decimal
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from common import (
@@ -10,12 +10,18 @@ from common import (
     Position as PositionORM,
     Trade as TradeORM,
 )
+from portfolio.price_cache import PriceCache
 from portfolio.repository import PortfolioRepository
 from portfolio.schemas import (
     PortfolioResponse,
     PortfolioSummaryResponse,
     PositionResponse,
     TradeResponse,
+)
+from portfolio.valuation import (
+    PositionValuation,
+    total_unrealized_pnl,
+    value_position,
 )
 
 router = APIRouter(tags=["portfolios"])
@@ -27,12 +33,31 @@ def get_repository(
     return PortfolioRepository(session)
 
 
+def get_price_cache(request: Request) -> PriceCache:
+    # Lifespan attaches a cache; tests that hit the router without lifespan get a fresh
+    # empty one which makes /summary degrade gracefully to cost-basis valuations.
+    cache = getattr(request.app.state, "price_cache", None)
+    return cache if cache is not None else PriceCache()
+
+
 def _not_found(portfolio_id: uuid.UUID) -> HTTPException:
     return HTTPException(
         status_code=404,
         detail={
             "error": "portfolio_not_found",
             "message": f"portfolio {portfolio_id} not found",
+        },
+    )
+
+
+def _position_with_valuation(
+    row: PositionORM, valuation: PositionValuation,
+) -> PositionResponse:
+    base = PositionResponse.model_validate(row)
+    return base.model_copy(
+        update={
+            "market_price": valuation.market_price,
+            "unrealized_pnl": valuation.unrealized_pnl,
         },
     )
 
@@ -56,13 +81,24 @@ async def list_positions(
     portfolio_id: uuid.UUID,
     open_only: bool = Query(False),
     session: AsyncSession = Depends(get_db),
+    price_cache: PriceCache = Depends(get_price_cache),
 ) -> list[PositionResponse]:
     stmt = select(PositionORM).where(PositionORM.portfolio_id == portfolio_id)
     if open_only:
         stmt = stmt.where(PositionORM.quantity > 0)
     stmt = stmt.order_by(PositionORM.symbol)
     rows = (await session.execute(stmt)).scalars().all()
-    return [PositionResponse.model_validate(r) for r in rows]
+    return [
+        _position_with_valuation(
+            row,
+            value_position(
+                quantity=row.quantity,
+                avg_entry_price=row.avg_entry_price,
+                market_price=price_cache.get(row.symbol),
+            ),
+        )
+        for row in rows
+    ]
 
 
 @router.get(
@@ -91,6 +127,7 @@ async def list_trades(
 async def get_summary(
     portfolio_id: uuid.UUID,
     session: AsyncSession = Depends(get_db),
+    price_cache: PriceCache = Depends(get_price_cache),
 ) -> PortfolioSummaryResponse:
     portfolio = await session.get(PortfolioORM, portfolio_id)
     if portfolio is None:
@@ -101,18 +138,26 @@ async def get_summary(
         .order_by(PositionORM.symbol)
     )
     positions = (await session.execute(positions_stmt)).scalars().all()
-    # Cost-basis valuation: cash plus capital tied up in positions valued at entry price.
-    # Market-price valuation and unrealized P&L land once the price-cache integration is in.
+    valuations = [
+        value_position(
+            quantity=p.quantity,
+            avg_entry_price=p.avg_entry_price,
+            market_price=price_cache.get(p.symbol),
+        )
+        for p in positions
+    ]
     invested = sum(
-        (p.quantity * p.avg_entry_price for p in positions), start=Decimal(0),
+        (v.market_value for v in valuations), start=Decimal(0),
     )
     total_realized = sum(
         (p.realized_pnl for p in positions), start=Decimal(0),
     )
     return PortfolioSummaryResponse(
         portfolio=PortfolioResponse.model_validate(portfolio),
-        positions=[PositionResponse.model_validate(p) for p in positions],
+        positions=[
+            _position_with_valuation(p, v) for p, v in zip(positions, valuations)
+        ],
         total_value=portfolio.cash_balance + invested,
         total_realized_pnl=total_realized,
-        total_unrealized_pnl=None,
+        total_unrealized_pnl=total_unrealized_pnl(valuations),
     )
