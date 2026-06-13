@@ -10,13 +10,18 @@ import httpx
 import redis.asyncio as aioredis
 from common import (
     setup_logging, attach_request_id, init_redis_pool,
-    close_redis_pool, MarketSubscriber, OrderSubscriber,
+    close_redis_pool, MarketSubscriber, OrderSubscriber, PortfolioSubscriber,
 )
 from common import create_rate_limit_middleware
 from gateway.routes import router, close_http_client
 from gateway.market_routes import market_router, close_market_client
 from gateway.order_routes import order_router, orderbook_router, close_order_client
-from gateway.ws import ws_router, get_manager, get_order_manager
+from gateway.ws import (
+    ws_router,
+    get_manager,
+    get_order_manager,
+    get_portfolio_manager,
+)
 from gateway.settings import (
     cors_origins, is_mock_mode, prewarm_enabled,
     prewarm_tickers, redis_url,
@@ -28,10 +33,11 @@ logger = logging.getLogger(__name__)
 _pubsub_redis: aioredis.Redis | None = None
 _subscriber: MarketSubscriber | None = None
 _order_subscriber: OrderSubscriber | None = None
+_portfolio_subscriber: PortfolioSubscriber | None = None
 
 
 async def _init_pubsub() -> None:
-    global _pubsub_redis, _subscriber, _order_subscriber
+    global _pubsub_redis, _subscriber, _order_subscriber, _portfolio_subscriber
     url = redis_url()
     if not url:
         logger.info("redis not configured, market data streaming disabled")
@@ -54,6 +60,13 @@ async def _init_pubsub() -> None:
         )
         await _order_subscriber.start()
         logger.info("order status pub/sub subscriber started")
+        portfolio_mgr = get_portfolio_manager()
+        _portfolio_subscriber = PortfolioSubscriber(
+            redis=_pubsub_redis,
+            on_portfolio_update=portfolio_mgr.broadcast_portfolio_update,
+        )
+        await _portfolio_subscriber.start()
+        logger.info("portfolio update pub/sub subscriber started")
     except Exception as e:
         logger.warning(
             "failed to start pub/sub subscribers",
@@ -62,10 +75,14 @@ async def _init_pubsub() -> None:
         _pubsub_redis = None
         _subscriber = None
         _order_subscriber = None
+        _portfolio_subscriber = None
 
 
 async def _close_pubsub() -> None:
-    global _pubsub_redis, _subscriber, _order_subscriber
+    global _pubsub_redis, _subscriber, _order_subscriber, _portfolio_subscriber
+    if _portfolio_subscriber:
+        await _portfolio_subscriber.stop()
+        _portfolio_subscriber = None
     if _order_subscriber:
         await _order_subscriber.stop()
         _order_subscriber = None
