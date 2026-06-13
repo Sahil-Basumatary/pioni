@@ -1,20 +1,28 @@
-import { configureStore } from "@reduxjs/toolkit";
+import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
 import instrumentReducer from "../features/instrument/instrumentSlice";
 import marketReducer from "../features/market/marketSlice";
 import { marketApi } from "../features/market/marketApi";
 
-export const store = configureStore({
-  reducer: {
-    instrument: instrumentReducer,
-    market: marketReducer,
-    [marketApi.reducerPath]: marketApi.reducer,
-  },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(marketApi.middleware),
+const rootReducer = combineReducers({
+  instrument: instrumentReducer,
+  market: marketReducer,
+  [marketApi.reducerPath]: marketApi.reducer,
 });
+
+export function setupStore(preloadedState?: Partial<RootState>) {
+  return configureStore({
+    reducer: rootReducer,
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware().concat(marketApi.middleware),
+    preloadedState,
+  });
+}
+
+export const store = setupStore();
 
 setupListeners(store.dispatch);
 
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
+export type RootState = ReturnType<typeof rootReducer>;
+export type AppStore = ReturnType<typeof setupStore>;
+export type AppDispatch = AppStore["dispatch"];
