@@ -1,0 +1,35 @@
+{
+  "BTCUSDT": {
+    "symbol": "BTCUSDT",
+    "exchange": "binance",
+    "price": "50000",
+    "change_24h": "1200",
+    "change_pct_24h": 2.46,
+    "high_24h": "51000",
+    "low_24h": "48500",
+    "volume_24h": "1250000000",
+    "updated_at": 1700000000
+  },
+  "ETHUSDT": {
+    "symbol": "ETHUSDT",
+    "exchange": "binance",
+    "price": "3200",
+    "change_24h": "-45",
+    "change_pct_24h": -1.39,
+    "high_24h": "3300",
+    "low_24h": "3150",
+    "volume_24h": "780000000",
+    "updated_at": 1700000000
+  },
+  "SOLUSDT": {
+    "symbol": "SOLUSDT",
+    "exchange": "binance",
+    "price": "145.32",
+    "change_24h": "5.1",
+    "change_pct_24h": 3.64,
+    "high_24h": "150",
+    "low_24h": "138",
+    "volume_24h": "320000000",
+    "updated_at": 1700000000
+  }
+}
