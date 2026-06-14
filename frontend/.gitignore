@@ -13,6 +13,14 @@ dist-ssr
 *.local
 *.tsbuildinfo
 
+# Test coverage output
+coverage
+
+# Cypress artifacts
+cypress/videos
+cypress/screenshots
+cypress/downloads
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
