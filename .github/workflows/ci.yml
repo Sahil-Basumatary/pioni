@@ -76,6 +76,18 @@ jobs:
       run: npm ci
     - name: Lint frontend
       run: npm run lint
+    - name: Typecheck frontend
+      run: npm run typecheck
+    - name: Run frontend unit tests with coverage
+      run: npm run coverage
+    - name: Upload frontend coverage report
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-coverage
+        path: frontend/coverage
+        retention-days: 7
+    - name: Run stubbed Cypress E2E suite
+      run: npm run e2e
     - name: Build frontend
       env:
         VITE_API_BASE_URL: https://api.placeholder.com

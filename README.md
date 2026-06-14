@@ -40,6 +40,13 @@ A live trading intelligence platform that transforms social sentiment and news i
 | **Frontend**   | [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/) [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/) [![Tailwind](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/) [![Chart.js](https://img.shields.io/badge/Chart.js-FF6384?style=for-the-badge&logo=chartdotjs&logoColor=white)](https://www.chartjs.org/) |
 | **Infrastructure** | [![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/features/actions) [![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/) |
 
+## Quality Gates
+
+- **Frontend unit/component tests:** 10 Vitest tests covering Redux state, RTK Query integration, and the trading symbol selector.
+- **Browser E2E tests:** 3 stubbed Cypress tests for the trading critical path, plus 5 live-stack smoke checks for gateway, market data, orders, and WebSocket connectivity.
+- **CI enforcement:** GitHub Actions runs Python lint/tests, frontend lint/typecheck, coverage with a ratcheting baseline, stubbed Cypress E2E, and the production build.
+- **Coverage baseline:** Frontend coverage currently starts at 6% global lines/statements while the larger legacy pages are backfilled; the threshold prevents regression and is designed to be raised as coverage expands.
+
 ## Technical Highlights
 
 **What I learned and implemented throughout building this:**
