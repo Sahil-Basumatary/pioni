@@ -8,6 +8,7 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    Index,
     Numeric,
     String,
     UniqueConstraint,
@@ -166,3 +167,38 @@ class Position(UUIDMixin, TimestampMixin, Base):
         Numeric(20, 2), nullable=False, default=0,
     )
     portfolio: Mapped[Portfolio] = relationship(back_populates="positions")
+
+
+class PortfolioSnapshot(UUIDMixin, Base):
+    # Append-only time series. Risk metrics (Sharpe, drawdown, VaR) read this directly.
+    # No relationship back to Portfolio: keeps queries explicit by portfolio_id and avoids
+    # accidentally lazy-loading thousands of snapshots when iterating Portfolio.snapshots.
+    # If write volume ever forces it, the (portfolio_id, snapshot_at) composite index makes
+    # this table a clean candidate for TimescaleDB hypertable conversion later.
+    __tablename__ = "portfolio_snapshots"
+    __table_args__ = (
+        Index(
+            "ix_portfolio_snapshots_portfolio_at",
+            "portfolio_id",
+            "snapshot_at",
+        ),
+    )
+    portfolio_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("portfolios.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    snapshot_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    total_value: Mapped[Decimal] = mapped_column(Numeric(20, 2), nullable=False)
+    cash_balance: Mapped[Decimal] = mapped_column(Numeric(20, 2), nullable=False)
+    positions_value: Mapped[Decimal] = mapped_column(Numeric(20, 2), nullable=False)
+    total_realized_pnl: Mapped[Decimal] = mapped_column(
+        Numeric(20, 2), nullable=False,
+    )
+    total_unrealized_pnl: Mapped[Decimal | None] = mapped_column(
+        Numeric(20, 2), nullable=True,
+    )
