@@ -8,7 +8,7 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 export default defineConfig([
   globalIgnores(['dist', 'coverage']),
   {
-    files: ['cypress/**/*.ts', 'cypress.config.ts'],
+    files: ['cypress/**/*.ts', 'cypress.config.ts', 'cypress.smoke.config.ts'],
     languageOptions: {
       globals: {
         ...globals.mocha,

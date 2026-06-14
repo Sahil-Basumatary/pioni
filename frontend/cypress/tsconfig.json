@@ -8,5 +8,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["**/*.ts", "../cypress.config.ts"]
+  "include": ["**/*.ts", "../cypress.config.ts", "../cypress.smoke.config.ts"]
 }
