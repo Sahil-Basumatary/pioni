@@ -15,7 +15,10 @@
     "cy:run": "cypress run",
     "e2e": "start-server-and-test dev http://localhost:5173 cy:run",
     "e2e:smoke": "cypress run --config-file cypress.smoke.config.ts",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:analyze": "ANALYZE=true npm run build",
+    "perf:lh": "npm run build && lhci autorun --collect.staticDistDir=./dist --collect.numberOfRuns=3 --upload.target=temporary-public-storage",
+    "perf:size": "npm run build && node scripts/perf/bundle-size.mjs"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.12.0",
@@ -29,6 +32,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
+    "@lhci/cli": "^0.15.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
@@ -44,11 +48,14 @@
     "globals": "^16.4.0",
     "jsdom": "^29.1.1",
     "postcss": "^8.5.6",
+    "rollup-plugin-visualizer": "^7.0.1",
     "start-server-and-test": "^3.0.11",
     "tailwindcss": "^3.4.18",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^7.1.7",
-    "vitest": "^4.1.8"
+    "vite-plugin-compression2": "^2.5.3",
+    "vitest": "^4.1.8",
+    "web-vitals": "^5.3.0"
   }
 }
