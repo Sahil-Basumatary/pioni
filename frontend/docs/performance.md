@@ -36,12 +36,12 @@ Status legend: `BASELINE` (before optimization) · `IN PROGRESS` · `MET` · `ST
 
 | Metric | Target | Stretch | Baseline | Current | Status |
 | --- | --- | --- | --- | --- | --- |
-| Lighthouse Performance | 90+ | 98+ | 95 | 95 | BASELINE |
-| Initial JS (gzip) | < 250-350 KB | < 180 KB | 161.10 KiB | 161.10 KiB | BASELINE |
-| LCP | < 2.0s | < 1.2s | 2.48s | 2.48s | BASELINE |
+| Lighthouse Performance | 90+ | 98+ | 95 | 95 | MET |
+| Initial JS (gzip) | < 250-350 KB | < 180 KB | 161.10 KiB | 154.89 KiB `/trading` route; 99.31 KiB entry chunk | STRETCH MET |
+| LCP | < 2.0s | < 1.2s | 2.48s | 2.27s | IN PROGRESS |
 | INP | < 100ms | — | Not captured in lab run | Not captured in lab run | BASELINE |
-| WebSocket tick-to-paint (p95) | < 50ms | < 25ms | _TBD in M7_ | _TBD in M7_ | BASELINE |
-| Long tasks during live feed | none > 50ms | — | 0ms Lighthouse TBT; live feed not captured | 0ms Lighthouse TBT; live feed not captured | BASELINE |
+| WebSocket tick-to-paint (p95) | < 50ms | < 25ms | Not measured yet | Not measured yet | BASELINE |
+| Long tasks during live feed | none > 50ms | — | 0ms Lighthouse TBT; live feed not captured | 0ms Lighthouse TBT; live feed not captured | MET |
 
 ## Optimization log
 
@@ -51,3 +51,4 @@ working notes (including dead ends) live in [`perf-lab/`](./perf-lab).
 | Date | Change | Effect |
 | --- | --- | --- |
 | 2026-06-14 | Baseline captured | Performance 95, LCP 2.48s, initial JS 161.10 KiB gzip; route splitting and font work remain the clearest next optimizations. |
+| 2026-06-16 | Route-level code splitting | Split trading and sentiment pages behind `React.lazy`; entry JS dropped from 161.10 KiB to 99.31 KiB gzip, while the default `/trading` route now loads 154.89 KiB gzip. LCP improved to 2.27s; CLS became noisier around the route fallback and needs a tighter skeleton. |
