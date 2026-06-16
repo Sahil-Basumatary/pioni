@@ -121,10 +121,95 @@ def test_calculate_sharpe_ratio_returns_none_for_zero_volatility():
     assert calculate_sharpe_ratio(points) is None
 
 
+def test_calculate_max_drawdown_returns_largest_peak_to_trough_loss():
+    points = [
+        EquityPoint(
+            snapshot_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            total_value=Decimal("100"),
+        ),
+        EquityPoint(
+            snapshot_at=datetime(2026, 1, 2, tzinfo=timezone.utc),
+            total_value=Decimal("150"),
+        ),
+        EquityPoint(
+            snapshot_at=datetime(2026, 1, 3, tzinfo=timezone.utc),
+            total_value=Decimal("120"),
+        ),
+        EquityPoint(
+            snapshot_at=datetime(2026, 1, 4, tzinfo=timezone.utc),
+            total_value=Decimal("180"),
+        ),
+        EquityPoint(
+            snapshot_at=datetime(2026, 1, 5, tzinfo=timezone.utc),
+            total_value=Decimal("90"),
+        ),
+    ]
+    assert calculate_max_drawdown(points) == Decimal("0.5")
+
+
+def test_calculate_max_drawdown_returns_zero_for_monotonic_growth():
+    points = [
+        EquityPoint(
+            snapshot_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            total_value=Decimal("100"),
+        ),
+        EquityPoint(
+            snapshot_at=datetime(2026, 1, 2, tzinfo=timezone.utc),
+            total_value=Decimal("125"),
+        ),
+        EquityPoint(
+            snapshot_at=datetime(2026, 1, 3, tzinfo=timezone.utc),
+            total_value=Decimal("150"),
+        ),
+    ]
+    assert calculate_max_drawdown(points) == Decimal("0")
+
+
+def test_calculate_max_drawdown_sorts_by_snapshot_time():
+    points = [
+        EquityPoint(
+            snapshot_at=datetime(2026, 1, 3, tzinfo=timezone.utc),
+            total_value=Decimal("50"),
+        ),
+        EquityPoint(
+            snapshot_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            total_value=Decimal("100"),
+        ),
+        EquityPoint(
+            snapshot_at=datetime(2026, 1, 2, tzinfo=timezone.utc),
+            total_value=Decimal("200"),
+        ),
+    ]
+    assert calculate_max_drawdown(points) == Decimal("0.75")
+
+
+def test_calculate_max_drawdown_returns_none_for_too_few_points():
+    point = EquityPoint(
+        snapshot_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        total_value=Decimal("100"),
+    )
+    assert calculate_max_drawdown([]) is None
+    assert calculate_max_drawdown([point]) is None
+
+
+def test_calculate_max_drawdown_rejects_non_positive_values():
+    points = [
+        EquityPoint(
+            snapshot_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            total_value=Decimal("100"),
+        ),
+        EquityPoint(
+            snapshot_at=datetime(2026, 1, 2, tzinfo=timezone.utc),
+            total_value=Decimal("0"),
+        ),
+    ]
+    with pytest.raises(ValueError, match="total_value must be positive"):
+        calculate_max_drawdown(points)
+
+
 @pytest.mark.parametrize(
     "fn",
     [
-        calculate_max_drawdown,
         calculate_historical_var_95,
     ],
 )

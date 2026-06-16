@@ -44,7 +44,23 @@ def calculate_sharpe_ratio(points: list[EquityPoint]) -> Decimal | None:
 
 
 def calculate_max_drawdown(points: list[EquityPoint]) -> Decimal | None:
-    raise NotImplementedError("max drawdown implementation pending")
+    ordered = sorted(points, key=lambda p: p.snapshot_at)
+    if len(ordered) < 2:
+        return None
+    peak = ordered[0].total_value
+    if peak <= 0:
+        raise ValueError("total_value must be positive")
+    max_drawdown = Decimal(0)
+    for point in ordered[1:]:
+        if point.total_value <= 0:
+            raise ValueError("total_value must be positive")
+        if point.total_value > peak:
+            peak = point.total_value
+            continue
+        drawdown = (peak - point.total_value) / peak
+        if drawdown > max_drawdown:
+            max_drawdown = drawdown
+    return max_drawdown
 
 
 def calculate_historical_var_95(points: list[EquityPoint]) -> Decimal | None:
