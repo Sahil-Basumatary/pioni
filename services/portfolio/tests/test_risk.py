@@ -7,6 +7,7 @@ from portfolio.risk import (
     RiskMetrics,
     calculate_historical_var_95,
     calculate_max_drawdown,
+    calculate_risk_metrics,
     calculate_returns,
     calculate_sharpe_ratio,
 )
@@ -30,6 +31,16 @@ def test_risk_metrics_allows_missing_metrics():
     assert metrics.sharpe_ratio is None
     assert metrics.max_drawdown is None
     assert metrics.historical_var_95 is None
+
+
+def _points(*values: str) -> list[EquityPoint]:
+    return [
+        EquityPoint(
+            snapshot_at=datetime(2026, 1, idx + 1, tzinfo=timezone.utc),
+            total_value=Decimal(value),
+        )
+        for idx, value in enumerate(values)
+    ]
 
 
 def test_calculate_returns_sorts_by_snapshot_time():
@@ -207,12 +218,42 @@ def test_calculate_max_drawdown_rejects_non_positive_values():
         calculate_max_drawdown(points)
 
 
-@pytest.mark.parametrize(
-    "fn",
-    [
-        calculate_historical_var_95,
-    ],
-)
-def test_metric_functions_are_explicitly_pending(fn):
-    with pytest.raises(NotImplementedError):
-        fn([])
+def test_calculate_historical_var_95_returns_tail_loss():
+    points = _points(
+        "100",
+        "110",
+        "121",
+        "96.8",
+        "101.64",
+        "91.476",
+        "92.39076",
+        "110.868912",
+        "107.54284464",
+        "118.297129104",
+        "106.4674161936",
+    )
+    assert calculate_historical_var_95(points) == Decimal("0.2")
+
+
+def test_calculate_historical_var_95_returns_zero_when_tail_is_positive():
+    points = _points("100", "110", "121", "133.1")
+    assert calculate_historical_var_95(points) == Decimal("0")
+
+
+def test_calculate_historical_var_95_returns_none_for_too_few_points():
+    assert calculate_historical_var_95([]) is None
+    assert calculate_historical_var_95(_points("100")) is None
+
+
+def test_calculate_historical_var_95_rejects_zero_previous_value():
+    points = _points("100", "0", "90")
+    with pytest.raises(ValueError, match="previous total_value must be positive"):
+        calculate_historical_var_95(points)
+
+
+def test_calculate_risk_metrics_returns_all_implemented_metrics():
+    points = _points("100", "110", "99", "118.8")
+    metrics = calculate_risk_metrics(points)
+    assert metrics.sharpe_ratio is not None
+    assert metrics.max_drawdown == Decimal("0.1")
+    assert metrics.historical_var_95 == Decimal("0.1")

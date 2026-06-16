@@ -1,9 +1,10 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
-from decimal import Decimal
+from decimal import ROUND_CEILING, Decimal
 
 TRADING_PERIODS_PER_YEAR = Decimal("365")
+VAR_CONFIDENCE_LEVEL = Decimal("0.95")
 
 
 @dataclass(frozen=True, slots=True)
@@ -64,7 +65,17 @@ def calculate_max_drawdown(points: list[EquityPoint]) -> Decimal | None:
 
 
 def calculate_historical_var_95(points: list[EquityPoint]) -> Decimal | None:
-    raise NotImplementedError("historical VaR implementation pending")
+    returns = sorted(calculate_returns(points))
+    if not returns:
+        return None
+    percentile = Decimal(1) - VAR_CONFIDENCE_LEVEL
+    rank = int(
+        (Decimal(len(returns)) * percentile).to_integral_value(
+            rounding=ROUND_CEILING,
+        ),
+    )
+    cutoff = returns[max(rank - 1, 0)]
+    return max(Decimal(0), -cutoff)
 
 
 def calculate_risk_metrics(points: list[EquityPoint]) -> RiskMetrics:
