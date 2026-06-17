@@ -106,7 +106,7 @@ const CandlestickChart = forwardRef<
       layout: {
         background: { type: ColorType.Solid, color: "transparent" },
         textColor: "var(--text-muted)",
-        fontFamily: "'Inter', sans-serif",
+        fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
         fontSize: 11,
       },
       grid: {
