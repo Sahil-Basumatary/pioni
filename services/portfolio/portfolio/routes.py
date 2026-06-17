@@ -1,5 +1,6 @@
 from __future__ import annotations
 import uuid
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select
@@ -7,12 +8,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from common import (
     get_db,
     Portfolio as PortfolioORM,
+    PortfolioSnapshot as PortfolioSnapshotORM,
     Position as PositionORM,
     Trade as TradeORM,
 )
+from portfolio.charts import SnapshotValue, build_daily_pnl_chart
 from portfolio.price_cache import PriceCache
 from portfolio.repository import PortfolioRepository
 from portfolio.schemas import (
+    DailyPnlPointResponse,
     PortfolioResponse,
     PortfolioSummaryResponse,
     PositionResponse,
@@ -161,3 +165,43 @@ async def get_summary(
         total_realized_pnl=total_realized,
         total_unrealized_pnl=total_unrealized_pnl(valuations),
     )
+
+
+@router.get(
+    "/portfolios/{portfolio_id}/pnl-chart",
+    response_model=list[DailyPnlPointResponse],
+)
+async def get_pnl_chart(
+    portfolio_id: uuid.UUID,
+    days: int = Query(30, ge=1, le=365),
+    session: AsyncSession = Depends(get_db),
+) -> list[DailyPnlPointResponse]:
+    portfolio = await session.get(PortfolioORM, portfolio_id)
+    if portfolio is None:
+        raise _not_found(portfolio_id)
+    since = datetime.now(timezone.utc) - timedelta(days=days)
+    stmt = (
+        select(PortfolioSnapshotORM)
+        .where(
+            PortfolioSnapshotORM.portfolio_id == portfolio_id,
+            PortfolioSnapshotORM.snapshot_at >= since,
+        )
+        .order_by(PortfolioSnapshotORM.snapshot_at)
+    )
+    snapshots = (await session.execute(stmt)).scalars().all()
+    points = build_daily_pnl_chart([
+        SnapshotValue(
+            snapshot_at=s.snapshot_at,
+            total_value=s.total_value,
+        )
+        for s in snapshots
+    ])
+    return [
+        DailyPnlPointResponse(
+            date=p.date,
+            total_value=p.total_value,
+            daily_pnl=p.daily_pnl,
+            cumulative_pnl=p.cumulative_pnl,
+        )
+        for p in points
+    ]

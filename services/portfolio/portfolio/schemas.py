@@ -1,6 +1,6 @@
 from __future__ import annotations
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from pydantic import BaseModel, ConfigDict
 from common import OrderSide
@@ -52,3 +52,11 @@ class PortfolioSummaryResponse(BaseModel):
     total_value: Decimal
     total_realized_pnl: Decimal
     total_unrealized_pnl: Decimal | None = None
+
+
+class DailyPnlPointResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    date: date
+    total_value: Decimal
+    daily_pnl: Decimal
+    cumulative_pnl: Decimal
