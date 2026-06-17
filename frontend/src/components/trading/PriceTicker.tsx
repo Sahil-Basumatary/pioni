@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useAppSelector } from "../../app/hooks";
 import { selectLatestTrade } from "../../features/market/marketSlice";
 import type { TickerSnapshot } from "../../types/market";
@@ -51,8 +51,9 @@ async function fetchSnapshot(symbol: string): Promise<TickerSnapshot> {
   return res.json();
 }
 
-export default function PriceTicker({ symbol }: PriceTickerProps) {
-  const trade = useAppSelector(selectLatestTrade(symbol));
+function PriceTicker({ symbol }: PriceTickerProps) {
+  const selectTrade = useMemo(() => selectLatestTrade(symbol), [symbol]);
+  const trade = useAppSelector(selectTrade);
   const [snapshot, setSnapshot] = useState<TickerSnapshot | null>(null);
   const [flashDir, setFlashDir] = useState<"up" | "down" | "">("");
   const prevPriceRef = useRef<number | null>(null);
@@ -142,3 +143,5 @@ function Stat({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+export default memo(PriceTicker);

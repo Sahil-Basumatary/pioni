@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import CandlestickChart, {
   type CandlestickChartHandle,
+  type Interval,
 } from "../components/trading/CandlestickChart";
 import PriceTicker from "../components/trading/PriceTicker";
 import SymbolSelector from "../components/trading/SymbolSelector";
@@ -72,6 +73,16 @@ export default function TradingPage() {
     [dispatch],
   );
 
+  const handleSymbolSelect = useCallback(
+    (next: string) => dispatch(symbolSelected(next)),
+    [dispatch],
+  );
+
+  const handleIntervalChange = useCallback(
+    (next: Interval) => dispatch(intervalChanged(next)),
+    [dispatch],
+  );
+
   const { subscribe, unsubscribe } = useMarketWebSocket({
     onKline: handleKline,
     onTrade: handleTrade,
@@ -100,7 +111,7 @@ export default function TradingPage() {
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <SymbolSelector
             selected={symbol}
-            onSelect={(next) => dispatch(symbolSelected(next))}
+            onSelect={handleSymbolSelect}
           />
           <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
             <span className={`inline-block h-2 w-2 rounded-full ${STATUS_COLORS[status]}`} />
@@ -114,7 +125,7 @@ export default function TradingPage() {
           ref={chartRef}
           symbol={symbol}
           interval={interval}
-          onIntervalChange={(next) => dispatch(intervalChanged(next))}
+          onIntervalChange={handleIntervalChange}
         />
       </div>
     </div>

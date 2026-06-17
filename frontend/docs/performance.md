@@ -36,8 +36,8 @@ Status legend: `BASELINE` (before optimization) · `IN PROGRESS` · `MET` · `ST
 
 | Metric | Target | Stretch | Baseline | Current | Status |
 | --- | --- | --- | --- | --- | --- |
-| Lighthouse Performance | 90+ | 98+ | 95 | 97 | MET |
-| Initial JS (gzip) | < 250-350 KB | < 180 KB | 161.10 KiB | 155.07 KiB `/trading` route; 99.46 KiB entry chunk | STRETCH MET |
+| Lighthouse Performance | 90+ | 98+ | 95 | 96 | MET |
+| Initial JS (gzip) | < 250-350 KB | < 180 KB | 161.10 KiB | 155.08 KiB `/trading` route; 99.46 KiB entry chunk | STRETCH MET |
 | LCP | < 2.0s | < 1.2s | 2.48s | 1.97s | MET |
 | INP | < 100ms | — | Not captured in lab run | Not captured in lab run | BASELINE |
 | WebSocket tick-to-paint (p95) | < 50ms | < 25ms | Not measured yet | Not measured yet | BASELINE |
@@ -54,3 +54,4 @@ working notes (including dead ends) live in [`perf-lab/`](./perf-lab).
 | 2026-06-16 | Route-level code splitting | Split trading and sentiment pages behind `React.lazy`; entry JS dropped from 161.10 KiB to 99.31 KiB gzip, while the default `/trading` route now loads 154.89 KiB gzip. LCP improved to 2.27s; CLS became noisier around the route fallback and needs a tighter skeleton. |
 | 2026-06-17 | Vite build tuning | Set the production target to `es2020`, added gzip/brotli assets, and gated the bundle treemap behind `ANALYZE=true`. Manual vendor/chart chunks were tested, but the default route loaded more JavaScript, so the final config keeps Rollup's route chunks. |
 | 2026-06-17 | Font loading | Removed the Google Fonts stylesheet import and kept the UI on a local/system font stack. Lighthouse reported zero font requests, FCP improved to 1.51s, and LCP reached 1.97s. |
+| 2026-06-17 | Runtime render hardening | Memoized hot trading components, stabilized trading route callbacks, and added a dev long-task observer. Lighthouse stayed stable at 0ms TBT, with LCP holding at 1.97s. |

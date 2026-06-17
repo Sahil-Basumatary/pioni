@@ -12,3 +12,13 @@ export async function reportWebVitals(onReport: WebVitalHandler): Promise<void> 
   onFCP(onReport);
   onTTFB(onReport);
 }
+
+export function observeLongTasks(onLongTask: (entry: PerformanceEntry) => void): void {
+  if (typeof PerformanceObserver === "undefined") return;
+  if (!PerformanceObserver.supportedEntryTypes.includes("longtask")) return;
+
+  const observer = new PerformanceObserver((list) => {
+    list.getEntries().forEach(onLongTask);
+  });
+  observer.observe({ type: "longtask", buffered: true });
+}

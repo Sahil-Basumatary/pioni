@@ -16,9 +16,12 @@ createRoot(document.getElementById('root')!).render(
 // DEV-gated so the entire reporting path is dead code in production and gets
 // stripped from the shipped bundle; Lighthouse measures prod independently.
 if (import.meta.env.DEV) {
-  void import('./reportWebVitals').then(({ reportWebVitals }) => {
+  void import('./reportWebVitals').then(({ observeLongTasks, reportWebVitals }) => {
     reportWebVitals((metric) => {
       console.info(`[web-vitals] ${metric.name}: ${Math.round(metric.value)}`, metric)
+    })
+    observeLongTasks((entry) => {
+      console.warn(`[longtask] ${Math.round(entry.duration)}ms`, entry)
     })
   })
 }

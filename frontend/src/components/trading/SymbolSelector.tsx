@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { useGetPricesQuery } from "../../features/market/marketApi";
 
 const PRICE_REFRESH_MS = 30_000;
@@ -25,7 +26,7 @@ function formatCompactPrice(price: number): string {
   return price.toFixed(6);
 }
 
-export default function SymbolSelector({ selected, onSelect }: SymbolSelectorProps) {
+function SymbolSelector({ selected, onSelect }: SymbolSelectorProps) {
   const { data: prices } = useGetPricesQuery(undefined, {
     pollingInterval: PRICE_REFRESH_MS,
   });
@@ -62,3 +63,5 @@ export default function SymbolSelector({ selected, onSelect }: SymbolSelectorPro
     </div>
   );
 }
+
+export default memo(SymbolSelector);
