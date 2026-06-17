@@ -1,9 +1,32 @@
 /// <reference types="vitest/config" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { compression } from 'vite-plugin-compression2'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    compression({
+      algorithms: ['gzip', 'brotliCompress'],
+      threshold: 1024,
+      logLevel: 'silent',
+      skipIfLargerOrEqual: true,
+    }),
+    ...(process.env.ANALYZE === 'true'
+      ? [
+          visualizer({
+            filename: 'dist/stats.html',
+            template: 'treemap',
+            gzipSize: true,
+            brotliSize: true,
+          }),
+        ]
+      : []),
+  ],
+  build: {
+    target: 'es2020',
+  },
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
