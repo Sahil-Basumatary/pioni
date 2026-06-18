@@ -9,4 +9,5 @@ tenacity>=8.2.0
 nltk>=3.9.0
 newsapi-python>=0.2.7
 praw>=7.8.0
+httpx>=0.28.0
 
