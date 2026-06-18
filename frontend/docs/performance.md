@@ -17,6 +17,7 @@ All commands run from `frontend/`.
 | Bundle size (gzip + brotli) | `npm run perf:size` | Builds, then reports per-asset and total compressed transfer size. |
 | Lighthouse (Performance, etc.) | `npm run perf:lh` | Builds, serves `dist/`, runs Lighthouse 3x, uploads a temporary public report. |
 | Bundle composition | `npm run build:analyze` | Builds with the treemap visualizer enabled to inspect what ships and why. |
+| Tick-to-paint latency | `npm run perf:tick-to-paint` | Builds, serves `dist/`, emits synthetic WebSocket trades, and measures visible price update latency. |
 | Live Web Vitals (dev) | `npm run dev` | Logs LCP / INP / CLS / FCP / TTFB to the console as you interact. |
 
 ## Measurement environment
@@ -28,6 +29,7 @@ All commands run from `frontend/`.
 - OS: macOS 15.6.1 (24G90)
 - Node: v22.20.0, npm 11.7.0
 - Browser (Lighthouse): Google Chrome 149.0.7827.104, LHCI 0.15.1
+- Browser (tick-to-paint): Cypress Electron 138, headless
 - Network throttling: Lighthouse default (simulated Slow 4G, 4x CPU)
 
 ## Targets vs achieved
@@ -40,7 +42,7 @@ Status legend: `BASELINE` (before optimization) · `IN PROGRESS` · `MET` · `ST
 | Initial JS (gzip) | < 250-350 KB | < 180 KB | 161.10 KiB | 155.08 KiB `/trading` route; 99.46 KiB entry chunk | STRETCH MET |
 | LCP | < 2.0s | < 1.2s | 2.48s | 1.97s | MET |
 | INP | < 100ms | — | Not captured in lab run | Not captured in lab run | BASELINE |
-| WebSocket tick-to-paint (p95) | < 50ms | < 25ms | Not measured yet | Not measured yet | BASELINE |
+| WebSocket tick-to-paint (p95) | < 50ms | < 25ms | Not measured yet | 17.60ms | STRETCH MET |
 | Long tasks during live feed | none > 50ms | — | 0ms Lighthouse TBT; live feed not captured | 0ms Lighthouse TBT; live feed not captured | MET |
 
 ## Optimization log
@@ -55,3 +57,4 @@ working notes (including dead ends) live in [`perf-lab/`](./perf-lab).
 | 2026-06-17 | Vite build tuning | Set the production target to `es2020`, added gzip/brotli assets, and gated the bundle treemap behind `ANALYZE=true`. Manual vendor/chart chunks were tested, but the default route loaded more JavaScript, so the final config keeps Rollup's route chunks. |
 | 2026-06-17 | Font loading | Removed the Google Fonts stylesheet import and kept the UI on a local/system font stack. Lighthouse reported zero font requests, FCP improved to 1.51s, and LCP reached 1.97s. |
 | 2026-06-17 | Runtime render hardening | Memoized hot trading components, stabilized trading route callbacks, and added a dev long-task observer. Lighthouse stayed stable at 0ms TBT, with LCP holding at 1.97s. |
+| 2026-06-17 | Tick-to-paint benchmark | Added a production-preview Cypress benchmark for synthetic WebSocket trades. The measured p95 from trade emit to visible price paint was 17.60ms across 120 measured ticks. |

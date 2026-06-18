@@ -101,6 +101,7 @@ function PriceTicker({ symbol }: PriceTickerProps) {
     <div className="flex items-center gap-6 flex-wrap">
       <div className="flex items-baseline gap-2.5">
         <span
+          data-testid="live-price"
           className={`text-[1.75rem] font-semibold tabular-nums tracking-tight transition-colors duration-300 ${
             flashDir === "up"
               ? "text-emerald-500"

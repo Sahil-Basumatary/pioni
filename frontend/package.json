@@ -18,7 +18,8 @@
     "preview": "vite preview",
     "build:analyze": "ANALYZE=true npm run build",
     "perf:lh": "npm run build && lhci autorun --collect.staticDistDir=./dist --collect.numberOfRuns=3 --upload.target=temporary-public-storage",
-    "perf:size": "npm run build && node scripts/perf/bundle-size.mjs"
+    "perf:size": "npm run build && node scripts/perf/bundle-size.mjs",
+    "perf:tick-to-paint": "npm run build && start-server-and-test \"vite preview --host 127.0.0.1\" http://127.0.0.1:4173 \"cypress run --spec cypress/e2e/perf/tick-to-paint.cy.ts --config baseUrl=http://127.0.0.1:4173\""
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.12.0",
