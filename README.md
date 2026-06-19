@@ -253,7 +253,7 @@ REDDIT_CLIENT_ID=your_reddit_client_id
 REDDIT_CLIENT_SECRET=your_reddit_client_secret
 UPSTASH_REDIS_REST_URL=https://...upstash.io
 UPSTASH_REDIS_REST_TOKEN=your_token
-FINBERT_ENABLED=true
+FINBERT_REQUIRED=true
 RATE_LIMIT_ENABLED=true
 ```
 
@@ -316,7 +316,7 @@ PYTHONPATH=../../src pytest tests/ -v
 
 GitHub Actions runs on every push to `main`:
 
-- **Backend Tests** — Pytest with `MOCK=true`, `FINBERT_ENABLED=false`
+- **Backend Tests** — Pytest with `MOCK=true`, `FINBERT_REQUIRED=false`
 - **Frontend Build** — `npm run lint` + `npm run build`
 - **Artifact Upload** — Built frontend saved for 7 days
 

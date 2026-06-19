@@ -1,5 +1,4 @@
 import { useState, lazy, Suspense, type ChangeEvent, type KeyboardEvent } from "react";
-import type { ChartData } from "chart.js";
 import "../loader.css";
 import { cacheLabel, formatSigned, formatAsOf, timeAgoFromIso, pct } from "../utils/formatters";
 import { agreementLabel, dispersionLabel, deriveTrendStats, pickDrivers, getConfidenceLabel, getSentimentLabel } from "../utils/sentiment";
@@ -183,22 +182,7 @@ export default function SentimentPage() {
     }
   };
 
-  const historyChartData: ChartData<"line"> | null = history.length
-    ? {
-        labels: history.map((i) => i.date),
-        datasets: [
-          {
-            label: "7-Day Sentiment Trend",
-            data: history.map((i) => i.score),
-            borderWidth: 2,
-            tension: 0.25,
-            borderColor: "#2A2A2A",
-            pointBackgroundColor: "#2A2A2A",
-          },
-        ],
-      }
-    : null;
-
+  const hasHistory = history.length > 0;
   const trendStats = deriveTrendStats(history);
   const driverItems = pickDrivers({ sentiment, feed });
 
@@ -589,13 +573,13 @@ export default function SentimentPage() {
 
             {chartLoading && <ChartSkeleton />}
 
-            {!chartLoading && historyChartData && (
+            {!chartLoading && hasHistory && (
               <Suspense fallback={<ChartSkeleton />}>
-                <SentimentChart data={historyChartData} />
+                <SentimentChart data={history} />
               </Suspense>
             )}
 
-            {!chartLoading && !historyChartData && sentiment && (
+            {!chartLoading && !hasHistory && sentiment && (
               <EmptyStatePanel
                 variant="history"
                 title="No history for this ticker"

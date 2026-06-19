@@ -15,6 +15,7 @@ All commands run from `frontend/`.
 | Goal | Command | What it does |
 | --- | --- | --- |
 | Bundle size (gzip + brotli) | `npm run perf:size` | Builds, then reports per-asset and total compressed transfer size. |
+| Bundle budget gate | `npm run perf:budget` | Builds, reports compressed sizes, and fails if the frontend exceeds the committed budgets. |
 | Lighthouse (Performance, etc.) | `npm run perf:lh` | Builds, serves `dist/`, runs Lighthouse 3x, uploads a temporary public report. |
 | Bundle composition | `npm run build:analyze` | Builds with the treemap visualizer enabled to inspect what ships and why. |
 | Tick-to-state latency | `npm run perf:tick-to-state` | Parses synthetic WebSocket trades, dispatches them into Redux, and measures state update latency. |
@@ -41,12 +42,24 @@ Status legend: `BASELINE` (before optimization) · `IN PROGRESS` · `MET` · `ST
 | Metric | Target | Stretch | Baseline | Current | Status |
 | --- | --- | --- | --- | --- | --- |
 | Lighthouse Performance | 90+ | 98+ | 95 | 96 | MET |
-| Initial JS (gzip) | < 250-350 KB | < 180 KB | 161.10 KiB | 155.08 KiB `/trading` route; 99.46 KiB entry chunk | STRETCH MET |
+| Initial JS (gzip) | < 250-350 KB | < 180 KB | 161.10 KiB | 155.10 KiB `/trading` route; 99.46 KiB entry chunk | STRETCH MET |
 | LCP | < 2.0s | < 1.2s | 2.48s | 1.97s | MET |
 | INP | < 100ms | — | Not captured in lab run | Not captured in lab run | BASELINE |
 | WebSocket tick-to-state (p95) | < 1ms | < 0.5ms | Not measured yet | 0.0307ms | STRETCH MET |
 | WebSocket tick-to-paint (p95) | < 50ms | < 25ms | Not measured yet | 17.60ms | STRETCH MET |
 | Long tasks during live feed | none > 50ms | — | 0ms Lighthouse TBT; live feed not captured | 0ms Lighthouse TBT; live feed not captured | MET |
+
+## CI Budgets
+
+The CI workflow checks production build output after `npm run build` and fails if the
+frontend regresses beyond these limits:
+
+- Total JavaScript/CSS gzip: 180 KiB
+- Total JavaScript/CSS brotli: 160 KiB
+- Entry chunk gzip: 110 KiB
+- Trading route gzip: 65 KiB
+- Sentiment route gzip: 12 KiB
+- Sentiment chart gzip: 5 KiB
 
 ## Optimization log
 
@@ -62,3 +75,5 @@ working notes (including dead ends) live in [`perf-lab/`](./perf-lab).
 | 2026-06-17 | Runtime render hardening | Memoized hot trading components, stabilized trading route callbacks, and added a dev long-task observer. Lighthouse stayed stable at 0ms TBT, with LCP holding at 1.97s. |
 | 2026-06-17 | Tick-to-paint benchmark | Added a production-preview Cypress benchmark for synthetic WebSocket trades. The measured p95 from trade emit to visible price paint was 17.60ms across 120 measured ticks. |
 | 2026-06-18 | Tick-to-state benchmark | Added a separate data-path benchmark for synthetic WebSocket trades. Parsing and Redux update latency measured 0.0307ms p95 across 10,000 measured ticks. |
+| 2026-06-18 | Chart runtime cleanup | Removed Chart.js from the sentiment trend chart and replaced it with a tiny SVG line chart. The lazy sentiment chart chunk dropped from about 46.69 KiB gzip to 0.72 KiB gzip. |
+| 2026-06-18 | CI budget gate | Added a production bundle budget check to CI so route chunks, total compressed size, and the sentiment chart chunk cannot quietly regress. |

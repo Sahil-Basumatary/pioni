@@ -2,7 +2,6 @@ import hashlib
 from datetime import date, timedelta
 from typing import Any, Dict, Tuple
 from fastapi import Request
-from sentiment.settings import is_mock_mode
 from sentiment.analysis import get_sentiment
 
 def _stable_jitter(ticker: str, day_iso: str) -> float:
@@ -13,8 +12,6 @@ def _stable_jitter(ticker: str, day_iso: str) -> float:
 
 async def get_history(ticker: str, request: Request) -> Tuple[Dict[str, Any], str]:
     ticker = ticker.upper()
-    if is_mock_mode():
-        return {"ticker": ticker, "history": []}, "MOCK"
     sentiment_payload, cache_status = await get_sentiment(ticker, request)
     base = float(sentiment_payload.get("sentiment") or 0.0)
     today = date.today()
