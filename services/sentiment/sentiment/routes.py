@@ -25,6 +25,7 @@ class ConfidenceDrivers(BaseModel):
     mix: float
     n_news: int
     n_reddit: int
+    n_x: int
 
 class EvidenceItem(BaseModel):
     source: str
@@ -53,12 +54,14 @@ class FeedItem(BaseModel):
 
 class SentimentResponse(BaseModel):
     ticker: str
+    asset_class: str
     sentiment: float
     sources: Dict[str, float]
     confidence: float
     highlights: Optional[List[HighlightItem]] = None
     n_news: int
     n_reddit: int
+    n_x: int
     computed_at: str
     confidence_drivers: ConfidenceDrivers
     evidence: Optional[List[EvidenceItem]] = None
@@ -67,6 +70,7 @@ class SentimentResponse(BaseModel):
 
 class FeedResponse(BaseModel):
     ticker: str
+    asset_class: str
     items: List[FeedItem]
 
 class HistoryPoint(BaseModel):

@@ -1,36 +1,28 @@
 import os
+import asyncio
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Tuple
 from fastapi import Request
-from newsapi import NewsApiClient
-import praw
+from sentiment.assets import resolve_asset
 from sentiment.settings import is_mock_mode
-from sentiment.scoring import vader_score
+from sentiment.scoring import score_items
+from sentiment.sources import ago, fetch_news_items, fetch_reddit_items, fetch_x_items
 from common import TTLCache
 
 _feed_cache = TTLCache()
 FEED_TTL_SECONDS = int(os.getenv("FEED_CACHE_TTL_SECONDS", "120"))
 FEED_STALE_SECONDS = int(os.getenv("FEED_CACHE_STALE_SECONDS", "30"))
 
-def _ago(ts: Optional[datetime]) -> str:
-    if not ts:
-        return ""
-    now = datetime.now(timezone.utc)
-    if ts.tzinfo is None:
-        ts = ts.replace(tzinfo=timezone.utc)
-    mins = int((now - ts).total_seconds() // 60)
-    if mins < 60:
-        return f"{mins} min ago"
-    hrs = mins // 60
-    return f"{hrs} h ago"
-
 
 async def get_feed(ticker: str, request: Request) -> Tuple[Dict[str, Any], str]:
-    ticker = ticker.upper()
+    asset = resolve_asset(ticker)
+    ticker = asset.ticker
     if is_mock_mode():
         import random
 
         items: List[Dict[str, Any]] = []
+        source_name = "Mock Crypto Wire" if asset.asset_class == "crypto" else "Mock Newswire"
+        reddit_source = "r/CryptoCurrency" if asset.asset_class == "crypto" else "r/mockstocks"
 
         for i in range(3):
             minutes_ago = (i + 1) * 45
@@ -40,7 +32,7 @@ async def get_feed(ticker: str, request: Request) -> Tuple[Dict[str, Any], str]:
                     "id": f"news-{i}",
                     "type": "news",
                     "title": f"{ticker} mock news headline {i + 1}",
-                    "source": "Mock Newswire",
+                    "source": source_name,
                     "score": round(random.uniform(-1, 1), 2),
                     "ago": ago_str,
                 }
@@ -54,104 +46,44 @@ async def get_feed(ticker: str, request: Request) -> Tuple[Dict[str, Any], str]:
                     "id": f"reddit-{i}",
                     "type": "reddit",
                     "title": f"{ticker} mock Reddit thread {i + 1}",
-                    "source": "r/mockstocks",
+                    "source": reddit_source,
                     "score": round(random.uniform(-1, 1), 2),
                     "ago": ago_str,
                 }
             )
 
-        return {"ticker": ticker, "items": items}, "MOCK"
+        return {"ticker": ticker, "asset_class": asset.asset_class, "items": items}, "MOCK"
 
     cache_key = f"feed:{ticker}"
 
     async def compute():
-        items: List[Dict[str, Any]] = []
-
-        api_key = os.getenv("NEWS_API_KEY")
-        if api_key:
-            try:
-                newsapi = NewsApiClient(api_key=api_key)
-                query = f'{ticker} stock OR shares OR earnings'
-                res = newsapi.get_everything(q=query, language="en", page_size=10)
-                articles = res.get("articles") or []
-
-                for idx, a in enumerate(articles):
-                    title = a.get("title")
-                    if not title:
-                        continue
-
-                    source_name = (a.get("source") or {}).get("name") or "News"
-                    published_at = a.get("publishedAt")
-                    dt = None
-                    if published_at:
-                        try:
-                            dt = datetime.fromisoformat(published_at.replace("Z", "+00:00")).astimezone(timezone.utc)
-                        except Exception:
-                            dt = None
-
-                    items.append(
-                        {
-                            "id": f"news-{idx}",
-                            "type": "news",
-                            "title": title,
-                            "source": source_name,
-                            "score": round(float(vader_score(title)), 2),
-                            "ago": _ago(dt),
-                        }
-                    )
-            except Exception:
-                pass
-
-        client_id = os.getenv("REDDIT_CLIENT_ID")
-        client_secret = os.getenv("REDDIT_CLIENT_SECRET")
-        if client_id and client_secret:
-            try:
-                reddit = praw.Reddit(
-                    client_id=client_id,
-                    client_secret=client_secret,
-                    user_agent="pioni_by_u/AquaBzy",
-                )
-
-                subs = ["stocks", "wallstreetbets", "investing"]
-                seen = set()
-
-                for sub in subs:
-                    posts = reddit.subreddit(sub).search(query=ticker, sort="new", limit=5)
-                    for p in posts:
-                        title = getattr(p, "title", None)
-                        if not title:
-                            continue
-                        if title in seen:
-                            continue
-                        seen.add(title)
-
-                        created = getattr(p, "created_utc", None)
-                        dt = datetime.fromtimestamp(created, tz=timezone.utc) if created else None
-
-                        items.append(
-                            {
-                                "id": f"reddit-{sub}-{len(seen)}",
-                                "type": "reddit",
-                                "title": title,
-                                "source": f"r/{sub}",
-                                "score": round(float(vader_score(title)), 2),
-                                "ago": _ago(dt),
-                            }
-                        )
-            except Exception:
-                pass
-
-        def _sort_key(x: Dict[str, Any]) -> int:
-            ago = x.get("ago") or ""
-            if "min" in ago:
-                return int(ago.split(" ")[0])
-            if "h" in ago:
-                return int(ago.split(" ")[0]) * 60
-            return 10**9
-
-        items.sort(key=_sort_key)
-
-        return {"ticker": ticker, "items": items[:12]}
+        results = await asyncio.gather(
+            asyncio.to_thread(fetch_news_items, asset),
+            asyncio.to_thread(fetch_reddit_items, asset),
+            asyncio.to_thread(fetch_x_items, asset),
+            return_exceptions=True,
+        )
+        raw_items = []
+        for result in results:
+            if not isinstance(result, Exception):
+                raw_items.extend(result)
+        scored = await score_items(raw_items, finbert_top_n=8)
+        scored.sort(
+            key=lambda item: item.ts or datetime.min.replace(tzinfo=timezone.utc),
+            reverse=True,
+        )
+        items = [
+            {
+                "id": item.item_id,
+                "type": item.source,
+                "title": item.text,
+                "source": item.provider or item.source,
+                "score": round(float(item.score), 2),
+                "ago": ago(item.ts),
+            }
+            for item in scored[:12]
+        ]
+        return {"ticker": ticker, "asset_class": asset.asset_class, "items": items}
     payload, cache_status = await _feed_cache.get_or_compute_swr(
         cache_key,
         ttl_seconds=FEED_TTL_SECONDS,

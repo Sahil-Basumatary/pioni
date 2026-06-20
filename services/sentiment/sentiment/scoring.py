@@ -121,6 +121,7 @@ def compute_confidence_details(
     scores: list[float],
     has_news: bool,
     has_reddit: bool,
+    has_x: bool = False,
 ) -> tuple[float, dict]:
     n = len(scores)
     if n == 0:
@@ -140,7 +141,8 @@ def compute_confidence_details(
     volume = 1.0 - math.exp(-n / 12.0)
     agreement = math.exp(-2.5 * std)
     strength = min(1.0, abs(mean) * 1.8)
-    mix = 1.0 if (has_news and has_reddit) else 0.85
+    source_count = sum((has_news, has_reddit, has_x))
+    mix = 1.0 if source_count >= 2 else 0.85
     raw = (0.40 * volume) + (0.40 * agreement) + (0.20 * strength)
     conf = (0.05 + 0.90 * raw) * mix
     conf = float(max(0.0, min(1.0, conf)))
@@ -155,8 +157,8 @@ def compute_confidence_details(
     }
     return conf, drivers
 
-def compute_confidence(scores: list[float], has_news: bool, has_reddit: bool) -> float:
-    conf, _ = compute_confidence_details(scores, has_news=has_news, has_reddit=has_reddit)
+def compute_confidence(scores: list[float], has_news: bool, has_reddit: bool, has_x: bool = False) -> float:
+    conf, _ = compute_confidence_details(scores, has_news=has_news, has_reddit=has_reddit, has_x=has_x)
     return conf
 
 async def score_items(items: Iterable[dict], finbert_top_n: int = 12) -> list[ScoredItem]:
