@@ -30,20 +30,29 @@ def check_reddit_config() -> dict[str, Any]:
         return {"status": "healthy", "configured": True}
     return {"status": "unhealthy", "configured": False}
 
+def check_x_config() -> dict[str, Any]:
+    token = os.getenv("X_BEARER_TOKEN") or os.getenv("TWITTER_BEARER_TOKEN")
+    if token:
+        return {"status": "healthy", "configured": True}
+    return {"status": "degraded", "configured": False}
+
 async def get_health_status() -> tuple[dict[str, Any], int]:
     redis_check = await check_redis()
     hf_check = check_hf_config()
     news_check = check_news_config()
     reddit_check = check_reddit_config()
+    x_check = check_x_config()
     checks = {
         "redis": redis_check,
         "huggingface": hf_check,
         "newsapi": news_check,
         "reddit": reddit_check,
+        "x": x_check,
     }
     news_ok = news_check["status"] == "healthy"
     reddit_ok = reddit_check["status"] == "healthy"
-    if not news_ok and not reddit_ok:
+    x_ok = x_check["status"] == "healthy"
+    if not news_ok and not reddit_ok and not x_ok:
         overall = "unhealthy"
         http_status = 503
     elif all(c["status"] == "healthy" for c in checks.values()):
@@ -56,7 +65,7 @@ async def get_health_status() -> tuple[dict[str, Any], int]:
     return {
         "status": overall,
         "timestamp": timestamp,
-        "version": "0.3.0",
+        "version": "0.4.0",
         "checks": checks,
     }, http_status
 

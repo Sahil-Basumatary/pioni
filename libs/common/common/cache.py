@@ -58,6 +58,17 @@ async def ping_redis() -> tuple[bool, float | None, str | None]:
         return False, None, str(e)
 
 
+async def publish_json(channel: str, payload: dict[str, Any]) -> bool:
+    if not _redis_instance:
+        return False
+    try:
+        await _redis_instance.publish(channel, json.dumps(payload, default=str))
+        return True
+    except Exception as e:
+        logger.warning("Redis publish failed", extra={"channel": channel, "error": str(e)})
+        return False
+
+
 @dataclass
 class CacheEntry:
     value: Any

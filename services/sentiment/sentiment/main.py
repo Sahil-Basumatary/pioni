@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
     await close_redis_pool()
     logger.info("sentiment service stopped")
 
-app = FastAPI(title="Pioni Sentiment Service", version="0.3.0", lifespan=lifespan)
+app = FastAPI(title="Pioni Sentiment Service", version="0.4.0", lifespan=lifespan)
 
 app.middleware("http")(attach_request_id)
 

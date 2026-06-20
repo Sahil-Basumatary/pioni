@@ -7,6 +7,7 @@ from common.cache import (
     init_redis_pool,
     close_redis_pool,
     ping_redis,
+    publish_json,
 )
 from common.ratelimit import RateLimiter, create_rate_limit_middleware
 from common.pubsub import (
@@ -56,6 +57,7 @@ __all__ = [
     "init_redis_pool",
     "close_redis_pool",
     "ping_redis",
+    "publish_json",
     "RateLimiter",
     "create_rate_limit_middleware",
     "MarketSubscriber",
