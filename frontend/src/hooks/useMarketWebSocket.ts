@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { markTradeBrowserReceived } from "../features/market/marketLatency";
 import type { Kline, Trade, WSCommand, WSMessage } from "../types/market";
 
 export type ConnectionStatus = "connecting" | "connected" | "disconnected";
@@ -58,7 +59,7 @@ export function useMarketWebSocket(options: UseMarketWebSocketOptions = {}) {
         const msg: WSMessage = JSON.parse(event.data);
         switch (msg.type) {
           case "trade":
-            optionsRef.current.onTrade?.(msg.data);
+            optionsRef.current.onTrade?.(markTradeBrowserReceived(msg.data));
             break;
           case "kline":
             optionsRef.current.onKline?.(msg.data, msg.interval);

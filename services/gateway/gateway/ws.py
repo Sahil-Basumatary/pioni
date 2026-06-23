@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import time
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
 
@@ -44,7 +45,12 @@ class ConnectionManager:
             return set(subs)
 
     async def broadcast_trade(self, symbol: str, data: dict) -> None:
-        msg = json.dumps({"type": "trade", "symbol": symbol, "data": data})
+        now_ms = int(time.time() * 1000)
+        latency = dict(data.get("latency") or {})
+        latency["gateway_received_at_ms"] = now_ms
+        latency["gateway_sent_at_ms"] = int(time.time() * 1000)
+        payload = {**data, "latency": latency}
+        msg = json.dumps({"type": "trade", "symbol": symbol, "data": payload})
         await self._broadcast(symbol, msg)
 
     async def broadcast_kline(self, symbol: str, interval: str, data: dict) -> None:

@@ -19,8 +19,9 @@ import {
 import {
   selectMarketStatus,
   statusChanged,
-  tradeReceived,
+  tradesFrameReceived,
 } from "../features/market/marketSlice";
+import { scheduleTradePaintMeasurement } from "../features/market/marketLatency";
 import type { Kline, Trade } from "../types/market";
 
 const STATUS_COLORS: Record<ConnectionStatus, string> = {
@@ -41,7 +42,7 @@ export default function TradingPage() {
   const status = useAppSelector(selectMarketStatus);
   const chartRef = useRef<CandlestickChartHandle>(null);
   const prevSymbolRef = useRef<string | null>(null);
-  const tradeBufferRef = useRef<Trade | null>(null);
+  const tradeBufferRef = useRef<Record<string, Trade>>({});
   const rafIdRef = useRef(0);
 
   const handleKline = useCallback(
@@ -56,12 +57,19 @@ export default function TradingPage() {
   // store from thrashing React subscribers on every tick.
   const handleTrade = useCallback(
     (trade: Trade) => {
-      tradeBufferRef.current = trade;
+      tradeBufferRef.current[trade.symbol] = trade;
       if (!rafIdRef.current) {
         rafIdRef.current = requestAnimationFrame(() => {
           rafIdRef.current = 0;
           const buffered = tradeBufferRef.current;
-          if (buffered) dispatch(tradeReceived(buffered));
+          tradeBufferRef.current = {};
+          const trades = Object.values(buffered);
+          if (trades.length > 0) {
+            dispatch(tradesFrameReceived(buffered));
+            for (const bufferedTrade of trades) {
+              scheduleTradePaintMeasurement(bufferedTrade);
+            }
+          }
         });
       }
     },

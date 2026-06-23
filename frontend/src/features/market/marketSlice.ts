@@ -23,10 +23,13 @@ const marketSlice = createSlice({
     tradeReceived(state, action: PayloadAction<Trade>) {
       state.latestTradeBySymbol[action.payload.symbol] = action.payload;
     },
+    tradesFrameReceived(state, action: PayloadAction<Record<string, Trade>>) {
+      Object.assign(state.latestTradeBySymbol, action.payload);
+    },
   },
 });
 
-export const { statusChanged, tradeReceived } = marketSlice.actions;
+export const { statusChanged, tradeReceived, tradesFrameReceived } = marketSlice.actions;
 
 export const selectMarketStatus = (state: RootState) => state.market.status;
 export const selectLatestTrade =

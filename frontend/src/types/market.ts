@@ -21,6 +21,17 @@ export interface Trade {
   quantity: string;
   timestamp: number;
   buyer_maker: boolean;
+  latency?: MarketLatencyMetadata;
+}
+
+export interface MarketLatencyMetadata {
+  exchange_at_ms?: number;
+  market_received_at_ms?: number;
+  market_published_at_ms?: number;
+  gateway_received_at_ms?: number;
+  gateway_sent_at_ms?: number;
+  browser_received_at_ms?: number;
+  browser_received_perf_ms?: number;
 }
 
 export interface TickerSnapshot {

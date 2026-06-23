@@ -20,6 +20,7 @@ All commands run from `frontend/`.
 | Bundle composition | `npm run build:analyze` | Builds with the treemap visualizer enabled to inspect what ships and why. |
 | Tick-to-state latency | `npm run perf:tick-to-state` | Parses synthetic WebSocket trades, dispatches them into Redux, and measures state update latency. |
 | Tick-to-paint latency | `npm run perf:tick-to-paint` | Builds, serves `dist/`, emits synthetic WebSocket trades, and measures visible price update latency. |
+| Live market latency (dev) | `VITE_MARKET_LATENCY_DEBUG=true npm run dev` | Adds real WebSocket hop timing and logs rolling receive-to-paint p50 / p95 / p99 while the trading page receives live ticks. |
 | Live Web Vitals (dev) | `npm run dev` | Logs LCP / INP / CLS / FCP / TTFB to the console as you interact. |
 
 ## Measurement environment
@@ -47,6 +48,7 @@ Status legend: `BASELINE` (before optimization) · `IN PROGRESS` · `MET` · `ST
 | INP | < 100ms | — | Not captured in lab run | Not captured in lab run | BASELINE |
 | WebSocket tick-to-state (p95) | < 1ms | < 0.5ms | Not measured yet | 0.0307ms | STRETCH MET |
 | WebSocket tick-to-paint (p95) | < 50ms | < 25ms | Not measured yet | 17.60ms | STRETCH MET |
+| Live market receive-to-paint (p95) | < 50ms | < 25ms | 64.09ms dev capture | 15.90ms dev capture | STRETCH MET |
 | Long tasks during live feed | none > 50ms | — | 0ms Lighthouse TBT; live feed not captured | 0ms Lighthouse TBT; live feed not captured | MET |
 
 ## CI Budgets
@@ -77,3 +79,5 @@ working notes (including dead ends) live in [`perf-lab/`](./perf-lab).
 | 2026-06-18 | Tick-to-state benchmark | Added a separate data-path benchmark for synthetic WebSocket trades. Parsing and Redux update latency measured 0.0307ms p95 across 10,000 measured ticks. |
 | 2026-06-18 | Chart runtime cleanup | Removed Chart.js from the sentiment trend chart and replaced it with a tiny SVG line chart. The lazy sentiment chart chunk dropped from about 46.69 KiB gzip to 0.72 KiB gzip. |
 | 2026-06-18 | CI budget gate | Added a production bundle budget check to CI so route chunks, total compressed size, and the sentiment chart chunk cannot quietly regress. |
+| 2026-06-20 | Live market latency instrumentation | Added opt-in live WebSocket timing from market-data publish through gateway send, browser receive, and the next painted frame. |
+| 2026-06-22 | Redux frame batching | Kept Redux as the market state source while batching live trades into one per-frame action keyed by symbol. Live receive-to-paint p95 improved from 64.09ms to 15.90ms in dev capture. |

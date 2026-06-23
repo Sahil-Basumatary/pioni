@@ -43,7 +43,13 @@ class MarketPublisher:
         )
         if self._redis:
             channel = CHANNEL_TRADE.format(symbol=trade.symbol)
-            payload = json.dumps(trade.model_dump(), cls=DecimalEncoder)
+            trade_payload = trade.model_dump()
+            trade_payload["latency"] = {
+                "exchange_at_ms": trade.timestamp,
+                "market_received_at_ms": now_ms,
+                "market_published_at_ms": int(time.time() * 1000),
+            }
+            payload = json.dumps(trade_payload, cls=DecimalEncoder)
             try:
                 await self._redis.publish(channel, payload)
             except Exception:

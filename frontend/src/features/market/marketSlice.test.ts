@@ -5,6 +5,7 @@ import reducer, {
   selectMarketStatus,
   statusChanged,
   tradeReceived,
+  tradesFrameReceived,
 } from "./marketSlice";
 import type { Trade } from "../../types/market";
 
@@ -37,10 +38,25 @@ describe("marketSlice", () => {
     expect(state.latestTradeBySymbol.BTCUSDT).toEqual(next);
   });
 
+  it("records the latest trade for each symbol in one frame", () => {
+    const ethTrade: Trade = { ...trade, symbol: "ETHUSDT", price: "3000" };
+    const nextBtcTrade: Trade = { ...trade, price: "52000" };
+    const state = reducer(
+      undefined,
+      tradesFrameReceived({
+        BTCUSDT: nextBtcTrade,
+        ETHUSDT: ethTrade,
+      }),
+    );
+
+    expect(state.latestTradeBySymbol.BTCUSDT).toEqual(nextBtcTrade);
+    expect(state.latestTradeBySymbol.ETHUSDT).toEqual(ethTrade);
+  });
+
   it("exposes status and trade through selectors", () => {
     const store = setupStore();
     store.dispatch(statusChanged("connected"));
-    store.dispatch(tradeReceived(trade));
+    store.dispatch(tradesFrameReceived({ BTCUSDT: trade }));
     expect(selectMarketStatus(store.getState())).toBe("connected");
     expect(selectLatestTrade("BTCUSDT")(store.getState())).toEqual(trade);
     expect(selectLatestTrade("ETHUSDT")(store.getState())).toBeNull();
