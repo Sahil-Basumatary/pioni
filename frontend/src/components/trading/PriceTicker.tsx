@@ -1,6 +1,5 @@
-import { memo, useEffect, useMemo, useRef, useState } from "react";
-import { useAppSelector } from "../../app/hooks";
-import { selectLatestTrade } from "../../features/market/marketSlice";
+import { memo, useEffect, useRef, useState } from "react";
+import { useLiveMarketTrade } from "../../features/market/liveMarketStore";
 import type { TickerSnapshot } from "../../types/market";
 
 const DEFAULT_GATEWAY_URL = "http://localhost:8000";
@@ -52,8 +51,7 @@ async function fetchSnapshot(symbol: string): Promise<TickerSnapshot> {
 }
 
 function PriceTicker({ symbol }: PriceTickerProps) {
-  const selectTrade = useMemo(() => selectLatestTrade(symbol), [symbol]);
-  const trade = useAppSelector(selectTrade);
+  const trade = useLiveMarketTrade(symbol);
   const [snapshot, setSnapshot] = useState<TickerSnapshot | null>(null);
   const [flashDir, setFlashDir] = useState<"up" | "down" | "">("");
   const prevPriceRef = useRef<number | null>(null);

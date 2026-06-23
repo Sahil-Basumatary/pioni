@@ -21,7 +21,11 @@ import {
   statusChanged,
   tradesFrameReceived,
 } from "../features/market/marketSlice";
-import { scheduleTradePaintMeasurement } from "../features/market/marketLatency";
+import {
+  recordTradeStateMeasurement,
+  scheduleTradePaintMeasurement,
+} from "../features/market/marketLatency";
+import { publishLiveTrade } from "../features/market/liveMarketStore";
 import type { Kline, Trade } from "../types/market";
 
 const STATUS_COLORS: Record<ConnectionStatus, string> = {
@@ -57,6 +61,7 @@ export default function TradingPage() {
   // store from thrashing React subscribers on every tick.
   const handleTrade = useCallback(
     (trade: Trade) => {
+      publishLiveTrade(trade);
       tradeBufferRef.current[trade.symbol] = trade;
       if (!rafIdRef.current) {
         rafIdRef.current = requestAnimationFrame(() => {
@@ -66,6 +71,7 @@ export default function TradingPage() {
           const trades = Object.values(buffered);
           if (trades.length > 0) {
             dispatch(tradesFrameReceived(buffered));
+            recordTradeStateMeasurement(trades);
             for (const bufferedTrade of trades) {
               scheduleTradePaintMeasurement(bufferedTrade);
             }

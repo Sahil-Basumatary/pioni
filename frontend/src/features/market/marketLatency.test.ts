@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   markTradeBrowserReceived,
+  recordTradeStoreMeasurement,
+  recordTradeStateMeasurement,
   scheduleTradePaintMeasurement,
 } from "./marketLatency";
 import type { Trade } from "../../types/market";
@@ -50,5 +52,25 @@ describe("market latency collector", () => {
     expect(marked).not.toBe(trade);
     expect(window.__pioniMarketLatency?.samples).toHaveLength(1);
     expect(window.__pioniMarketLatency?.latestSummary?.samples).toBe(1);
+  });
+
+  it("records a browser receive-to-state sample when enabled", () => {
+    vi.stubEnv("VITE_MARKET_LATENCY_DEBUG", "true");
+
+    const marked = markTradeBrowserReceived(trade);
+    recordTradeStateMeasurement([marked]);
+
+    expect(window.__pioniMarketLatency?.stateSamples).toHaveLength(1);
+    expect(window.__pioniMarketLatency?.latestStateSummary?.samples).toBe(1);
+  });
+
+  it("records a browser receive-to-store sample when enabled", () => {
+    vi.stubEnv("VITE_MARKET_LATENCY_DEBUG", "true");
+
+    const marked = markTradeBrowserReceived(trade);
+    recordTradeStoreMeasurement(marked);
+
+    expect(window.__pioniMarketLatency?.storeSamples).toHaveLength(1);
+    expect(window.__pioniMarketLatency?.latestStoreSummary?.samples).toBe(1);
   });
 });

@@ -12,6 +12,16 @@ export interface MarketLatencySample {
   browserReceiveToPaintMs: number;
 }
 
+export interface MarketStateLatencySample {
+  symbol: string;
+  browserReceiveToStateMs: number;
+}
+
+export interface MarketStoreLatencySample {
+  symbol: string;
+  browserReceiveToStoreMs: number;
+}
+
 export interface MarketLatencySummary {
   samples: number;
   p50: number;
@@ -22,7 +32,11 @@ export interface MarketLatencySummary {
 
 interface MarketLatencyDebugState {
   readonly samples: MarketLatencySample[];
+  readonly storeSamples: MarketStoreLatencySample[];
+  readonly stateSamples: MarketStateLatencySample[];
   readonly latestSummary: MarketLatencySummary | null;
+  readonly latestStoreSummary: MarketLatencySummary | null;
+  readonly latestStateSummary: MarketLatencySummary | null;
   reset: () => void;
 }
 
@@ -33,7 +47,11 @@ declare global {
 }
 
 const samples: MarketLatencySample[] = [];
+const storeSamples: MarketStoreLatencySample[] = [];
+const stateSamples: MarketStateLatencySample[] = [];
 let latestSummary: MarketLatencySummary | null = null;
+let latestStoreSummary: MarketLatencySummary | null = null;
+let latestStateSummary: MarketLatencySummary | null = null;
 
 function isEnabled(): boolean {
   return import.meta.env.VITE_MARKET_LATENCY_DEBUG === "true";
@@ -76,6 +94,48 @@ function pushSample(sample: MarketLatencySample): void {
   }
 }
 
+function pushStateSample(sample: MarketStateLatencySample): void {
+  stateSamples.push(sample);
+  if (stateSamples.length > MAX_SAMPLES) {
+    stateSamples.splice(0, stateSamples.length - MAX_SAMPLES);
+  }
+
+  const stateValues = stateSamples.map((entry) => entry.browserReceiveToStateMs);
+  latestStateSummary = summarize(stateValues);
+
+  if (stateSamples.length % REPORT_EVERY === 0) {
+    console.info("[market-latency] receive-to-state", {
+      samples: latestStateSummary.samples,
+      p50: `${latestStateSummary.p50.toFixed(2)}ms`,
+      p95: `${latestStateSummary.p95.toFixed(2)}ms`,
+      p99: `${latestStateSummary.p99.toFixed(2)}ms`,
+      max: `${latestStateSummary.max.toFixed(2)}ms`,
+      latest: sample,
+    });
+  }
+}
+
+function pushStoreSample(sample: MarketStoreLatencySample): void {
+  storeSamples.push(sample);
+  if (storeSamples.length > MAX_SAMPLES) {
+    storeSamples.splice(0, storeSamples.length - MAX_SAMPLES);
+  }
+
+  const storeValues = storeSamples.map((entry) => entry.browserReceiveToStoreMs);
+  latestStoreSummary = summarize(storeValues);
+
+  if (storeSamples.length % REPORT_EVERY === 0) {
+    console.info("[market-latency] receive-to-store", {
+      samples: latestStoreSummary.samples,
+      p50: `${latestStoreSummary.p50.toFixed(2)}ms`,
+      p95: `${latestStoreSummary.p95.toFixed(2)}ms`,
+      p99: `${latestStoreSummary.p99.toFixed(2)}ms`,
+      max: `${latestStoreSummary.max.toFixed(2)}ms`,
+      latest: sample,
+    });
+  }
+}
+
 function installDebugState(): void {
   if (!isEnabled() || typeof window === "undefined" || window.__pioniMarketLatency) {
     return;
@@ -85,12 +145,28 @@ function installDebugState(): void {
     get samples() {
       return [...samples];
     },
+    get storeSamples() {
+      return [...storeSamples];
+    },
+    get stateSamples() {
+      return [...stateSamples];
+    },
     get latestSummary() {
       return latestSummary;
     },
+    get latestStoreSummary() {
+      return latestStoreSummary;
+    },
+    get latestStateSummary() {
+      return latestStateSummary;
+    },
     reset() {
       samples.length = 0;
+      storeSamples.length = 0;
+      stateSamples.length = 0;
       latestSummary = null;
+      latestStoreSummary = null;
+      latestStateSummary = null;
     },
   };
 }
@@ -114,7 +190,7 @@ export function scheduleTradePaintMeasurement(trade: Trade): void {
   if (!isEnabled()) return;
 
   const latency = trade.latency;
-  if (!latency?.browser_received_perf_ms) return;
+  if (latency?.browser_received_perf_ms === undefined) return;
 
   requestAnimationFrame(() => {
     const paintedPerfMs = performance.now();
@@ -137,5 +213,36 @@ export function scheduleTradePaintMeasurement(trade: Trade): void {
         : undefined,
       browserReceiveToPaintMs,
     });
+  });
+}
+
+export function recordTradeStateMeasurement(trades: Trade[]): void {
+  if (!isEnabled()) return;
+
+  installDebugState();
+
+  const stateUpdatedPerfMs = performance.now();
+  for (const trade of trades) {
+    const receivedPerfMs = trade.latency?.browser_received_perf_ms;
+    if (receivedPerfMs === undefined) continue;
+
+    pushStateSample({
+      symbol: trade.symbol,
+      browserReceiveToStateMs: stateUpdatedPerfMs - receivedPerfMs,
+    });
+  }
+}
+
+export function recordTradeStoreMeasurement(trade: Trade): void {
+  if (!isEnabled()) return;
+
+  installDebugState();
+
+  const receivedPerfMs = trade.latency?.browser_received_perf_ms;
+  if (receivedPerfMs === undefined) return;
+
+  pushStoreSample({
+    symbol: trade.symbol,
+    browserReceiveToStoreMs: performance.now() - receivedPerfMs,
   });
 }
