@@ -62,6 +62,10 @@ async def sentiment(ticker: str, request: Request, response: Response):
 async def sentiment_history(ticker: str, request: Request, response: Response):
     return await _proxy_to_sentiment(f"/history/{ticker}", response)
 
+@router.get("/sentiment/signals/{ticker}")
+async def sentiment_signals(ticker: str, request: Request, response: Response):
+    return await _proxy_to_sentiment(f"/signals/{ticker}", response)
+
 @router.get("/sentiment/feed/{ticker}")
 async def sentiment_feed(ticker: str, request: Request, response: Response):
     return await _proxy_to_sentiment(f"/feed/{ticker}", response)

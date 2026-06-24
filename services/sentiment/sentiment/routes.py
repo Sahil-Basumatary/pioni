@@ -6,6 +6,7 @@ from sentiment.analysis import get_sentiment
 from sentiment.history import get_history
 from sentiment.feed import get_feed
 from sentiment.health import get_health_status
+from sentiment.signals import get_signal
 from sentiment.settings import is_mock_mode
 
 router = APIRouter()
@@ -81,6 +82,24 @@ class HistoryResponse(BaseModel):
     ticker: str
     history: List[HistoryPoint]
 
+class SignalInputs(BaseModel):
+    sentiment: float
+    previous_sentiment: float
+    confidence: float
+    sources: Dict[str, float]
+
+class SignalResponse(BaseModel):
+    ticker: str
+    asset_class: str
+    action: str
+    score: float
+    confidence: float
+    delta: float
+    threshold: float
+    reason: str
+    generated_at: str
+    inputs: SignalInputs
+
 @router.get("/health")
 def health_check():
     return {"status": "ok"}
@@ -104,6 +123,13 @@ async def analyze(ticker: str, request: Request, response: Response):
 @router.get("/history/{ticker}", response_model=HistoryResponse)
 async def history(ticker: str, request: Request, response: Response):
     payload, cache_status = await get_history(ticker, request)
+    response.headers["X-Cache"] = cache_status
+    response.headers["X-Mode"] = "MOCK" if cache_status == "MOCK" else "LIVE"
+    return payload
+
+@router.get("/signals/{ticker}", response_model=SignalResponse)
+async def signals(ticker: str, request: Request, response: Response):
+    payload, cache_status = await get_signal(ticker, request)
     response.headers["X-Cache"] = cache_status
     response.headers["X-Mode"] = "MOCK" if cache_status == "MOCK" else "LIVE"
     return payload
