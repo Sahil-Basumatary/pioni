@@ -1,8 +1,8 @@
 import { useState, lazy, Suspense, type ChangeEvent, type KeyboardEvent } from "react";
 import "../loader.css";
 import { cacheLabel, formatSigned, formatAsOf, timeAgoFromIso, pct } from "../utils/formatters";
-import { agreementLabel, dispersionLabel, deriveTrendStats, pickDrivers, getConfidenceLabel, getSentimentLabel } from "../utils/sentiment";
-import type { SentimentData, FeedItem, HistoryPoint } from "../types/sentiment";
+import { agreementLabel, dispersionLabel, deriveTrendStats, pickDrivers, getConfidenceLabel, getSentimentLabel, getSignalLabel, getSignalTone } from "../utils/sentiment";
+import type { SentimentData, FeedItem, HistoryPoint, SentimentSignal } from "../types/sentiment";
 import Chip from "../components/Chip";
 import EmptyStatePanel from "../components/EmptyStatePanel";
 import ChartSkeleton from "../components/ChartSkeleton";
@@ -26,7 +26,7 @@ type RequestErrorCode =
   | "SERVER_OFFLINE"
   | "GENERIC";
 
-const QUICK_PICKS = ["TSLA", "AAPL", "NVDA", "MSFT", "AMZN", "GOOGL"] as const;
+const QUICK_PICKS = ["BTC", "ETH", "SOL", "TSLA", "AAPL", "NVDA"] as const;
 const DEV_BYPASS = ["NONEWS", "NORED", "TOOFEW", "ZEROSENT", "LIMIT"] as const;
 
 function isTickerValid(val: string): boolean {
@@ -43,6 +43,7 @@ export default function SentimentPage() {
   const [history, setHistory] = useState<HistoryPoint[]>([]);
   const [chartLoading, setChartLoading] = useState(false);
   const [feed, setFeed] = useState<FeedItem[]>([]);
+  const [signal, setSignal] = useState<SentimentSignal | null>(null);
   const [cacheStatus, setCacheStatus] = useState<string | null>(null);
   const [appMode, setAppMode] = useState<string | null>(null);
 
@@ -113,6 +114,7 @@ export default function SentimentPage() {
     setHistory([]);
     setChartLoading(false);
     setFeed([]);
+    setSignal(null);
 
     try {
       const response = await fetch(`${API_BASE_URL}/sentiment/${symbol}`)
@@ -162,15 +164,25 @@ export default function SentimentPage() {
 
       setChartLoading(true);
       try {
-        const historyResponse = await fetch(`${API_BASE_URL}/sentiment/history/${symbol}`)
+        const [historyResponse, signalResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/sentiment/history/${symbol}`),
+          fetch(`${API_BASE_URL}/sentiment/signals/${symbol}`),
+        ]);
         if (historyResponse.ok) {
           const hist: { history?: HistoryPoint[] } = await historyResponse.json();
           setHistory(hist.history ?? []);
         } else {
           setHistory([]);
         }
+        if (signalResponse.ok) {
+          const nextSignal: SentimentSignal = await signalResponse.json();
+          setSignal(nextSignal);
+        } else {
+          setSignal(null);
+        }
       } catch {
         setHistory([]);
+        setSignal(null);
       } finally {
         setChartLoading(false);
       }
@@ -185,6 +197,7 @@ export default function SentimentPage() {
   const hasHistory = history.length > 0;
   const trendStats = deriveTrendStats(history);
   const driverItems = pickDrivers({ sentiment, feed });
+  const signalTone = getSignalTone(signal?.action);
 
   const landing = !sentiment && !loading && !requestError;
 
@@ -227,7 +240,7 @@ export default function SentimentPage() {
                 <div className="mb-4">
                   <h2 className="text-sm font-medium text-[var(--text-primary)]">Ticker</h2>
                   <p className="text-xs text-[var(--text-muted)] mt-1">
-                    Enter a stock symbol (1-5 letters). Example: TSLA.
+                    Enter a symbol. Example: BTC or TSLA.
                   </p>
                 </div>
 
@@ -306,8 +319,8 @@ export default function SentimentPage() {
                       </p>
                       <p className="mt-1 text-sm font-semibold tabular-nums text-[var(--text-primary)]">
                         {sentiment
-                          ? (Number.isFinite(sentiment?.n_news) || Number.isFinite(sentiment?.n_reddit)
-                              ? (Number(sentiment?.n_news || 0) + Number(sentiment?.n_reddit || 0))
+                          ? (Number.isFinite(sentiment?.n_news) || Number.isFinite(sentiment?.n_reddit) || Number.isFinite(sentiment?.n_x)
+                              ? (Number(sentiment?.n_news || 0) + Number(sentiment?.n_reddit || 0) + Number(sentiment?.n_x || 0))
                               : (feed?.length ?? "—"))
                           : "—"}
                       </p>
@@ -351,14 +364,14 @@ export default function SentimentPage() {
                       <ul className="mt-2 space-y-1 text-xs text-[var(--text-muted)]">
                         <li>• Combined sentiment score with confidence</li>
                         <li>• 7-day trend snapshot</li>
-                        <li>• Recent headlines and Reddit mentions</li>
+                        <li>• Recent headlines, Reddit threads, and X posts</li>
                       </ul>
                     </div>
                   )}
 
                   <div className="mt-6 pt-4 border-t border-[var(--card-border)] flex items-center justify-between text-[11px] text-[var(--text-muted)]">
                     <span>
-                      Sources: <span className="text-[var(--text-secondary)]">News</span> + <span className="text-[var(--text-secondary)]">Reddit</span>
+                      Sources: <span className="text-[var(--text-secondary)]">News</span> + <span className="text-[var(--text-secondary)]">Reddit</span> + <span className="text-[var(--text-secondary)]">X</span>
                     </span>
                     <span className="flex items-center gap-2">
                       <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] opacity-40" />
@@ -475,7 +488,7 @@ export default function SentimentPage() {
               </div>
 
               <p className="text-xs text-[var(--text-muted)] mt-2">
-                Combined mood from recent news and Reddit sources.
+                Combined mood from recent news, Reddit, and X sources.
               </p>
 
               <div className="pt-3">
@@ -512,12 +525,14 @@ export default function SentimentPage() {
                         ? sentiment?.n_news ?? 0
                         : source === "reddit"
                         ? sentiment?.n_reddit ?? 0
+                        : source === "x"
+                        ? sentiment?.n_x ?? 0
                         : null;
 
                     return (
                       <div key={source} className="flex items-center justify-between text-xs">
                         <span className="text-[var(--text-muted)]">
-                          {source === "newsapi" ? "News" : source === "reddit" ? "Reddit" : source}
+                          {source === "newsapi" ? "News" : source === "reddit" ? "Reddit" : source === "x" ? "X" : source}
                           {count !== null ? ` (${count})` : ""}
                         </span>
                         <span className="font-medium tabular-nums">{formatSigned(value ?? 0, 3)}</span>
@@ -539,7 +554,7 @@ export default function SentimentPage() {
 
                     <Chip
                       label="Coverage"
-                      value={`News ${sentiment?.n_news ?? 0} • Reddit ${sentiment?.n_reddit ?? 0}`}
+                      value={`News ${sentiment?.n_news ?? 0} • Reddit ${sentiment?.n_reddit ?? 0} • X ${sentiment?.n_x ?? 0}`}
                     />
 
                     <Chip
@@ -556,6 +571,44 @@ export default function SentimentPage() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {signal && (
+            <div className="card-premium mt-3 w-full rounded-xl p-5 border border-[var(--card-border)]">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-[var(--text-muted)]">
+                    Trading signal
+                  </p>
+                  <p className="text-xl font-semibold mt-1 text-[var(--text-primary)]">
+                    {getSignalLabel(signal.action)}
+                  </p>
+                </div>
+                <span
+                  className={`text-[10px] px-2 py-1 rounded-full border ${
+                    signalTone === "positive"
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : signalTone === "negative"
+                      ? "bg-red-50 text-red-700 border-red-200"
+                      : signalTone === "caution"
+                      ? "bg-amber-50 text-amber-700 border-amber-200"
+                      : "bg-[var(--bg)] text-[var(--text-muted)] border-[var(--card-border)]"
+                  }`}
+                >
+                  Δ {formatSigned(signal.delta, 3)}
+                </span>
+              </div>
+
+              <p className="mt-3 text-xs text-[var(--text-muted)]">
+                {signal.reason}
+              </p>
+
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                <Chip label="Score" value={formatSigned(signal.score, 3)} />
+                <Chip label="Confidence" value={`${Math.round(signal.confidence * 100)}%`} />
+                <Chip label="Spike threshold" value={formatSigned(signal.threshold, 2)} />
+              </div>
             </div>
           )}
         </div>
@@ -608,7 +661,7 @@ export default function SentimentPage() {
                 Recent mentions
               </h2>
               <p className="text-xs text-[var(--text-muted)] mt-1">
-                News headlines and posts that shape this sentiment score.
+                News headlines, threads, and posts that shape this sentiment score.
               </p>
             </div>
           </div>
@@ -625,7 +678,7 @@ export default function SentimentPage() {
             <EmptyStatePanel
               variant="history"
               title="No posts to show yet"
-              body="We couldn't pull any recent headlines or Reddit posts for this ticker in mock mode."
+              body="We couldn't pull any recent headlines, Reddit threads, or X posts for this ticker in mock mode."
             />
           )}
         </div>

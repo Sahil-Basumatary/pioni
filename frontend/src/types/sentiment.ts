@@ -11,7 +11,7 @@ export interface Highlight {
 
 export interface FeedItem {
   id: string;
-  type: "news" | "reddit";
+  type: "news" | "reddit" | "x";
   title: string;
   source?: string;
   score?: number;
@@ -22,8 +22,10 @@ export interface SentimentData {
   ticker: string;
   sentiment: number;
   confidence: number;
+  asset_class?: string;
   n_news?: number;
   n_reddit?: number;
+  n_x?: number;
   sources?: Record<string, number>;
   confidence_drivers?: ConfidenceDrivers;
   computed_at?: string;
@@ -56,4 +58,22 @@ export interface DriverItem {
   source: string;
   score: number;
   ago: string;
+}
+
+export interface SentimentSignal {
+  ticker: string;
+  asset_class: string;
+  action: "BUY" | "SELL" | "HOLD" | "WATCH" | "BULLISH_WATCH" | "BEARISH_WATCH";
+  score: number;
+  confidence: number;
+  delta: number;
+  threshold: number;
+  reason: string;
+  generated_at: string;
+  inputs: {
+    sentiment: number;
+    previous_sentiment: number;
+    confidence: number;
+    sources: Record<string, number>;
+  };
 }

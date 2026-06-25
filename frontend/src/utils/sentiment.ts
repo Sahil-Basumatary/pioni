@@ -49,7 +49,7 @@ export const pickDrivers = ({ sentiment, feed }: PickDriversArgs): DriverItem[] 
       .slice(0, 4)
       .map((h, idx) => ({
         id: `hl-${idx}`,
-        type: h.source === "reddit" ? "reddit" : "news",
+        type: h.source === "reddit" ? "reddit" : h.source === "x" ? "x" : "news",
         title: h.text,
         source: h.source || "",
         score: h.score,
@@ -83,4 +83,20 @@ export const getSentimentLabel = (value: number): string => {
   if (value > 0.10) return "Positive";
   if (value < -0.10) return "Negative";
   return "Neutral";
+};
+
+export const getSignalLabel = (action: string | undefined): string => {
+  if (action === "BUY") return "Buy signal";
+  if (action === "SELL") return "Sell signal";
+  if (action === "BULLISH_WATCH") return "Bullish watch";
+  if (action === "BEARISH_WATCH") return "Bearish watch";
+  if (action === "WATCH") return "Watch only";
+  return "Hold";
+};
+
+export const getSignalTone = (action: string | undefined): string => {
+  if (action === "BUY" || action === "BULLISH_WATCH") return "positive";
+  if (action === "SELL" || action === "BEARISH_WATCH") return "negative";
+  if (action === "WATCH") return "caution";
+  return "neutral";
 };
