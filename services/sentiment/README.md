@@ -15,6 +15,7 @@ uvicorn sentiment.main:app --reload --port 8001
 - `/analyze/{ticker}` - sentiment analysis with scores, confidence, evidence
 - `/feed/{ticker}` - recent news, Reddit, and X items
 - `/history/{ticker}` - 7-day historical sentiment
+- `/signals/{ticker}` - sentiment spike trading signal
 - `/health`, `/health/live`, `/health/ready` - health checks
 
 Crypto symbols such as `BTC`, `BTCUSDT`, `ETH`, and `SOL` are normalized before provider queries so cache keys, evidence, and event channels stay canonical.
@@ -32,6 +33,9 @@ Crypto symbols such as `BTC`, `BTCUSDT`, `ETH`, and `SOL` are normalized before 
 | `X_BEARER_TOKEN` | No | Optional X API bearer token for crypto posts |
 | `REDIS_URL` | No | Redis connection for caching |
 | `SENTIMENT_PUBLISH_ENABLED` | No | Publish fresh sentiment events to Redis (default: `true`) |
+| `SENTIMENT_SPIKE_THRESHOLD` | No | Minimum score delta for BUY/SELL signals (default: `0.18`) |
+| `SENTIMENT_STRONG_THRESHOLD` | No | Strong static sentiment watch threshold (default: `0.35`) |
+| `SENTIMENT_MIN_SIGNAL_CONFIDENCE` | No | Minimum confidence for actionable signals (default: `0.45`) |
 
 *At least one data source (NewsAPI, Reddit, or X) must be configured for live mode.
 

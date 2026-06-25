@@ -6,6 +6,8 @@ import {
   dispersionLabel,
   getConfidenceLabel,
   getSentimentLabel,
+  getSignalLabel,
+  getSignalTone,
   pickDrivers,
 } from "./sentiment";
 
@@ -96,5 +98,15 @@ describe("sentiment utilities", () => {
     expect(getSentimentLabel(0.11)).toBe("Positive");
     expect(getSentimentLabel(-0.11)).toBe("Negative");
     expect(getSentimentLabel(0.1)).toBe("Neutral");
+  });
+
+  it("labels trading signal actions and tones", () => {
+    expect(getSignalLabel("BUY")).toBe("Buy signal");
+    expect(getSignalLabel("SELL")).toBe("Sell signal");
+    expect(getSignalLabel("BULLISH_WATCH")).toBe("Bullish watch");
+    expect(getSignalTone("BUY")).toBe("positive");
+    expect(getSignalTone("SELL")).toBe("negative");
+    expect(getSignalTone("WATCH")).toBe("caution");
+    expect(getSignalTone("HOLD")).toBe("neutral");
   });
 });
