@@ -12,6 +12,7 @@ from common import (
     dispose_engine,
     MarketSubscriber,
     RabbitMQManager,
+    instrument_app,
 )
 import portfolio.settings  # noqa: F401 — triggers dotenv load before anything reads env
 from portfolio.consumer import TradeConsumer
@@ -105,6 +106,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Pioni Portfolio Service", version="0.1.0", lifespan=lifespan)
+
+instrument_app(app, "portfolio")
 
 app.middleware("http")(attach_request_id)
 app.include_router(portfolio_router)

@@ -10,6 +10,7 @@ from common.cache import (
     publish_json,
 )
 from common.ratelimit import RateLimiter, create_rate_limit_middleware
+from common.metrics import instrument_app, render_metrics
 from common.pubsub import (
     MarketSubscriber,
     OrderSubscriber,
@@ -60,6 +61,8 @@ __all__ = [
     "publish_json",
     "RateLimiter",
     "create_rate_limit_middleware",
+    "instrument_app",
+    "render_metrics",
     "MarketSubscriber",
     "OrderSubscriber",
     "PortfolioSubscriber",

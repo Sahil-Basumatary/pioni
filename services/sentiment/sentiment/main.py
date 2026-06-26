@@ -2,7 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
-from common import setup_logging, attach_request_id, init_redis_pool, close_redis_pool
+from common import setup_logging, attach_request_id, init_redis_pool, close_redis_pool, instrument_app
 from sentiment.routes import router
 
 setup_logging()
@@ -17,6 +17,8 @@ async def lifespan(app: FastAPI):
     logger.info("sentiment service stopped")
 
 app = FastAPI(title="Pioni Sentiment Service", version="0.4.0", lifespan=lifespan)
+
+instrument_app(app, "sentiment")
 
 app.middleware("http")(attach_request_id)
 
