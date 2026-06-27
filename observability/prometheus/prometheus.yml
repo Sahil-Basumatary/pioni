@@ -1,0 +1,40 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# App services run on the host via uvicorn (compose only runs infra), so targets use
+# host.docker.internal. The compose file maps that name to the host gateway on Linux.
+scrape_configs:
+  - job_name: gateway
+    static_configs:
+      - targets: ["host.docker.internal:8000"]
+        labels:
+          service: gateway
+
+  - job_name: sentiment
+    static_configs:
+      - targets: ["host.docker.internal:8001"]
+        labels:
+          service: sentiment
+
+  - job_name: market-data
+    static_configs:
+      - targets: ["host.docker.internal:8002"]
+        labels:
+          service: market-data
+
+  - job_name: orders
+    static_configs:
+      - targets: ["host.docker.internal:8003"]
+        labels:
+          service: orders
+
+  - job_name: portfolio
+    static_configs:
+      - targets: ["host.docker.internal:8004"]
+        labels:
+          service: portfolio
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

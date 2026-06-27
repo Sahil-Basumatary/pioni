@@ -59,10 +59,50 @@ services:
     networks:
       - pioni-net
 
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: pioni-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=15d"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - pioni-prometheus:/prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - pioni-net
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: pioni-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - pioni-grafana:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - pioni-net
+
 volumes:
   pioni-pgdata:
   pioni-redis:
   pioni-rabbitmq:
+  pioni-prometheus:
+  pioni-grafana:
 
 networks:
   pioni-net:
