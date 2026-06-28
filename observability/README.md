@@ -28,6 +28,21 @@ Every service is instrumented through `common.instrument_app`, which exposes:
 Labels use the matched route template (`/portfolios/{portfolio_id}`), never the raw path,
 to keep Prometheus label cardinality bounded.
 
+### Domain metrics (orders service)
+
+Beyond the cross-cutting HTTP signals, the orders service emits trading-specific metrics
+from `orders.metrics`, recorded around the matching engine:
+
+- `orders_submitted_total{symbol,side,order_type,status}` — orders reaching the engine, by outcome
+- `trades_executed_total{symbol,side}` — fills produced (one per maker matched)
+- `trade_volume_base_total{symbol}` — executed quantity in the base asset
+- `trade_notional_total{symbol}` — executed notional in the quote asset (`quantity * price`)
+- `matching_engine_match_duration_seconds{symbol}` — engine latency histogram
+
+Latency is timed in the service layer around `engine.submit()` so the matching engine stays
+pure domain logic. `symbol` is a safe label here because the tradable universe is bounded;
+unbounded identifiers (order/portfolio IDs) are deliberately excluded.
+
 ## Dashboard panels
 
 The dashboard follows the RED method (Rate, Errors, Duration):
@@ -37,6 +52,14 @@ The dashboard follows the RED method (Rate, Errors, Duration):
 - Requests by status code
 - Latency percentiles p50/p95/p99
 - Error rate by service
+
+A **Trading Activity** section surfaces the domain metrics:
+
+- Orders/sec, trades/sec, matching p99, notional/sec (stats)
+- Orders by status
+- Trades by symbol
+- Matching engine latency percentiles p50/p95/p99
+- Executed volume (base) by symbol
 
 ## Scaling note
 
