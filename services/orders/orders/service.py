@@ -2,6 +2,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
 import uuid
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -25,6 +26,7 @@ from common import (
 )
 from orders.book_types import BookOrder, BookSnapshot, Fill, _FastResult
 from orders.engine import MatchingEngine
+from orders.metrics import record_submission
 from orders.events import (
     OrderAccepted,
     OrderFilled,
@@ -151,7 +153,9 @@ class OrderService:
         maker_updates: list[dict[str, Any]] = []
         async with self._get_lock(req.symbol):
             self._order_portfolios[order_id] = req.portfolio_id
+            match_start = time.perf_counter()
             result = self._get_engine(req.symbol).submit(book_order)
+            match_seconds = time.perf_counter() - match_start
             db_order.status = result.status
             if result.fills:
                 maker_updates = await self._process_fills(
@@ -165,6 +169,7 @@ class OrderService:
                 OrderStatus.FILLED, OrderStatus.REJECTED, OrderStatus.CANCELLED,
             ):
                 self._order_portfolios.pop(order_id, None)
+        record_submission(req, result, match_seconds)
         await session.flush()
         await session.refresh(db_order)
         filled_qty = db_order.filled_quantity
