@@ -11,6 +11,7 @@ from common.cache import (
 )
 from common.ratelimit import RateLimiter, create_rate_limit_middleware
 from common.metrics import instrument_app, render_metrics
+from common.tracing import instrument_app_tracing
 from common.pubsub import (
     MarketSubscriber,
     OrderSubscriber,
@@ -63,6 +64,7 @@ __all__ = [
     "create_rate_limit_middleware",
     "instrument_app",
     "render_metrics",
+    "instrument_app_tracing",
     "MarketSubscriber",
     "OrderSubscriber",
     "PortfolioSubscriber",

@@ -2,6 +2,7 @@ import time
 import logging
 from uuid import uuid4
 from fastapi import Request
+from common.tracing import tag_current_span
 
 logger = logging.getLogger(__name__)
 
@@ -9,6 +10,7 @@ logger = logging.getLogger(__name__)
 async def attach_request_id(request: Request, call_next):
     request_id = uuid4().hex[:12]
     request.state.request_id = request_id
+    tag_current_span(**{"request.id": request_id})
     start = time.perf_counter()
     response = await call_next(request)
     latency_ms = (time.perf_counter() - start) * 1000
