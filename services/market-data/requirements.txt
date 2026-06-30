@@ -6,3 +6,7 @@ python-dotenv>=1.2.0
 websockets>=13.0
 redis>=5.0.0
 certifi>=2024.0.0
+opentelemetry-sdk>=1.27.0
+opentelemetry-exporter-otlp-proto-http>=1.27.0
+opentelemetry-instrumentation-fastapi>=0.48b0
+opentelemetry-instrumentation-httpx>=0.48b0

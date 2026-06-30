@@ -11,6 +11,7 @@ from common import (
     dispose_engine,
     RabbitMQManager,
     instrument_app,
+    instrument_app_tracing,
 )
 import orders.settings as settings
 from orders.routes import router as orders_router
@@ -81,6 +82,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Pioni Orders Service", version="0.1.0", lifespan=lifespan)
 
 instrument_app(app, "orders")
+instrument_app_tracing(app, "orders")
 
 app.middleware("http")(attach_request_id)
 app.include_router(orders_router)

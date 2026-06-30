@@ -12,7 +12,7 @@ from common import (
     setup_logging, attach_request_id, init_redis_pool,
     close_redis_pool, MarketSubscriber, OrderSubscriber, PortfolioSubscriber,
 )
-from common import create_rate_limit_middleware, instrument_app
+from common import create_rate_limit_middleware, instrument_app, instrument_app_tracing
 from gateway.routes import router, close_http_client
 from gateway.market_routes import market_router, close_market_client
 from gateway.order_routes import order_router, orderbook_router, close_order_client
@@ -144,6 +144,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Pioni API", version="0.4.0", lifespan=lifespan)
 
 instrument_app(app, "gateway")
+instrument_app_tracing(app, "gateway")
 
 app.middleware("http")(attach_request_id)
 

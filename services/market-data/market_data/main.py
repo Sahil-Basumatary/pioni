@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 import redis.asyncio as aioredis
-from common import setup_logging, attach_request_id, instrument_app
+from common import setup_logging, attach_request_id, instrument_app, instrument_app_tracing
 from market_data.binance import BinanceWSClient
 from market_data.publisher import MarketPublisher
 from market_data.routes import router, set_publisher
@@ -86,6 +86,7 @@ app = FastAPI(
     title="Pioni Market Data Service", version="0.2.0", lifespan=lifespan
 )
 instrument_app(app, "market-data")
+instrument_app_tracing(app, "market-data")
 app.middleware("http")(attach_request_id)
 app.include_router(router)
 
