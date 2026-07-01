@@ -27,6 +27,11 @@ services:
           name: pioni-market-data
           type: pserv
           property: hostport
+      - key: ORDERS_SERVICE_HOST
+        fromService:
+          name: pioni-orders
+          type: pserv
+          property: hostport
       - key: DATABASE_URL
         fromDatabase:
           name: pioni-db
@@ -71,6 +76,38 @@ services:
         value: BTCUSDT,ETHUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT
       - key: KLINE_INTERVALS
         value: 1m,5m,15m,1h,4h,1d
+
+  - type: pserv
+    name: pioni-orders
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./services/orders/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: REDIS_URL
+        sync: false
+      - key: RABBITMQ_URL
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pioni-db
+          property: connectionString
+
+  - type: pserv
+    name: pioni-portfolio
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./services/portfolio/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: REDIS_URL
+        sync: false
+      - key: RABBITMQ_URL
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pioni-db
+          property: connectionString
 
 databases:
   - name: pioni-db
