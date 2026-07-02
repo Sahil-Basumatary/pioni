@@ -54,3 +54,18 @@ def orders_service_url() -> str:
         return f"http://{hostport}"
     return os.getenv("ORDERS_SERVICE_URL", "http://localhost:8003")
 
+def clerk_issuer() -> str | None:
+    issuer = os.getenv("CLERK_ISSUER", "").strip()
+    return issuer or None
+
+def clerk_jwks_url() -> str | None:
+    url = os.getenv("CLERK_JWKS_URL", "").strip()
+    if url:
+        return url
+    issuer = clerk_issuer()
+    return f"{issuer.rstrip('/')}/.well-known/jwks.json" if issuer else None
+
+def clerk_authorized_parties() -> list[str]:
+    raw = os.getenv("CLERK_AUTHORIZED_PARTIES", "").strip()
+    return [p.strip() for p in raw.split(",") if p.strip()]
+

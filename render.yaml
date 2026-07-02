@@ -9,6 +9,10 @@ services:
     envVars:
       - key: CORS_ORIGINS
         sync: false
+      - key: CLERK_ISSUER
+        sync: false
+      - key: CLERK_AUTHORIZED_PARTIES
+        sync: false
       - key: REDIS_URL
         sync: false
       - key: MOCK

@@ -13,6 +13,7 @@ from common import (
     close_redis_pool, MarketSubscriber, OrderSubscriber, PortfolioSubscriber,
 )
 from common import create_rate_limit_middleware, instrument_app, instrument_app_tracing
+from gateway.auth import auth_router
 from gateway.routes import router, close_http_client
 from gateway.market_routes import market_router, close_market_client
 from gateway.order_routes import order_router, orderbook_router, close_order_client
@@ -161,6 +162,7 @@ app.add_middleware(
 )
 app.add_middleware(GZipMiddleware, minimum_size=500)
 
+app.include_router(auth_router)
 app.include_router(router)
 app.include_router(market_router)
 app.include_router(order_router)
