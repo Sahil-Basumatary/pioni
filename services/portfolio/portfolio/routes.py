@@ -2,7 +2,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from common import (
@@ -14,6 +14,7 @@ from common import (
 )
 from portfolio.charts import SnapshotValue, build_daily_pnl_chart
 from portfolio.price_cache import PriceCache
+from portfolio.provisioning import Identity, get_or_create_portfolio
 from portfolio.repository import PortfolioRepository
 from portfolio.schemas import (
     DailyPnlPointResponse,
@@ -22,6 +23,7 @@ from portfolio.schemas import (
     PositionResponse,
     TradeResponse,
 )
+from portfolio.settings import starting_balance
 from portfolio.valuation import (
     PositionValuation,
     total_unrealized_pnl,
@@ -42,6 +44,30 @@ def get_price_cache(request: Request) -> PriceCache:
     # empty one which makes /summary degrade gracefully to cost-basis valuations.
     cache = getattr(request.app.state, "price_cache", None)
     return cache if cache is not None else PriceCache()
+
+
+def current_identity(
+    x_clerk_id: str | None = Header(default=None),
+    x_user_email: str | None = Header(default=None),
+    x_user_name: str | None = Header(default=None),
+) -> Identity:
+    # The gateway performs edge auth and forwards the verified identity over the private
+    # network. This service is never publicly exposed, so it trusts these headers.
+    if not x_clerk_id:
+        raise HTTPException(
+            status_code=401,
+            detail={"error": "UNAUTHENTICATED", "message": "missing identity"},
+        )
+    return Identity(clerk_id=x_clerk_id, email=x_user_email, username=x_user_name)
+
+
+@router.get("/me/portfolio", response_model=PortfolioResponse)
+async def get_my_portfolio(
+    identity: Identity = Depends(current_identity),
+    session: AsyncSession = Depends(get_db),
+) -> PortfolioResponse:
+    portfolio = await get_or_create_portfolio(session, identity, starting_balance())
+    return PortfolioResponse.model_validate(portfolio)
 
 
 def _not_found(portfolio_id: uuid.UUID) -> HTTPException:
