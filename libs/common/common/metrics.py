@@ -4,14 +4,16 @@ from collections.abc import Awaitable, Callable
 
 from fastapi import FastAPI, Request, Response
 from prometheus_client import (
-    CONTENT_TYPE_LATEST,
+    REGISTRY,
     CollectorRegistry,
     Counter,
     Histogram,
-    generate_latest,
     multiprocess,
 )
+from prometheus_client.exposition import choose_encoder
 from starlette.responses import PlainTextResponse
+
+from common.tracing import current_trace_ids
 
 METRICS_PATH = "/metrics"
 UNMATCHED_ROUTE = "__unmatched__"
@@ -39,6 +41,15 @@ def _route_template(request: Request) -> str:
     return UNMATCHED_ROUTE
 
 
+def trace_exemplar() -> dict[str, str] | None:
+    if os.getenv("PROMETHEUS_MULTIPROC_DIR"):
+        return None
+    ids = current_trace_ids()
+    if ids is None:
+        return None
+    return {"trace_id": ids[0]}
+
+
 def create_metrics_middleware(
     service_name: str,
 ) -> Callable[[Request, Callable[[Request], Awaitable[Response]]], Awaitable[Response]]:
@@ -56,28 +67,30 @@ def create_metrics_middleware(
         ).inc()
         HTTP_REQUEST_DURATION_SECONDS.labels(
             service_name, request.method, path
-        ).observe(duration)
+        ).observe(duration, exemplar=trace_exemplar())
         return response
 
     return metrics_middleware
 
 
-def render_metrics() -> Response:
+def render_metrics(accept_header: str = "") -> Response:
     # With multiple workers each process writes samples into PROMETHEUS_MULTIPROC_DIR.
-    # The scrape must merge them so /metrics reflects the whole service, not one worker.
+    # The scrape must merge them so /metrics reflects the whole service
     multiproc_dir = os.getenv("PROMETHEUS_MULTIPROC_DIR")
     if multiproc_dir:
         registry = CollectorRegistry()
         multiprocess.MultiProcessCollector(registry)
-        payload = generate_latest(registry)
     else:
-        payload = generate_latest()
-    return PlainTextResponse(payload, media_type=CONTENT_TYPE_LATEST)
+        registry = REGISTRY
+    # Content negotiation hands the OpenMetrics encoder to scrapers that ask for it,
+    # which is the only exposition format that carries exemplars.
+    encoder, content_type = choose_encoder(accept_header)
+    return PlainTextResponse(encoder(registry), media_type=content_type)
 
 
 def instrument_app(app: FastAPI, service_name: str) -> None:
     app.middleware("http")(create_metrics_middleware(service_name))
 
     @app.get(METRICS_PATH, include_in_schema=False)
-    async def metrics() -> Response:
-        return render_metrics()
+    async def metrics(request: Request) -> Response:
+        return render_metrics(request.headers.get("accept", ""))
