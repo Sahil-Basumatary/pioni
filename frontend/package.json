@@ -24,6 +24,7 @@
     "perf:tick-to-paint": "npm run build && start-server-and-test \"vite preview --host 127.0.0.1\" http://127.0.0.1:4173 \"cypress run --spec cypress/e2e/perf/tick-to-paint.cy.ts --config baseUrl=http://127.0.0.1:4173\""
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.61.8",
     "@reduxjs/toolkit": "^2.12.0",
     "lightweight-charts": "^5.1.0",
     "react": "^19.1.1",

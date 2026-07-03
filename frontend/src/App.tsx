@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, NavLink } from "react-router-dom";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
 import "./App.css";
 
 const SentimentPage = lazy(() => import("./pages/SentimentPage"));
@@ -60,6 +61,18 @@ function App() {
                   {label}
                 </NavLink>
               ))}
+              <div className="ml-2 flex items-center">
+                <SignedOut>
+                  <SignInButton mode="modal">
+                    <button className="px-3 py-1.5 rounded-lg text-sm font-medium bg-[var(--accent)] text-white">
+                      Sign in
+                    </button>
+                  </SignInButton>
+                </SignedOut>
+                <SignedIn>
+                  <UserButton afterSignOutUrl="/" />
+                </SignedIn>
+              </div>
             </div>
           </div>
         </nav>

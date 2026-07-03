@@ -26,6 +26,7 @@ import {
   scheduleTradePaintMeasurement,
 } from "../features/market/marketLatency";
 import { publishLiveTrade } from "../features/market/liveMarketStore";
+import PortfolioPanel from "../features/portfolio/PortfolioPanel";
 import type { Kline, Trade } from "../types/market";
 
 const STATUS_COLORS: Record<ConnectionStatus, string> = {
@@ -133,6 +134,7 @@ export default function TradingPage() {
           </div>
         </div>
         <PriceTicker symbol={symbol} />
+        <PortfolioPanel />
       </div>
       <div className="card-premium flex-1 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] backdrop-blur-xl p-4">
         <CandlestickChart

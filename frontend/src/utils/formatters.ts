@@ -13,6 +13,17 @@ export const cacheLabel = (status: string | null | undefined): string => {
   }
 };
 
+const USD = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 2,
+});
+
+export const formatUsd = (n: number | string | null | undefined): string => {
+  const num = Number(n);
+  return Number.isFinite(num) ? USD.format(num) : "—";
+};
+
 export const formatSigned = (n: number | string, decimals = 2): string => {
   const num = Number(n);
   if (!Number.isFinite(num)) return "—";
