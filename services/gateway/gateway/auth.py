@@ -22,6 +22,7 @@ class AuthContext:
     session_id: str | None = None
     email: str | None = None
     username: str | None = None
+    portfolio_id: str | None = None
 
 
 def _get_jwks_client() -> PyJWKClient | None:
@@ -31,8 +32,6 @@ def _get_jwks_client() -> PyJWKClient | None:
     url = clerk_jwks_url()
     if not url:
         return None
-    # PyJWKClient caches keys in-process and re-fetches on an unknown key id, so Clerk's
-    # signing-key rotation is handled without a redeploy.
     _jwks_client = PyJWKClient(url, cache_keys=True)
     return _jwks_client
 
@@ -85,21 +84,17 @@ def verify_token(token: str) -> AuthContext:
     return AuthContext(
         clerk_id=claims["sub"],
         session_id=claims.get("sid"),
-        # Populated only when the Clerk session token is customized to include these claims;
-        # absent claims fall back to placeholders during portfolio provisioning.
         email=claims.get("email"),
         username=claims.get("username"),
+        portfolio_id=claims.get("portfolio_id"),
     )
-
 
 async def require_auth(request: Request) -> AuthContext:
     ctx = verify_token(_bearer_token(request))
     request.state.auth = ctx
     return ctx
 
-
 auth_router = APIRouter(tags=["auth"])
-
 
 @auth_router.get("/me")
 async def me(ctx: AuthContext = Depends(require_auth)) -> dict:
@@ -108,4 +103,5 @@ async def me(ctx: AuthContext = Depends(require_auth)) -> dict:
         "session_id": ctx.session_id,
         "email": ctx.email,
         "username": ctx.username,
+        "portfolio_id": ctx.portfolio_id,
     }

@@ -14,6 +14,7 @@ from common import (
 )
 from common import create_rate_limit_middleware, instrument_app, instrument_app_tracing
 from gateway.auth import auth_router
+from gateway.clerk_backend import close_clerk_client
 from gateway.me_routes import me_router, close_portfolio_client
 from gateway.routes import router, close_http_client
 from gateway.market_routes import market_router, close_market_client
@@ -141,6 +142,7 @@ async def lifespan(app: FastAPI):
     await close_market_client()
     await close_order_client()
     await close_portfolio_client()
+    await close_clerk_client()
     await _close_pubsub()
     await close_redis_pool()
 

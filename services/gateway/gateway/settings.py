@@ -60,6 +60,23 @@ def portfolio_service_url() -> str:
         return f"http://{hostport}"
     return os.getenv("PORTFOLIO_SERVICE_URL", "http://localhost:8004")
 
+def portfolio_cache_ttl() -> float:
+    return float(os.getenv("PORTFOLIO_ID_CACHE_TTL_SECONDS", "300"))
+
+def portfolio_cache_redis_ttl() -> int:
+    return int(os.getenv("PORTFOLIO_ID_REDIS_TTL_SECONDS", "3600"))
+
+def clerk_secret_key() -> str | None:
+    key = os.getenv("CLERK_SECRET_KEY", "").strip()
+    return key or None
+
+def clerk_metadata_sync_enabled() -> bool:
+    # The write-back to Clerk is what promotes a user into the zero-hop tier, but it only works
+    # with a backend secret; disabled automatically when the secret is absent (e.g. local dev).
+    if os.getenv("CLERK_METADATA_SYNC_ENABLED", "").strip().lower() in {"0", "false", "no"}:
+        return False
+    return clerk_secret_key() is not None
+
 def clerk_issuer() -> str | None:
     issuer = os.getenv("CLERK_ISSUER", "").strip()
     return issuer or None

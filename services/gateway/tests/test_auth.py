@@ -60,6 +60,11 @@ def test_verify_extracts_email_and_username(rsa_key):
     assert ctx.username == "trader"
 
 
+def test_verify_extracts_portfolio_id_claim(rsa_key):
+    ctx = verify_token(_make_token(rsa_key, portfolio_id="P_JWT"))
+    assert ctx.portfolio_id == "P_JWT"
+
+
 def test_expired_token_rejected(rsa_key):
     with pytest.raises(HTTPException) as exc:
         verify_token(_make_token(rsa_key, exp=int(time.time()) - 10))
