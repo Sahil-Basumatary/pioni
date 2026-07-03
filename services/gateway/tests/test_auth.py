@@ -54,6 +54,12 @@ def test_verify_valid_token(rsa_key):
     assert ctx.session_id == "sess_abc"
 
 
+def test_verify_extracts_email_and_username(rsa_key):
+    ctx = verify_token(_make_token(rsa_key, email="e@x.com", username="trader"))
+    assert ctx.email == "e@x.com"
+    assert ctx.username == "trader"
+
+
 def test_expired_token_rejected(rsa_key):
     with pytest.raises(HTTPException) as exc:
         verify_token(_make_token(rsa_key, exp=int(time.time()) - 10))

@@ -54,6 +54,12 @@ def orders_service_url() -> str:
         return f"http://{hostport}"
     return os.getenv("ORDERS_SERVICE_URL", "http://localhost:8003")
 
+def portfolio_service_url() -> str:
+    hostport = os.getenv("PORTFOLIO_SERVICE_HOST")
+    if hostport:
+        return f"http://{hostport}"
+    return os.getenv("PORTFOLIO_SERVICE_URL", "http://localhost:8004")
+
 def clerk_issuer() -> str | None:
     issuer = os.getenv("CLERK_ISSUER", "").strip()
     return issuer or None

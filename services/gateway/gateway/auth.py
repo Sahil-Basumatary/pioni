@@ -20,6 +20,8 @@ _jwks_client: PyJWKClient | None = None
 class AuthContext:
     clerk_id: str
     session_id: str | None = None
+    email: str | None = None
+    username: str | None = None
 
 
 def _get_jwks_client() -> PyJWKClient | None:
@@ -80,7 +82,14 @@ def verify_token(token: str) -> AuthContext:
     if parties and claims.get("azp") not in parties:
         raise _unauthorized("untrusted authorized party")
 
-    return AuthContext(clerk_id=claims["sub"], session_id=claims.get("sid"))
+    return AuthContext(
+        clerk_id=claims["sub"],
+        session_id=claims.get("sid"),
+        # Populated only when the Clerk session token is customized to include these claims;
+        # absent claims fall back to placeholders during portfolio provisioning.
+        email=claims.get("email"),
+        username=claims.get("username"),
+    )
 
 
 async def require_auth(request: Request) -> AuthContext:
@@ -94,4 +103,9 @@ auth_router = APIRouter(tags=["auth"])
 
 @auth_router.get("/me")
 async def me(ctx: AuthContext = Depends(require_auth)) -> dict:
-    return {"clerk_id": ctx.clerk_id, "session_id": ctx.session_id}
+    return {
+        "clerk_id": ctx.clerk_id,
+        "session_id": ctx.session_id,
+        "email": ctx.email,
+        "username": ctx.username,
+    }
