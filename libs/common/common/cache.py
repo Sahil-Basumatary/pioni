@@ -58,6 +58,25 @@ async def ping_redis() -> tuple[bool, float | None, str | None]:
         return False, None, str(e)
 
 
+async def redis_get(key: str) -> str | None:
+    if not _redis_instance:
+        return None
+    try:
+        return await _redis_instance.get(key)
+    except Exception as e:
+        logger.warning("Redis GET failed", extra={"key": key, "error": str(e)})
+        return None
+
+
+async def redis_set(key: str, value: str, ttl_seconds: int) -> None:
+    if not _redis_instance:
+        return
+    try:
+        await _redis_instance.set(key, value, ex=ttl_seconds)
+    except Exception as e:
+        logger.warning("Redis SET failed", extra={"key": key, "error": str(e)})
+
+
 async def publish_json(channel: str, payload: dict[str, Any]) -> bool:
     if not _redis_instance:
         return False

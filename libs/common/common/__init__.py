@@ -8,9 +8,11 @@ from common.cache import (
     close_redis_pool,
     ping_redis,
     publish_json,
+    redis_get,
+    redis_set,
 )
 from common.ratelimit import RateLimiter, create_rate_limit_middleware
-from common.metrics import instrument_app, render_metrics
+from common.metrics import instrument_app, render_metrics, trace_exemplar
 from common.tracing import instrument_app_tracing
 from common.pubsub import (
     MarketSubscriber,
@@ -60,10 +62,13 @@ __all__ = [
     "close_redis_pool",
     "ping_redis",
     "publish_json",
+    "redis_get",
+    "redis_set",
     "RateLimiter",
     "create_rate_limit_middleware",
     "instrument_app",
     "render_metrics",
+    "trace_exemplar",
     "instrument_app_tracing",
     "MarketSubscriber",
     "OrderSubscriber",
