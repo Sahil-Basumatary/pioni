@@ -87,10 +87,35 @@ The three signals are joined so you can pivot between them:
 So a log line points at its trace, a trace points back at the request ID, and metrics and
 traces share the same service boundaries.
 
+### Exemplars (metrics → traces)
+
+Latency histograms attach the active `trace_id` to each observation as an exemplar, so a
+spike on a Grafana latency panel is a clickable jump to the exact slow trace in Jaeger.
+
+The wiring:
+
+- services attach `trace_exemplar()` to `http_request_duration_seconds` and
+  `matching_engine_match_duration_seconds`
+- `/metrics` serves OpenMetrics (the only format that carries exemplars) when the scraper
+  asks for it; plain Prometheus text is still returned otherwise
+- Prometheus runs with `--enable-feature=exemplar-storage`
+- Grafana's Prometheus datasource maps the `trace_id` exemplar label to the Jaeger
+  datasource, and the latency panels query exemplars (`"exemplar": true`)
+
+Exemplars require single-process mode; under `PROMETHEUS_MULTIPROC_DIR` they are skipped
+(the multiprocess collector cannot carry them).
+
+The exemplar link currently opens Jaeger directly through `JAEGER_BROWSE_URL`, which works
+for anonymous Grafana viewers because the browser reaches Jaeger itself. Once Grafana has
+authenticated users with Explore access, the stronger pattern is to point
+`exemplarTraceIdDestinations` at the Jaeger datasource (`datasourceUid`) instead of a URL,
+so Grafana proxies the trace lookup server-side and the browser never needs network access
+to Jaeger.
+
 ## Scaling note
 
 This stack is single-node by design. The instrumentation is unchanged when swapping the
-storage layer for Thanos, Mimir, or a managed backend, and when moving target discovery
+storage layer for Thanos and when moving target discovery
 to Kubernetes service discovery in a cluster deployment.
 
 ## Multiple workers

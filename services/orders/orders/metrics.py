@@ -1,5 +1,6 @@
 from __future__ import annotations
 from prometheus_client import Counter, Histogram
+from common import trace_exemplar
 from orders.book_types import _FastResult
 from orders.schemas import SubmitOrderRequest
 
@@ -43,7 +44,9 @@ MATCH_DURATION_SECONDS = Histogram(
 def record_submission(
     req: SubmitOrderRequest, result: _FastResult, match_seconds: float,
 ) -> None:
-    MATCH_DURATION_SECONDS.labels(req.symbol).observe(match_seconds)
+    MATCH_DURATION_SECONDS.labels(req.symbol).observe(
+        match_seconds, exemplar=trace_exemplar()
+    )
     ORDERS_SUBMITTED_TOTAL.labels(
         req.symbol, req.side.value, req.order_type.value, result.status.value,
     ).inc()

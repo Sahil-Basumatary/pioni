@@ -222,19 +222,22 @@
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "pioniprom" },
           "expr": "histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
-          "legendFormat": "p50"
+          "legendFormat": "p50",
+          "exemplar": true
         },
         {
           "refId": "B",
           "datasource": { "type": "prometheus", "uid": "pioniprom" },
           "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
-          "legendFormat": "p95"
+          "legendFormat": "p95",
+          "exemplar": true
         },
         {
           "refId": "C",
           "datasource": { "type": "prometheus", "uid": "pioniprom" },
           "expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
-          "legendFormat": "p99"
+          "legendFormat": "p99",
+          "exemplar": true
         }
       ]
     },
@@ -461,19 +464,22 @@
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "pioniprom" },
           "expr": "histogram_quantile(0.50, sum by (le) (rate(matching_engine_match_duration_seconds_bucket[5m])))",
-          "legendFormat": "p50"
+          "legendFormat": "p50",
+          "exemplar": true
         },
         {
           "refId": "B",
           "datasource": { "type": "prometheus", "uid": "pioniprom" },
           "expr": "histogram_quantile(0.95, sum by (le) (rate(matching_engine_match_duration_seconds_bucket[5m])))",
-          "legendFormat": "p95"
+          "legendFormat": "p95",
+          "exemplar": true
         },
         {
           "refId": "C",
           "datasource": { "type": "prometheus", "uid": "pioniprom" },
           "expr": "histogram_quantile(0.99, sum by (le) (rate(matching_engine_match_duration_seconds_bucket[5m])))",
-          "legendFormat": "p99"
+          "legendFormat": "p99",
+          "exemplar": true
         }
       ]
     },
