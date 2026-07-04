@@ -1,7 +1,9 @@
 import logging
 import uuid
 import httpx
-from fastapi import APIRouter, Query, Request, HTTPException
+from fastapi import APIRouter, Depends, Query, Request, HTTPException
+from gateway.auth import AuthContext, require_auth
+from gateway.me_routes import resolve_portfolio_id
 from gateway.settings import orders_service_url
 
 logger = logging.getLogger(__name__)
@@ -44,9 +46,12 @@ def _service_unavailable() -> HTTPException:
 
 
 @order_router.post("", status_code=201)
-async def submit_order(request: Request):
+async def submit_order(request: Request, ctx: AuthContext = Depends(require_auth)):
     client = await _get_client()
     body = await request.json()
+    # Override any client-supplied portfolio_id with the caller's own, resolved from the
+    # verified identity — a user can never submit an order against another portfolio.
+    body["portfolio_id"] = await resolve_portfolio_id(ctx)
     try:
         resp = await client.post("/orders", json=body)
         return await _proxy_response(resp)
@@ -58,13 +63,14 @@ async def submit_order(request: Request):
 @order_router.delete("/{order_id}")
 async def cancel_order(
     order_id: uuid.UUID,
-    portfolio_id: uuid.UUID = Query(...),
+    ctx: AuthContext = Depends(require_auth),
 ):
     client = await _get_client()
+    portfolio_id = await resolve_portfolio_id(ctx)
     try:
         resp = await client.delete(
             f"/orders/{order_id}",
-            params={"portfolio_id": str(portfolio_id)},
+            params={"portfolio_id": portfolio_id},
         )
         return await _proxy_response(resp)
     except httpx.RequestError as e:
@@ -75,13 +81,14 @@ async def cancel_order(
 @order_router.get("/{order_id}")
 async def get_order(
     order_id: uuid.UUID,
-    portfolio_id: uuid.UUID = Query(...),
+    ctx: AuthContext = Depends(require_auth),
 ):
     client = await _get_client()
+    portfolio_id = await resolve_portfolio_id(ctx)
     try:
         resp = await client.get(
             f"/orders/{order_id}",
-            params={"portfolio_id": str(portfolio_id)},
+            params={"portfolio_id": portfolio_id},
         )
         return await _proxy_response(resp)
     except httpx.RequestError as e:
@@ -91,14 +98,18 @@ async def get_order(
 
 @order_router.get("")
 async def list_orders(
-    portfolio_id: uuid.UUID = Query(...),
+    ctx: AuthContext = Depends(require_auth),
     symbol: str | None = Query(None),
     status: str | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
 ):
     client = await _get_client()
-    params: dict = {"portfolio_id": str(portfolio_id), "limit": limit, "offset": offset}
+    params: dict = {
+        "portfolio_id": await resolve_portfolio_id(ctx),
+        "limit": limit,
+        "offset": offset,
+    }
     if symbol:
         params["symbol"] = symbol
     if status:
