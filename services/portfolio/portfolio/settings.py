@@ -13,4 +13,4 @@ def redis_url() -> str | None:
 
 
 def starting_balance() -> Decimal:
-    return Decimal(os.getenv("PORTFOLIO_STARTING_BALANCE", "100000"))
+    return Decimal(os.getenv("PORTFOLIO_STARTING_BALANCE", "10000"))
