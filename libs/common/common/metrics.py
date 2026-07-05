@@ -1,6 +1,5 @@
 import os
 import time
-from collections.abc import Awaitable, Callable
 
 from fastapi import FastAPI, Request, Response
 from prometheus_client import (
@@ -12,6 +11,7 @@ from prometheus_client import (
 )
 from prometheus_client.exposition import choose_encoder
 from starlette.responses import PlainTextResponse
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from common.tracing import current_trace_ids
 
@@ -32,10 +32,11 @@ HTTP_REQUEST_DURATION_SECONDS = Histogram(
 )
 
 
-def _route_template(request: Request) -> str:
+def _route_template(scope: Scope) -> str:
     # Label on the matched route template (/portfolios/{portfolio_id}), never the raw path.
-    # Raw paths carry IDs and would give Prometheus unbounded label cardinality.
-    route = request.scope.get("route")
+    # Raw paths carry IDs and would give Prometheus unbounded label cardinality. The route is
+    # populated by the router while handling, so this is read after the inner app has run.
+    route = scope.get("route")
     if route is not None:
         return getattr(route, "path", UNMATCHED_ROUTE)
     return UNMATCHED_ROUTE
@@ -50,27 +51,39 @@ def trace_exemplar() -> dict[str, str] | None:
     return {"trace_id": ids[0]}
 
 
-def create_metrics_middleware(
-    service_name: str,
-) -> Callable[[Request, Callable[[Request], Awaitable[Response]]], Awaitable[Response]]:
-    async def metrics_middleware(
-        request: Request, call_next: Callable[[Request], Awaitable[Response]]
-    ) -> Response:
+class MetricsMiddleware:
+    # Pure ASGI to keep the RED-metrics recording off the BaseHTTPMiddleware slow path. Times the
+    # inner app, captures the response status from the ASGI start message, and labels on the matched
+    # route template resolved after the router has run.
+    def __init__(self, app: ASGIApp, service_name: str) -> None:
+        self.app = app
+        self.service_name = service_name
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
         start = time.perf_counter()
-        response = await call_next(request)
+        status_code = 0
+
+        async def send_wrapper(message: Message) -> None:
+            nonlocal status_code
+            if message["type"] == "http.response.start":
+                status_code = message["status"]
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
         duration = time.perf_counter() - start
-        path = _route_template(request)
+        path = _route_template(scope)
         if path == METRICS_PATH:
-            return response
+            return
+        method = scope["method"]
         HTTP_REQUESTS_TOTAL.labels(
-            service_name, request.method, path, str(response.status_code)
+            self.service_name, method, path, str(status_code)
         ).inc()
         HTTP_REQUEST_DURATION_SECONDS.labels(
-            service_name, request.method, path
+            self.service_name, method, path
         ).observe(duration, exemplar=trace_exemplar())
-        return response
-
-    return metrics_middleware
 
 
 def render_metrics(accept_header: str = "") -> Response:
@@ -89,7 +102,7 @@ def render_metrics(accept_header: str = "") -> Response:
 
 
 def instrument_app(app: FastAPI, service_name: str) -> None:
-    app.middleware("http")(create_metrics_middleware(service_name))
+    app.add_middleware(MetricsMiddleware, service_name=service_name)
 
     @app.get(METRICS_PATH, include_in_schema=False)
     async def metrics(request: Request) -> Response:

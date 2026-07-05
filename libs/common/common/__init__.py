@@ -1,5 +1,5 @@
 from common.logging import setup_logging, JSONFormatter
-from common.middleware import attach_request_id
+from common.middleware import RequestIdMiddleware
 from common.errors import raise_api_error
 from common.cache import (
     TTLCache,
@@ -11,7 +11,7 @@ from common.cache import (
     redis_get,
     redis_set,
 )
-from common.ratelimit import RateLimiter, create_rate_limit_middleware
+from common.ratelimit import RateLimiter, RateLimitMiddleware
 from common.metrics import instrument_app, render_metrics, trace_exemplar
 from common.tracing import instrument_app_tracing
 from common.pubsub import (
@@ -54,7 +54,7 @@ from common.trading import estimate_required_cash, held_quantity
 __all__ = [
     "setup_logging",
     "JSONFormatter",
-    "attach_request_id",
+    "RequestIdMiddleware",
     "raise_api_error",
     "TTLCache",
     "CacheEntry",
@@ -65,7 +65,7 @@ __all__ = [
     "redis_get",
     "redis_set",
     "RateLimiter",
-    "create_rate_limit_middleware",
+    "RateLimitMiddleware",
     "instrument_app",
     "render_metrics",
     "trace_exemplar",

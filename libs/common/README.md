@@ -24,8 +24,8 @@ pip install -e libs/common
 from common.cache import TTLCache, init_redis_pool, close_redis_pool
 from common.errors import raise_api_error
 from common.logging import setup_logging
-from common.middleware import attach_request_id
-from common.ratelimit import RateLimiter, create_rate_limit_middleware
+from common.middleware import RequestIdMiddleware
+from common.ratelimit import RateLimiter, RateLimitMiddleware
 ```
 
 ## Design

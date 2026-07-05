@@ -2,8 +2,9 @@ import os
 import time
 from collections import deque
 from typing import Callable
-from fastapi import Request
+from starlette.datastructures import Headers
 from starlette.responses import JSONResponse
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 
 class RateLimiter:
@@ -40,12 +41,8 @@ def _rate_limit_enabled() -> bool:
     return os.getenv("RATE_LIMIT_ENABLED", "true").lower() == "true"
 
 
-def _cors_headers_for(request: Request, get_cors_origins: Callable[[], list[str]]) -> dict:
-    origin = request.headers.get("origin")
-    if not origin:
-        return {}
-    allowed = get_cors_origins()
-    if origin not in allowed:
+def _cors_headers_for(origin: str | None, get_cors_origins: Callable[[], list[str]]) -> dict:
+    if not origin or origin not in get_cors_origins():
         return {}
     return {
         "Access-Control-Allow-Origin": origin,
@@ -56,32 +53,41 @@ def _cors_headers_for(request: Request, get_cors_origins: Callable[[], list[str]
     }
 
 
-def create_rate_limit_middleware(
-    get_cors_origins: Callable[[], list[str]],
-    max_requests: int | None = None,
-    window_seconds: int | None = None,
-):
-    _max = max_requests or int(os.getenv("RATE_LIMIT_MAX_REQUESTS", os.getenv("RATE_LIMIT_MAX", "30")))
-    _window = window_seconds or int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
-    limiter = RateLimiter(max_requests=_max, window_seconds=_window)
-
-    async def rate_limit_middleware(request: Request, call_next):
-        if request.method == "OPTIONS":
-            return await call_next(request)
-        if not _rate_limit_enabled():
-            return await call_next(request)
-        ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (
-            request.client.host if request.client else "unknown"
+class RateLimitMiddleware:
+    # Pure ASGI so the allow path (the overwhelming majority of requests) is a dict lookup and a
+    # deque trim with no BaseHTTPMiddleware wrapping. Only the rare 429 path builds a response.
+    def __init__(
+        self,
+        app: ASGIApp,
+        get_cors_origins: Callable[[], list[str]],
+        max_requests: int | None = None,
+        window_seconds: int | None = None,
+    ) -> None:
+        self.app = app
+        self._get_cors_origins = get_cors_origins
+        _max = max_requests or int(
+            os.getenv("RATE_LIMIT_MAX_REQUESTS", os.getenv("RATE_LIMIT_MAX", "30"))
         )
-        key = f"{ip}:{request.url.path}"
-        if not limiter.allow(key):
-            request_id = getattr(request.state, "request_id", None)
-            headers = _cors_headers_for(request, get_cors_origins)
-            return JSONResponse(
-                status_code=429,
-                content={"error": "RATE_LIMIT", "message": "Too many requests.", "request_id": request_id},
-                headers=headers,
-            )
-        return await call_next(request)
+        _window = window_seconds or int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
+        self._limiter = RateLimiter(max_requests=_max, window_seconds=_window)
 
-    return rate_limit_middleware
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http" or scope["method"] == "OPTIONS" or not _rate_limit_enabled():
+            await self.app(scope, receive, send)
+            return
+        headers = Headers(scope=scope)
+        xff = headers.get("x-forwarded-for", "")
+        ip = xff.split(",")[0].strip() if xff else (
+            (scope.get("client") or ("unknown",))[0]
+        )
+        key = f"{ip}:{scope['path']}"
+        if self._limiter.allow(key):
+            await self.app(scope, receive, send)
+            return
+        request_id = scope.get("state", {}).get("request_id")
+        response = JSONResponse(
+            status_code=429,
+            content={"error": "RATE_LIMIT", "message": "Too many requests.", "request_id": request_id},
+            headers=_cors_headers_for(headers.get("origin"), self._get_cors_origins),
+        )
+        await response(scope, receive, send)
