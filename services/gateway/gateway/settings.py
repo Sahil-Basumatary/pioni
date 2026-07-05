@@ -48,6 +48,9 @@ def market_data_service_url() -> str:
         return f"http://{hostport}"
     return os.getenv("MARKET_DATA_SERVICE_URL", "http://localhost:8002")
 
+def market_cache_ttl() -> float:
+    return float(os.getenv("MARKET_CACHE_TTL_MS", "500")) / 1000.0
+
 def orders_service_url() -> str:
     hostport = os.getenv("ORDERS_SERVICE_HOST")
     if hostport:
