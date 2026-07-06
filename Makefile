@@ -1,10 +1,11 @@
-.PHONY: help install dev-gateway dev-sentiment dev-market-data dev-orders dev-portfolio dev-frontend test lint lint-python build infra infra-stop infra-logs infra-clean db-migrate db-upgrade db-downgrade db-current
+.PHONY: help install dev-gateway dev-gateway-perf dev-sentiment dev-market-data dev-orders dev-portfolio dev-frontend test lint lint-python build infra infra-stop infra-logs infra-clean db-migrate db-upgrade db-downgrade db-current load-market load-orders
 
 help:
 	@echo "Pioni Development Commands"
 	@echo ""
 	@echo "Services:"
 	@echo "  make dev-gateway      Run gateway service (port 8000)"
+	@echo "  make dev-gateway-perf Run gateway with multiple workers (no reload)"
 	@echo "  make dev-sentiment    Run sentiment service (port 8001)"
 	@echo "  make dev-market-data  Run market-data service (port 8002)"
 	@echo "  make dev-orders       Run orders service (port 8003)"
@@ -28,6 +29,10 @@ help:
 	@echo "  make db-downgrade     Rollback one migration"
 	@echo "  make db-current       Show current migration version"
 	@echo ""
+	@echo "Load testing (requires k6 + running services):"
+	@echo "  make load-market      k6 load test the gateway market read path"
+	@echo "  make load-orders      k6 load test order submission throughput"
+	@echo ""
 	@echo "Testing & Setup:"
 	@echo "  make test             Run all service tests"
 	@echo "  make install          Install shared libs (editable)"
@@ -37,6 +42,10 @@ install:
 
 dev-gateway:
 	cd services/gateway && uvicorn gateway.main:app --reload
+
+dev-gateway-perf:
+	@mkdir -p $${PROMETHEUS_MULTIPROC_DIR:-/tmp/pioni-gw-metrics}
+	cd services/gateway && PROMETHEUS_MULTIPROC_DIR=$${PROMETHEUS_MULTIPROC_DIR:-/tmp/pioni-gw-metrics} uvicorn gateway.main:app --workers $${WORKERS:-8} --no-access-log
 
 dev-sentiment:
 	cd services/sentiment && uvicorn sentiment.main:app --reload --port 8001
@@ -88,4 +97,10 @@ db-downgrade:
 
 db-current:
 	alembic current
+
+load-market:
+	k6 run loadtest/gateway_market_read.js
+
+load-orders:
+	k6 run loadtest/orders_submit.js
 
