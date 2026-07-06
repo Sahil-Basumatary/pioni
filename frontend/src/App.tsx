@@ -1,10 +1,13 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, NavLink } from "react-router-dom";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
+import Footer from "./components/Footer";
 import "./App.css";
 
 const SentimentPage = lazy(() => import("./pages/SentimentPage"));
 const TradingPage = lazy(() => import("./pages/TradingPage"));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
+const TermsPage = lazy(() => import("./pages/TermsPage"));
 
 const NAV_LINKS = [
   { to: "/trading", label: "Trading" },
@@ -37,7 +40,7 @@ function App() {
   return (
     <BrowserRouter>
       <div
-        className="min-h-screen w-full"
+        className="flex min-h-screen w-full flex-col"
         style={{ background: "var(--bg)", color: "var(--text-primary)" }}
       >
         <nav className="sticky top-0 z-50 border-b border-[var(--card-border)] bg-[var(--card-bg)]/80 backdrop-blur-lg">
@@ -76,15 +79,18 @@ function App() {
             </div>
           </div>
         </nav>
-        <main className="mx-auto w-full max-w-[1320px] px-6 lg:px-12 py-8">
+        <main className="mx-auto w-full max-w-[1320px] flex-1 px-6 lg:px-12 py-8">
           <Suspense fallback={<RouteFallback />}>
             <Routes>
               <Route path="/sentiment" element={<SentimentPage />} />
               <Route path="/trading" element={<TradingPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/terms" element={<TermsPage />} />
               <Route path="*" element={<Navigate to="/trading" replace />} />
             </Routes>
           </Suspense>
         </main>
+        <Footer />
       </div>
     </BrowserRouter>
   );

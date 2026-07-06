@@ -72,6 +72,38 @@ button:hover {
   transform: none;
 }
 
+.legal-prose {
+  color: var(--text-secondary, #3A3A3A);
+  line-height: 1.72;
+  font-size: 0.95rem;
+}
+.legal-prose h2 {
+  color: var(--text-primary);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 2.25rem 0 0.75rem;
+}
+.legal-prose h3 {
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
+}
+.legal-prose p { margin: 0.75rem 0; }
+.legal-prose ul {
+  margin: 0.75rem 0;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+.legal-prose li { margin: 0.35rem 0; }
+.legal-prose a {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.legal-prose strong { color: var(--text-primary); font-weight: 600; }
+
 .skeleton {
   position: relative;
   overflow: hidden;
