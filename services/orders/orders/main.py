@@ -6,7 +6,7 @@ from sqlalchemy import text
 import redis.asyncio as aioredis
 from common import (
     setup_logging,
-    attach_request_id,
+    RequestIdMiddleware,
     get_session_factory,
     dispose_engine,
     RabbitMQManager,
@@ -84,7 +84,7 @@ app = FastAPI(title="Pioni Orders Service", version="0.1.0", lifespan=lifespan)
 instrument_app(app, "orders")
 instrument_app_tracing(app, "orders")
 
-app.middleware("http")(attach_request_id)
+app.add_middleware(RequestIdMiddleware)
 app.include_router(orders_router)
 
 

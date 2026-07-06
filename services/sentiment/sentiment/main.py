@@ -2,7 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
-from common import setup_logging, attach_request_id, init_redis_pool, close_redis_pool, instrument_app, instrument_app_tracing
+from common import setup_logging, RequestIdMiddleware, init_redis_pool, close_redis_pool, instrument_app, instrument_app_tracing
 from sentiment.routes import router
 
 setup_logging()
@@ -21,7 +21,7 @@ app = FastAPI(title="Pioni Sentiment Service", version="0.4.0", lifespan=lifespa
 instrument_app(app, "sentiment")
 instrument_app_tracing(app, "sentiment")
 
-app.middleware("http")(attach_request_id)
+app.add_middleware(RequestIdMiddleware)
 
 app.include_router(router)
 

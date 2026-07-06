@@ -9,10 +9,10 @@ from starlette.middleware.gzip import GZipMiddleware
 import httpx
 import redis.asyncio as aioredis
 from common import (
-    setup_logging, attach_request_id, init_redis_pool,
+    setup_logging, RequestIdMiddleware, init_redis_pool,
     close_redis_pool, MarketSubscriber, OrderSubscriber, PortfolioSubscriber,
 )
-from common import create_rate_limit_middleware, instrument_app, instrument_app_tracing
+from common import RateLimitMiddleware, instrument_app, instrument_app_tracing
 from gateway.auth import auth_router
 from gateway.clerk_backend import close_clerk_client
 from gateway.me_routes import me_router, close_portfolio_client
@@ -151,10 +151,9 @@ app = FastAPI(title="Pioni API", version="0.4.0", lifespan=lifespan)
 instrument_app(app, "gateway")
 instrument_app_tracing(app, "gateway")
 
-app.middleware("http")(attach_request_id)
+app.add_middleware(RequestIdMiddleware)
 
-rate_limit_middleware = create_rate_limit_middleware(cors_origins)
-app.middleware("http")(rate_limit_middleware)
+app.add_middleware(RateLimitMiddleware, get_cors_origins=cors_origins)
 
 app.add_middleware(
     CORSMiddleware,

@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from common import (
     setup_logging,
-    attach_request_id,
+    RequestIdMiddleware,
     get_session_factory,
     dispose_engine,
     MarketSubscriber,
@@ -111,7 +111,7 @@ app = FastAPI(title="Pioni Portfolio Service", version="0.1.0", lifespan=lifespa
 instrument_app(app, "portfolio")
 instrument_app_tracing(app, "portfolio")
 
-app.middleware("http")(attach_request_id)
+app.add_middleware(RequestIdMiddleware)
 app.include_router(portfolio_router)
 
 @app.get("/health")
