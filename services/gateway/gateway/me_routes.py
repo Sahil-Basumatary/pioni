@@ -2,7 +2,7 @@ import asyncio
 import logging
 import httpx
 from common import redis_get, redis_set
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from gateway.auth import AuthContext, require_auth
 from gateway.cache import TTLCache
 from gateway.clerk_backend import set_portfolio_metadata
@@ -85,7 +85,6 @@ async def fetch_my_portfolio(ctx: AuthContext) -> dict:
 
 
 async def resolve_portfolio_id(ctx: AuthContext) -> str:
-   
     if ctx.portfolio_id:
         return ctx.portfolio_id
 
@@ -108,3 +107,62 @@ async def resolve_portfolio_id(ctx: AuthContext) -> str:
 @me_router.get("/portfolio")
 async def my_portfolio(ctx: AuthContext = Depends(require_auth)) -> dict:
     return await fetch_my_portfolio(ctx)
+
+
+async def _proxy_portfolio_get(path: str, params: dict | None = None):
+    # The portfolio service exposes these by portfolio_id in the path and trusts the private
+    # network, so no identity headers are needed once the gateway has resolved ownership.
+    client = await _get_client()
+    try:
+        resp = await client.get(path, params=params)
+    except httpx.RequestError as e:
+        logger.error("portfolio service unreachable", extra={"error": str(e)})
+        raise _unavailable() from None
+    if resp.status_code >= 400:
+        raise HTTPException(status_code=resp.status_code, detail=resp.json())
+    return resp.json()
+
+
+@me_router.get("/summary")
+async def my_summary(ctx: AuthContext = Depends(require_auth)):
+    portfolio_id = await resolve_portfolio_id(ctx)
+    return await _proxy_portfolio_get(f"/portfolios/{portfolio_id}/summary")
+
+
+@me_router.get("/positions")
+async def my_positions(
+    ctx: AuthContext = Depends(require_auth),
+    open_only: bool = Query(False),
+):
+    portfolio_id = await resolve_portfolio_id(ctx)
+    return await _proxy_portfolio_get(
+        f"/portfolios/{portfolio_id}/positions",
+        params={"open_only": open_only},
+    )
+
+
+@me_router.get("/trades")
+async def my_trades(
+    ctx: AuthContext = Depends(require_auth),
+    symbol: str | None = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+):
+    portfolio_id = await resolve_portfolio_id(ctx)
+    params: dict = {"limit": limit, "offset": offset}
+    if symbol:
+        params["symbol"] = symbol
+    return await _proxy_portfolio_get(
+        f"/portfolios/{portfolio_id}/trades", params=params,
+    )
+
+
+@me_router.get("/pnl-chart")
+async def my_pnl_chart(
+    ctx: AuthContext = Depends(require_auth),
+    days: int = Query(30, ge=1, le=365),
+):
+    portfolio_id = await resolve_portfolio_id(ctx)
+    return await _proxy_portfolio_get(
+        f"/portfolios/{portfolio_id}/pnl-chart", params={"days": days},
+    )

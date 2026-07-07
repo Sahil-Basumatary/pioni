@@ -76,3 +76,90 @@ def test_my_portfolio_propagates_upstream_error(monkeypatch, client):
     resp = client.get("/me/portfolio")
     assert resp.status_code == 404
     assert resp.json()["error"] == "portfolio_not_found"
+
+
+class _FakeProxyClient:
+    def __init__(self, response):
+        self._response = response
+        self.calls: list = []
+
+    async def get(self, url, headers=None, params=None):
+        self.calls.append((url, params))
+        return self._response
+
+
+def _auth_with_portfolio(portfolio_id="P1"):
+    # Seeding portfolio_id on the context short-circuits resolve_portfolio_id so the proxy
+    # tests exercise only the data hop, not id resolution (covered elsewhere).
+    app.dependency_overrides[require_auth] = lambda: AuthContext(
+        clerk_id="user_abc", portfolio_id=portfolio_id,
+    )
+
+
+def test_my_summary_proxies_to_resolved_portfolio(monkeypatch, client):
+    _auth_with_portfolio("P1")
+    fake = _FakeProxyClient(_FakeResponse(200, {"total_value": "100000"}))
+    _install_client(monkeypatch, fake)
+    resp = client.get("/me/summary")
+    assert resp.status_code == 200
+    assert resp.json()["total_value"] == "100000"
+    assert fake.calls[0][0] == "/portfolios/P1/summary"
+
+
+def test_my_positions_forwards_open_only(monkeypatch, client):
+    _auth_with_portfolio("P1")
+    fake = _FakeProxyClient(_FakeResponse(200, []))
+    _install_client(monkeypatch, fake)
+    resp = client.get("/me/positions?open_only=true")
+    assert resp.status_code == 200
+    url, params = fake.calls[0]
+    assert url == "/portfolios/P1/positions"
+    assert params == {"open_only": True}
+
+
+def test_my_trades_forwards_filters(monkeypatch, client):
+    _auth_with_portfolio("P1")
+    fake = _FakeProxyClient(_FakeResponse(200, []))
+    _install_client(monkeypatch, fake)
+    resp = client.get("/me/trades?symbol=BTCUSDT&limit=10&offset=5")
+    assert resp.status_code == 200
+    url, params = fake.calls[0]
+    assert url == "/portfolios/P1/trades"
+    assert params == {"limit": 10, "offset": 5, "symbol": "BTCUSDT"}
+
+
+def test_my_trades_omits_symbol_when_absent(monkeypatch, client):
+    _auth_with_portfolio("P1")
+    fake = _FakeProxyClient(_FakeResponse(200, []))
+    _install_client(monkeypatch, fake)
+    resp = client.get("/me/trades")
+    assert resp.status_code == 200
+    _, params = fake.calls[0]
+    assert "symbol" not in params
+    assert params == {"limit": 50, "offset": 0}
+
+
+def test_my_pnl_chart_forwards_days(monkeypatch, client):
+    _auth_with_portfolio("P1")
+    fake = _FakeProxyClient(_FakeResponse(200, []))
+    _install_client(monkeypatch, fake)
+    resp = client.get("/me/pnl-chart?days=7")
+    assert resp.status_code == 200
+    url, params = fake.calls[0]
+    assert url == "/portfolios/P1/pnl-chart"
+    assert params == {"days": 7}
+
+
+def test_my_summary_propagates_upstream_error(monkeypatch, client):
+    _auth_with_portfolio("P1")
+    fake = _FakeProxyClient(_FakeResponse(404, {"error": "portfolio_not_found"}))
+    _install_client(monkeypatch, fake)
+    resp = client.get("/me/summary")
+    assert resp.status_code == 404
+    assert resp.json()["error"] == "portfolio_not_found"
+
+
+def test_my_positions_rejects_invalid_query(client):
+    _auth_with_portfolio("P1")
+    resp = client.get("/me/trades?limit=0")
+    assert resp.status_code == 422
