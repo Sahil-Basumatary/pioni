@@ -16,7 +16,7 @@ const NAV_LINKS = [
 
 function RouteFallback() {
   return (
-    <div className="flex flex-col gap-4 h-[calc(100vh-7.5rem)]" aria-label="Loading page">
+    <div className="flex min-h-0 flex-1 flex-col gap-4" aria-label="Loading page">
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex flex-wrap gap-2">
@@ -40,13 +40,13 @@ function App() {
   return (
     <BrowserRouter>
       <div
-        className="flex min-h-screen w-full flex-col"
+        className="flex min-h-screen w-full flex-col overflow-x-clip"
         style={{ background: "var(--bg)", color: "var(--text-primary)" }}
       >
         <nav className="sticky top-0 z-50 border-b border-[var(--card-border)] bg-[var(--card-bg)]/80 backdrop-blur-lg">
           <div className="mx-auto max-w-[1320px] px-6 lg:px-12 flex items-center justify-between h-14">
             <NavLink to="/" className="flex items-center">
-              <img src="/logo.svg" alt="Pioni" className="h-16 -my-2" />
+              <img src="/logo.svg" alt="Pioni" className="h-9" />
             </NavLink>
             <div className="flex items-center gap-1">
               {NAV_LINKS.map(({ to, label }) => (
@@ -79,7 +79,7 @@ function App() {
             </div>
           </div>
         </nav>
-        <main className="mx-auto w-full max-w-[1320px] flex-1 px-6 lg:px-12 py-8">
+        <main className="mx-auto flex min-h-0 w-full max-w-[1320px] flex-1 flex-col px-6 lg:px-12 py-8">
           <Suspense fallback={<RouteFallback />}>
             <Routes>
               <Route path="/sentiment" element={<SentimentPage />} />

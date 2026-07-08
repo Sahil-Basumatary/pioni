@@ -27,6 +27,7 @@ import {
 } from "../features/market/marketLatency";
 import { publishLiveTrade } from "../features/market/liveMarketStore";
 import PortfolioPanel from "../features/portfolio/PortfolioPanel";
+import OrderTicket from "../features/orders/OrderTicket";
 import type { Kline, Trade } from "../types/market";
 
 const STATUS_COLORS: Record<ConnectionStatus, string> = {
@@ -121,7 +122,7 @@ export default function TradingPage() {
   }, [symbol, status, subscribe, unsubscribe]);
 
   return (
-    <div className="flex flex-col gap-4 h-[calc(100vh-7.5rem)]">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <SymbolSelector
@@ -136,13 +137,18 @@ export default function TradingPage() {
         <PriceTicker symbol={symbol} />
         <PortfolioPanel />
       </div>
-      <div className="card-premium flex-1 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] backdrop-blur-xl p-4">
-        <CandlestickChart
-          ref={chartRef}
-          symbol={symbol}
-          interval={interval}
-          onIntervalChange={handleIntervalChange}
-        />
+      <div className="flex flex-1 min-h-0 flex-col gap-4 lg:flex-row">
+        <div className="card-premium min-h-0 flex-1 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] backdrop-blur-xl p-4">
+          <CandlestickChart
+            ref={chartRef}
+            symbol={symbol}
+            interval={interval}
+            onIntervalChange={handleIntervalChange}
+          />
+        </div>
+        <div className="shrink-0 lg:w-[320px]">
+          <OrderTicket />
+        </div>
       </div>
     </div>
   );
