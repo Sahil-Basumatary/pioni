@@ -74,6 +74,7 @@ export function useMarketWebSocket(options: UseMarketWebSocketOptions = {}) {
     };
 
     ws.onclose = () => {
+      if (wsRef.current !== ws) return;
       wsRef.current = null;
       updateStatus("disconnected");
       if (!intentionalCloseRef.current) {
@@ -97,8 +98,17 @@ export function useMarketWebSocket(options: UseMarketWebSocketOptions = {}) {
       clearTimeout(reconnectTimerRef.current);
       reconnectTimerRef.current = null;
     }
-    wsRef.current?.close();
+    const ws = wsRef.current;
     wsRef.current = null;
+    if (!ws) return;
+    // Avoid the "closed before established" console noise under StrictMode remounts.
+    if (ws.readyState === WebSocket.CONNECTING) {
+      ws.onopen = () => ws.close();
+      return;
+    }
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.close();
+    }
   }, []);
 
   const subscribe = useCallback(
