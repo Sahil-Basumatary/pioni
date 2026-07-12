@@ -1,18 +1,13 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route, Navigate, NavLink } from "react-router-dom";
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
-import Footer from "./components/Footer";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import AppShell from "./components/shell/AppShell";
+import ComingSoonPage from "./pages/ComingSoonPage";
 import "./App.css";
 
 const SentimentPage = lazy(() => import("./pages/SentimentPage"));
 const TradingPage = lazy(() => import("./pages/TradingPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
-
-const NAV_LINKS = [
-  { to: "/trading", label: "Trading" },
-  { to: "/sentiment", label: "Sentiment" },
-] as const;
 
 function RouteFallback() {
   return (
@@ -39,60 +34,73 @@ function RouteFallback() {
 function App() {
   return (
     <BrowserRouter>
-      <div
-        className="flex min-h-screen w-full flex-col overflow-x-clip"
-        style={{ background: "var(--bg)", color: "var(--text-primary)" }}
-      >
-        <nav className="sticky top-0 z-50 border-b border-[var(--card-border)] bg-[var(--card-bg)]/80 backdrop-blur-lg">
-          <div className="mx-auto max-w-[1320px] px-6 lg:px-12 flex items-center justify-between h-14">
-            <NavLink to="/" className="flex items-center">
-              <img src="/logo.svg" alt="Pioni" className="h-9" />
-            </NavLink>
-            <div className="flex items-center gap-1">
-              {NAV_LINKS.map(({ to, label }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  className={({ isActive }) =>
-                    `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                      isActive
-                        ? "bg-[var(--accent)] text-white"
-                        : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg)]"
-                    }`
-                  }
-                >
-                  {label}
-                </NavLink>
-              ))}
-              <div className="ml-2 flex items-center">
-                <SignedOut>
-                  <SignInButton mode="modal">
-                    <button className="px-3 py-1.5 rounded-lg text-sm font-medium bg-[var(--accent)] text-white">
-                      Sign in
-                    </button>
-                  </SignInButton>
-                </SignedOut>
-                <SignedIn>
-                  <UserButton afterSignOutUrl="/" />
-                </SignedIn>
-              </div>
-            </div>
-          </div>
-        </nav>
-        <main className="mx-auto flex min-h-0 w-full max-w-[1320px] flex-1 flex-col px-6 lg:px-12 py-8">
-          <Suspense fallback={<RouteFallback />}>
-            <Routes>
-              <Route path="/sentiment" element={<SentimentPage />} />
-              <Route path="/trading" element={<TradingPage />} />
-              <Route path="/privacy" element={<PrivacyPage />} />
-              <Route path="/terms" element={<TermsPage />} />
-              <Route path="*" element={<Navigate to="/trading" replace />} />
-            </Routes>
-          </Suspense>
-        </main>
-        <Footer />
-      </div>
+      <AppShell>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            <Route path="/home" element={
+              <ComingSoonPage
+                title="Home"
+                description="Your portfolio overview, equity curve, and recent activity will live here — Kraken Pro Home, adapted for paper trading."
+              />
+            } />
+            <Route path="/trading" element={<TradingPage />} />
+            <Route path="/trade/margin" element={
+              <ComingSoonPage
+                title="Trade Margin"
+                description="Simulated margin trading is next. Spot paper trading is ready now."
+              />
+            } />
+            <Route path="/trade/futures" element={
+              <ComingSoonPage
+                title="Trade Futures"
+                description="Simulated futures will land here after Spot is at full Kraken parity."
+              />
+            } />
+            <Route path="/trade/prop" element={
+              <ComingSoonPage
+                title="Trade Prop"
+                description="A simulated prop desk experience is planned after the core Spot terminal."
+              />
+            } />
+            <Route path="/markets" element={
+              <ComingSoonPage
+                title="Markets"
+                description="A full markets browser and ⌘K search palette are coming in the next milestones."
+              />
+            } />
+            <Route path="/yield" element={
+              <ComingSoonPage
+                title="Yield"
+                description="Simulated yield products will appear here once the Spot terminal is complete."
+              />
+            } />
+            <Route path="/earn" element={
+              <ComingSoonPage
+                title="Earn"
+                description="Simulated earn flows will mirror Kraken’s Earn surface in our paper-trading theme."
+              />
+            } />
+            <Route path="/deposit" element={
+              <ComingSoonPage
+                title="Deposit"
+                description="Paper deposits will reset or top up practice balance without touching real money."
+              />
+            } />
+            <Route path="/convert" element={
+              <ComingSoonPage
+                title="Convert"
+                description="A simulated convert flow is planned after Spot trading and settlement are solid."
+              />
+            } />
+            <Route path="/sentiment" element={<SentimentPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="*" element={<Navigate to="/trading" replace />} />
+          </Routes>
+        </Suspense>
+      </AppShell>
     </BrowserRouter>
   );
 }
+
 export default App;

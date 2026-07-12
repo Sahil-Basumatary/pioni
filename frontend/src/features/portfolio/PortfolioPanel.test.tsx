@@ -2,12 +2,13 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import PortfolioPanel from "./PortfolioPanel";
 
-const { mockQuery } = vi.hoisted(() => ({ mockQuery: vi.fn() }));
+const { mockQuery, mockAuth } = vi.hoisted(() => ({
+  mockQuery: vi.fn(),
+  mockAuth: vi.fn(() => ({ isSignedIn: true })),
+}));
 
 vi.mock("@clerk/clerk-react", () => ({
-  SignedIn: ({ children }: { children: unknown }) => children,
-  SignedOut: () => null,
-  SignInButton: ({ children }: { children: unknown }) => children,
+  useAuth: () => mockAuth(),
 }));
 
 vi.mock("./portfolioApi", () => ({
@@ -15,7 +16,18 @@ vi.mock("./portfolioApi", () => ({
 }));
 
 describe("PortfolioPanel", () => {
-  beforeEach(() => mockQuery.mockReset());
+  beforeEach(() => {
+    mockQuery.mockReset();
+    mockAuth.mockReturnValue({ isSignedIn: true });
+  });
+
+  it("shows a signed-out balance placeholder without a second sign-in button", () => {
+    mockAuth.mockReturnValue({ isSignedIn: false });
+    render(<PortfolioPanel />);
+    expect(screen.getByText("Paper balance")).toBeInTheDocument();
+    expect(screen.getByText("—")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Sign in" })).not.toBeInTheDocument();
+  });
 
   it("shows the formatted paper balance when signed in", () => {
     mockQuery.mockReturnValue({
