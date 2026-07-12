@@ -8,7 +8,7 @@ export default function ProductNav() {
       aria-label="Products"
       className="border-b border-[var(--card-border)] bg-[var(--card-bg)]"
     >
-      <div className="mx-auto flex max-w-[1320px] items-center gap-1 overflow-x-auto px-6 py-1.5 lg:px-12">
+      <div className="mx-auto flex max-w-[1750px] items-center gap-1 overflow-x-auto px-2 py-1.5">
         {PRODUCT_NAV.map((item) =>
           item.kind === "group" ? (
             <TradeMenu key={item.id} item={item} />

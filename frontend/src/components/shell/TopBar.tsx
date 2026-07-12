@@ -5,7 +5,7 @@ import BalanceChip from "./BalanceChip";
 export default function TopBar() {
   return (
     <header className="border-b border-[var(--card-border)] bg-[var(--card-bg)]/90 backdrop-blur-lg">
-      <div className="mx-auto flex h-14 max-w-[1320px] items-center gap-3 px-6 lg:px-12">
+      <div className="mx-auto flex h-14 w-full max-w-[1750px] items-center gap-3 px-2">
         <NavLink to="/home" className="flex shrink-0 items-center">
           <img src="/logo.svg" alt="Pioni" className="h-9" />
         </NavLink>

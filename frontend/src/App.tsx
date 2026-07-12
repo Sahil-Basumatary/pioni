@@ -6,6 +6,7 @@ import "./App.css";
 
 const SentimentPage = lazy(() => import("./pages/SentimentPage"));
 const TradingPage = lazy(() => import("./pages/TradingPage"));
+const HomePage = lazy(() => import("./pages/HomePage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 
@@ -37,12 +38,7 @@ function App() {
       <AppShell>
         <Suspense fallback={<RouteFallback />}>
           <Routes>
-            <Route path="/home" element={
-              <ComingSoonPage
-                title="Home"
-                description="Your portfolio overview, equity curve, and recent activity will live here — Kraken Pro Home, adapted for paper trading."
-              />
-            } />
+            <Route path="/home" element={<HomePage />} />
             <Route path="/trading" element={<TradingPage />} />
             <Route path="/trade/margin" element={
               <ComingSoonPage
@@ -95,7 +91,7 @@ function App() {
             <Route path="/sentiment" element={<SentimentPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
-            <Route path="*" element={<Navigate to="/trading" replace />} />
+            <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>
         </Suspense>
       </AppShell>

@@ -62,7 +62,7 @@ export default function TradingPage() {
   }, [symbol, status, subscribe, unsubscribe]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4 px-4 py-4 lg:px-10">
       <div className="flex flex-col gap-2">
         <SymbolSelector selected={symbol} onSelect={handleSymbolSelect} />
         <PriceTicker symbol={symbol} />
