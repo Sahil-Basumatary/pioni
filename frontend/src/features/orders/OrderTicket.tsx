@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuth, useClerk } from "@clerk/clerk-react";
+import { Link } from "react-router-dom";
 import { useAppSelector } from "../../app/hooks";
 import { selectSymbol } from "../instrument/instrumentSlice";
 import { useLiveMarketTrade } from "../market/liveMarketStore";
-import { useGetMyPortfolioQuery } from "../portfolio/portfolioApi";
+import {
+  useGetMyPortfolioQuery,
+  useGetMyPositionsQuery,
+} from "../portfolio/portfolioApi";
 import { useSubmitOrderMutation, type OrderSide, type OrderType } from "./ordersApi";
 import { evaluateOrder } from "./orderValidation";
 import { formatUsd } from "../../utils/formatters";
@@ -18,12 +22,15 @@ function extractError(err: unknown): string {
   return "Something went wrong placing your order. Please try again.";
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex h-full flex-col gap-3 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-4">
-      {children}
-    </div>
-  );
+function formatQtyInput(n: number): string {
+  if (!Number.isFinite(n) || n <= 0) return "";
+  if (n >= 1) return n.toFixed(6).replace(/\.?0+$/, "");
+  return n.toFixed(8).replace(/\.?0+$/, "");
+}
+
+function formatTotalInput(n: number): string {
+  if (!Number.isFinite(n) || n <= 0) return "";
+  return n.toFixed(2);
 }
 
 type Feedback = { tone: "success" | "error"; message: string };
@@ -37,11 +44,23 @@ export default function OrderTicket() {
   const { data: portfolio } = useGetMyPortfolioQuery(undefined, {
     skip: !isSignedIn,
   });
+  const { data: positions } = useGetMyPositionsQuery(
+    { openOnly: true },
+    { skip: !isSignedIn },
+  );
   const cashBalance = portfolio ? Number(portfolio.cash_balance) : null;
+  const baseQty = useMemo(() => {
+    const row = (positions ?? []).find(
+      (p) => p.symbol.toUpperCase() === symbol.toUpperCase(),
+    );
+    return row ? Number(row.quantity) : 0;
+  }, [positions, symbol]);
   const [side, setSide] = useState<OrderSide>("BUY");
-  const [orderType, setOrderType] = useState<OrderType>("MARKET");
+  const [orderType, setOrderType] = useState<OrderType>("LIMIT");
   const [quantity, setQuantity] = useState("");
   const [limitPrice, setLimitPrice] = useState("");
+  const [total, setTotal] = useState("");
+  const [sizePct, setSizePct] = useState(0);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [submitOrder, { isLoading }] = useSubmitOrderMutation();
   const evaluation = evaluateOrder({
@@ -55,6 +74,42 @@ export default function OrderTicket() {
   const asset = baseAsset(symbol);
   const isBuy = side === "BUY";
   const canAct = isSignedIn ? evaluation.canSubmit : quantity.trim().length > 0;
+  const effectivePrice =
+    orderType === "LIMIT" ? Number(limitPrice) || null : livePrice;
+
+  function syncFromQuantity(nextQty: string, price: number | null) {
+    setQuantity(nextQty);
+    const q = Number(nextQty);
+    if (price != null && price > 0 && Number.isFinite(q) && q > 0) {
+      setTotal(formatTotalInput(q * price));
+    } else {
+      setTotal("");
+    }
+  }
+
+  function syncFromTotal(nextTotal: string, price: number | null) {
+    setTotal(nextTotal);
+    const t = Number(nextTotal);
+    if (price != null && price > 0 && Number.isFinite(t) && t > 0) {
+      setQuantity(formatQtyInput(t / price));
+    } else if (!nextTotal.trim()) {
+      setQuantity("");
+    }
+  }
+
+  function applySizePct(pct: number) {
+    setSizePct(pct);
+    const price = effectivePrice;
+    if (price == null || price <= 0) return;
+    if (isBuy) {
+      if (cashBalance == null || cashBalance <= 0) return;
+      const spend = (cashBalance * pct) / 100;
+      syncFromQuantity(formatQtyInput(spend / price), price);
+      return;
+    }
+    if (baseQty <= 0) return;
+    syncFromQuantity(formatQtyInput((baseQty * pct) / 100), price);
+  }
 
   async function handleSubmit() {
     setFeedback(null);
@@ -78,87 +133,126 @@ export default function OrderTicket() {
           : `Order placed (${order.status.toLowerCase().replace(/_/g, " ")})`,
       });
       setQuantity("");
+      setTotal("");
+      setSizePct(0);
     } catch (err) {
       setFeedback({ tone: "error", message: extractError(err) });
     }
   }
 
   return (
-    <Shell>
+    <div className="flex h-full flex-col gap-3 overflow-y-auto rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-3 shadow-[var(--shadow-card)]">
       <div className="grid grid-cols-2 gap-1 rounded-xl bg-[var(--bg)] p-1">
         <button
+          type="button"
           onClick={() => setSide("BUY")}
-          className={`rounded-lg py-2 text-sm font-semibold transition-colors ${
-            isBuy ? "bg-emerald-500 text-white" : "bg-transparent text-[var(--text-muted)]"
+          className={`rail-icon rounded-lg py-2 text-sm font-semibold transition-colors ${
+            isBuy ? "!bg-emerald-500 text-white" : "bg-transparent text-[var(--text-muted)]"
           }`}
         >
           Buy
         </button>
         <button
+          type="button"
           onClick={() => setSide("SELL")}
-          className={`rounded-lg py-2 text-sm font-semibold transition-colors ${
-            !isBuy ? "bg-red-500 text-white" : "bg-transparent text-[var(--text-muted)]"
+          className={`rail-icon rounded-lg py-2 text-sm font-semibold transition-colors ${
+            !isBuy ? "!bg-red-500 text-white" : "bg-transparent text-[var(--text-muted)]"
           }`}
         >
           Sell
         </button>
       </div>
-      <div className="flex gap-2 text-xs">
-        {(["MARKET", "LIMIT"] as const).map((type) => (
+      <div className="flex gap-1 text-xs">
+        {(["LIMIT", "MARKET"] as const).map((type) => (
           <button
+            type="button"
             key={type}
             onClick={() => setOrderType(type)}
-            className={`rounded-lg px-3 py-1.5 font-medium transition-colors ${
+            className={`rail-icon rounded-lg px-3 py-1.5 font-medium transition-colors ${
               orderType === type
-                ? "bg-[var(--accent)] text-white"
-                : "bg-[var(--bg)] text-[var(--text-muted)]"
+                ? "!bg-black/[0.08] text-[var(--text-primary)]"
+                : "bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             }`}
           >
             {type === "MARKET" ? "Market" : "Limit"}
           </button>
         ))}
       </div>
-      <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
-        Amount ({asset})
-        <input
-          inputMode="decimal"
-          value={quantity}
-          onChange={(e) => setQuantity(e.target.value)}
-          placeholder="0.00"
-          className="rounded-lg border border-[var(--card-border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
-        />
-      </label>
       {orderType === "LIMIT" && (
-        <label className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
-          Limit price (USD)
-          <input
-            inputMode="decimal"
-            value={limitPrice}
-            onChange={(e) => setLimitPrice(e.target.value)}
-            placeholder="0.00"
-            className="rounded-lg border border-[var(--card-border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
-          />
-        </label>
+        <Field
+          label={`Limit price USD`}
+          value={limitPrice}
+          onChange={(v) => {
+            setLimitPrice(v);
+            const price = Number(v);
+            const q = Number(quantity);
+            if (Number.isFinite(price) && price > 0 && Number.isFinite(q) && q > 0) {
+              setTotal(formatTotalInput(q * price));
+            }
+          }}
+          placeholder="0.00"
+        />
       )}
-      <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
-        <span>{orderType === "MARKET" ? "Est. price" : "Your price"}</span>
-        <span className="text-[var(--text-primary)]">
-          {evaluation.effectivePrice != null ? formatUsd(evaluation.effectivePrice) : "—"}
-        </span>
-      </div>
-      <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
-        <span>Est. total</span>
-        <span className="text-[var(--text-primary)]">
-          {evaluation.estimatedTotal != null ? formatUsd(evaluation.estimatedTotal) : "—"}
-        </span>
-      </div>
-      {isSignedIn && cashBalance != null && (
-        <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
-          <span>Buying power</span>
-          <span>{formatUsd(cashBalance)}</span>
+      <Field
+        label={`Quantity ${asset}`}
+        value={quantity}
+        onChange={(v) => syncFromQuantity(v, effectivePrice)}
+        placeholder="0.00"
+      />
+      <Field
+        label="Total USD"
+        value={total}
+        onChange={(v) => syncFromTotal(v, effectivePrice)}
+        placeholder="0.00"
+      />
+      <div className="flex flex-col gap-1.5">
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={1}
+          value={sizePct}
+          onChange={(e) => applySizePct(Number(e.target.value))}
+          className="w-full accent-[var(--accent)]"
+          aria-label="Order size percent"
+        />
+        <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
+          {[0, 25, 50, 75, 100].map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => applySizePct(p)}
+              className={`rail-icon rounded px-1 ${
+                sizePct === p ? "text-[var(--text-primary)]" : ""
+              }`}
+            >
+              {p}%
+            </button>
+          ))}
         </div>
-      )}
+      </div>
+      <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
+        <span>Available balance</span>
+        <span className="flex items-center gap-1 tabular-nums text-[var(--text-primary)]">
+          {isSignedIn
+            ? isBuy
+              ? cashBalance != null
+                ? formatUsd(cashBalance)
+                : "—"
+              : `${baseQty || 0} ${asset}`
+            : "—"}
+          <Link
+            to="/deposit"
+            className="rail-icon inline-flex h-5 w-5 items-center justify-center rounded-md text-[var(--text-muted)] hover:bg-black/[0.04] hover:text-[var(--text-primary)]"
+            aria-label="Add funds"
+            title="Add funds"
+          >
+            +
+          </Link>
+        </span>
+      </div>
       <button
+        type="button"
         onClick={handleSubmit}
         disabled={!canAct || isLoading}
         className={`mt-auto rounded-xl py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
@@ -183,6 +277,33 @@ export default function OrderTicket() {
       <p className="text-[11px] leading-relaxed text-[var(--text-muted)]">
         Practice money only — you can’t lose anything real.
       </p>
-    </Shell>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <label className="flex flex-col gap-1 rounded-xl border border-[var(--card-border)] bg-[var(--bg)] px-3 py-2">
+      <span className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
+        {label}
+      </span>
+      <input
+        inputMode="decimal"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="bg-transparent text-sm font-medium tabular-nums text-[var(--text-primary)] outline-none"
+      />
+    </label>
   );
 }

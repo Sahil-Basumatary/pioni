@@ -1,24 +1,12 @@
-import { SignedIn, SignedOut, SignInButton } from "@clerk/clerk-react";
+import { SignedIn } from "@clerk/clerk-react";
 import { formatUsd } from "../../utils/formatters";
 import { useGetMyPortfolioQuery } from "../../features/portfolio/portfolioApi";
 
 export default function BalanceChip() {
   return (
-    <>
-      <SignedOut>
-        <SignInButton mode="modal">
-          <button
-            type="button"
-            className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white"
-          >
-            Sign in
-          </button>
-        </SignInButton>
-      </SignedOut>
-      <SignedIn>
-        <SignedInBalance />
-      </SignedIn>
-    </>
+    <SignedIn>
+      <SignedInBalance />
+    </SignedIn>
   );
 }
 

@@ -3,22 +3,21 @@ import CandlestickChart, {
   type CandlestickChartHandle,
   type Interval,
 } from "../components/trading/CandlestickChart";
-import PriceTicker from "../components/trading/PriceTicker";
-import SymbolSelector from "../components/trading/SymbolSelector";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import {
   intervalChanged,
   selectInterval,
   selectSymbol,
-  symbolSelected,
 } from "../features/instrument/instrumentSlice";
 import { selectMarketStatus } from "../features/market/marketSlice";
 import {
   STATUS_BAR_SYMBOLS,
   useMarketSocket,
 } from "../features/market/MarketSocketProvider";
-import PortfolioPanel from "../features/portfolio/PortfolioPanel";
 import OrderTicket from "../features/orders/OrderTicket";
+import PairHeader from "../features/trading/PairHeader";
+import OrderBookPanel from "../features/trading/OrderBookPanel";
+import TradingBottomPanel from "../features/trading/TradingBottomPanel";
 import type { Kline } from "../types/market";
 
 export default function TradingPage() {
@@ -38,12 +37,9 @@ export default function TradingPage() {
     [interval],
   );
 
-  useEffect(() => registerKlineHandler(handleKline), [registerKlineHandler, handleKline]);
-
-  const handleSymbolSelect = useCallback(
-    (next: string) => dispatch(symbolSelected(next)),
-    [dispatch],
-  );
+  useEffect(() => {
+    return registerKlineHandler(handleKline);
+  }, [registerKlineHandler, handleKline]);
 
   const handleIntervalChange = useCallback(
     (next: Interval) => dispatch(intervalChanged(next)),
@@ -62,14 +58,16 @@ export default function TradingPage() {
   }, [symbol, status, subscribe, unsubscribe]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 px-4 py-4 lg:px-10">
-      <div className="flex flex-col gap-2">
-        <SymbolSelector selected={symbol} onSelect={handleSymbolSelect} />
-        <PriceTicker symbol={symbol} />
-        <PortfolioPanel />
-      </div>
-      <div className="flex flex-1 min-h-0 flex-col gap-4 lg:flex-row">
-        <div className="card-premium min-h-0 flex-1 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] backdrop-blur-xl p-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-2">
+      <PairHeader symbol={symbol} />
+      <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
+        <div className="flex min-h-[360px] w-full shrink-0 flex-col md:w-[260px] xl:w-[300px]">
+          <OrderTicket />
+        </div>
+        <div className="flex min-h-[320px] w-full shrink-0 flex-col md:w-[220px] xl:w-[260px]">
+          <OrderBookPanel symbol={symbol} />
+        </div>
+        <div className="card-premium flex min-h-[320px] min-w-0 flex-1 flex-col rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-3 backdrop-blur-xl">
           <CandlestickChart
             ref={chartRef}
             symbol={symbol}
@@ -77,10 +75,8 @@ export default function TradingPage() {
             onIntervalChange={handleIntervalChange}
           />
         </div>
-        <div className="shrink-0 lg:w-[320px]">
-          <OrderTicket />
-        </div>
       </div>
+      <TradingBottomPanel symbol={symbol} />
     </div>
   );
 }
