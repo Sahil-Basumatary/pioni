@@ -52,7 +52,7 @@ function App() {
             <Route path="/trade/futures" element={
               <ComingSoonPage
                 title="Trade Futures"
-                description="Simulated futures will land here after Spot is at full Kraken parity."
+                description="Simulated futures will land here after Spot is complete."
               />
             } />
             <Route path="/trade/prop" element={
@@ -71,7 +71,7 @@ function App() {
             <Route path="/earn" element={
               <ComingSoonPage
                 title="Earn"
-                description="Simulated earn flows will mirror Kraken’s Earn surface in our paper-trading theme."
+                description="Simulated earn flows will appear here in our paper-trading theme."
               />
             } />
             <Route path="/deposit" element={

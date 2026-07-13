@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useGetOrderBookQuery, type PriceLevel } from "../orders/ordersApi";
 import { useLiveMarketTrade } from "../market/liveMarketStore";
+import { MinusSmallIcon, PlusSmallIcon } from "../../components/shell/shellIcons";
 
 const GROUPINGS = [0.01, 0.1, 1, 10, 100] as const;
 
@@ -76,17 +77,17 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
     spread != null && mid != null && mid > 0 ? (spread / mid) * 100 : null;
 
   return (
-    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-[var(--shadow-card)]">
-      <div className="flex shrink-0 items-center justify-between border-b border-[var(--card-border)] px-2 py-1.5">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--card-bg)]">
+      <div className="flex shrink-0 items-center justify-between border-b border-[var(--card-border)] px-2 py-1">
         <div className="flex items-center gap-1">
           <button
             type="button"
             aria-label="Decrease grouping"
             disabled={groupIdx <= 0}
             onClick={() => setGroupIdx((i) => Math.max(0, i - 1))}
-            className="rail-icon flex h-6 w-6 items-center justify-center rounded-md text-[var(--text-muted)] disabled:opacity-40"
+            className="rail-icon flex h-6 w-6 items-center justify-center rounded-md text-[var(--text-muted)] hover:text-[var(--text-secondary)] disabled:opacity-40"
           >
-            −
+            <MinusSmallIcon className="h-4 w-4" />
           </button>
           <button
             type="button"
@@ -100,9 +101,9 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
             aria-label="Increase grouping"
             disabled={groupIdx >= GROUPINGS.length - 1}
             onClick={() => setGroupIdx((i) => Math.min(GROUPINGS.length - 1, i + 1))}
-            className="rail-icon flex h-6 w-6 items-center justify-center rounded-md text-[var(--text-muted)] disabled:opacity-40"
+            className="rail-icon flex h-6 w-6 items-center justify-center rounded-md text-[var(--text-muted)] hover:text-[var(--text-secondary)] disabled:opacity-40"
           >
-            +
+            <PlusSmallIcon className="h-4 w-4" />
           </button>
         </div>
         <span className="text-[10px] text-[var(--text-muted)]">
@@ -177,7 +178,7 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
           </>
         )}
       </div>
-    </section>
+    </div>
   );
 }
 

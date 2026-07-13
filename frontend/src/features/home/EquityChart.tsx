@@ -9,7 +9,7 @@ import {
   type Time,
 } from "lightweight-charts";
 import type { PnlChartPoint } from "../portfolio/portfolioApi";
-import { ArrowDownIcon, ArrowTopIcon } from "../../components/shell/krakenIcons";
+import { ArrowDownIcon, ArrowTopIcon } from "../../components/shell/shellIcons";
 
 type EquityChartProps = {
   points: PnlChartPoint[];

@@ -6,7 +6,7 @@ import {
   DepositIcon,
   StakeIcon,
   WithdrawIcon,
-} from "../../components/shell/krakenIcons";
+} from "../../components/shell/shellIcons";
 import type { PnlChartPoint } from "../portfolio/portfolioApi";
 import EquityChart from "./EquityChart";
 

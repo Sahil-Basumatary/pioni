@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { assetIconUrl } from "../../components/shell/activityFormat";
-import { StarIcon } from "../../components/shell/krakenIcons";
+import { StarIcon } from "../../components/shell/shellIcons";
 import type { MarketRow } from "./useMarketRows";
 import {
   formatChangePct,

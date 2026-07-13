@@ -13,8 +13,7 @@ import {
 } from "../portfolio/portfolioApi";
 import { baseAsset } from "../../components/shell/activityFormat";
 import { formatUsd } from "../../utils/formatters";
-
-type Tab = "balances" | "positions" | "orders" | "closed";
+import ComingSoonBody from "./ComingSoonBody";
 
 const OPEN_STATUSES = new Set(["OPEN", "PARTIALLY_FILLED", "NEW", "PENDING"]);
 const CLOSED_STATUSES = new Set([
@@ -25,28 +24,22 @@ const CLOSED_STATUSES = new Set([
   "EXPIRED",
 ]);
 
-export default function TradingBottomPanel({ symbol }: { symbol: string }) {
+type BottomTab = "balances" | "positions" | "orders" | "closed" | "history";
+
+export type { BottomTab };
+
+export default function TradingBottomPanel({
+  symbol,
+  tab,
+}: {
+  symbol: string;
+  tab: BottomTab;
+}) {
   const { isSignedIn } = useAuth();
-  const [tab, setTab] = useState<Tab>("orders");
 
   return (
-    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-[var(--shadow-card)]">
-      <div className="flex flex-wrap items-center gap-1 border-b border-[var(--card-border)] px-2 py-1.5">
-        <TabBtn active={tab === "balances"} onClick={() => setTab("balances")} label="Balances" />
-        <TabBtn
-          active={tab === "positions"}
-          onClick={() => setTab("positions")}
-          label="Positions"
-        />
-        <TabBtn active={tab === "orders"} onClick={() => setTab("orders")} label="Orders" />
-        <TabBtn
-          active={tab === "closed"}
-          onClick={() => setTab("closed")}
-          label="Closed orders"
-        />
-        {isSignedIn && <ResetChip />}
-      </div>
-      <div className="min-h-0 flex-1 overflow-auto bg-[var(--card-bg)]">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--card-bg)]">
+      <div className="min-h-0 flex-1 overflow-auto">
         {!isSignedIn ? (
           <Empty copy="Sign in from the top bar to see balances, positions, and orders." />
         ) : tab === "balances" ? (
@@ -55,39 +48,20 @@ export default function TradingBottomPanel({ symbol }: { symbol: string }) {
           <PositionsTab />
         ) : tab === "orders" ? (
           <OrdersTab symbol={symbol} mode="open" />
-        ) : (
+        ) : tab === "closed" ? (
           <OrdersTab symbol={symbol} mode="closed" />
+        ) : (
+          <ComingSoonBody
+            title="Trade history"
+            description="Fill-by-fill trade history will land here next."
+          />
         )}
       </div>
-    </section>
+    </div>
   );
 }
 
-function TabBtn({
-  active,
-  onClick,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rail-icon rounded-lg px-2.5 py-1.5 text-xs font-medium ${
-        active
-          ? "bg-black/[0.08] text-[var(--text-primary)]"
-          : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-
-function ResetChip() {
+export function ResetAccountChip() {
   const [resetPortfolio, { isLoading }] = useResetPortfolioMutation();
   const [confirm, setConfirm] = useState(false);
   if (!confirm) {
@@ -95,14 +69,14 @@ function ResetChip() {
       <button
         type="button"
         onClick={() => setConfirm(true)}
-        className="rail-icon ml-auto rounded-lg px-2 py-1 text-[11px] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+        className="rail-icon rounded-lg px-2 py-1 text-[11px] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
       >
         Reset account
       </button>
     );
   }
   return (
-    <div className="ml-auto flex items-center gap-1">
+    <div className="flex items-center gap-1">
       <button
         type="button"
         disabled={isLoading}

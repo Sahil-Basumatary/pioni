@@ -225,3 +225,99 @@ export function ArrowRightIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function MaximizeIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path
+        d="M19.9004 4.09961H12.9004V2.90039H21.0996V11.0996H19.9004V4.09961Z"
+        className="fill-current"
+      />
+      <path
+        d="M2.90039 12.9004H4.09961V19.9004H11.0996V21.0996H2.90039V12.9004Z"
+        className="fill-current"
+      />
+      <path
+        d="M20.5518 4.29688L20.127 4.72071L13.9238 10.9238L13.5 11.3486L12.6514 10.5L13.0762 10.0762L19.2793 3.87305L19.7031 3.44825L20.5518 4.29688Z"
+        className="fill-current"
+      />
+      <path
+        d="M11.3486 13.5L10.9238 13.9238L4.72071 20.127L4.29688 20.5518L3.44825 19.7031L3.87305 19.2793L10.0762 13.0762L10.5 12.6514L11.3486 13.5Z"
+        className="fill-current"
+      />
+    </svg>
+  );
+}
+
+export function MinimizeIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path
+        d="M12.9004 2.90039H14.0996V9.90039H21.0996V11.0996H12.9004V2.90039Z"
+        className="fill-current"
+      />
+      <path
+        d="M9.90039 14.0996H2.90039V12.9004H11.0996V21.0996H9.90039V14.0996Z"
+        className="fill-current"
+      />
+      <path
+        d="M21.3486 3.5L20.9238 3.92383L14.4238 10.4238L14 10.8486L13.1514 10L13.5762 9.57617L20.0762 3.07617L20.5 2.65137L21.3486 3.5Z"
+        className="fill-current"
+      />
+      <path
+        d="M10.8486 14L10.4238 14.4238L3.92383 20.9238L3.5 21.3486L2.65137 20.5L3.07617 20.0762L9.57617 13.5762L10 13.1514L10.8486 14Z"
+        className="fill-current"
+      />
+    </svg>
+  );
+}
+
+export function PlusSmallIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path
+        d="M11.4004 12.5996H5.90039V11.4004H11.4004V5.90039H12.5996V11.4004H18.0996V12.5996H12.5996V18.0996H11.4004V12.5996Z"
+        className="fill-current"
+      />
+    </svg>
+  );
+}
+
+export function MinusSmallIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path
+        d="M18.0996 11.4004V12.5996H5.90039V11.4004H18.0996Z"
+        className="fill-current"
+      />
+    </svg>
+  );
+}
+
+export function CloseSmallIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path
+        d="M18.8486 6L18.4238 6.42383L12.8477 12L18.4238 17.5762L18.8486 18L18 18.8486L17.5762 18.4238L12 12.8477L6.42383 18.4238L6 18.8486L5.15137 18L5.57617 17.5762L11.1523 12L5.57617 6.42383L5.15137 6L6 5.15137L6.42383 5.57617L12 11.1523L17.5762 5.57617L18 5.15137L18.8486 6Z"
+        className="fill-current"
+      />
+    </svg>
+  );
+}
+
+export function LayoutAddIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path
+        d="M19.5996 18.6436H22.5996V19.8428H19.5996V22.8428H18.4004V19.8428H15.4004V18.6436H18.4004V15.6436H19.5996V18.6436Z"
+        className="fill-current"
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M20.5996 14H19.4004V12.5996H12.5996V19.4004H14V20.5996H3.40039V3.40039H20.5996V14ZM4.59961 19.4004H11.4004V12.5996H4.59961V19.4004ZM4.59961 11.4004H11.4004V4.59961H4.59961V11.4004ZM12.5996 11.4004H19.4004V4.59961H12.5996V11.4004Z"
+        className="fill-current"
+      />
+    </svg>
+  );
+}

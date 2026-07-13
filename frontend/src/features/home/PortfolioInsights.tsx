@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRightIcon } from "../../components/shell/krakenIcons";
+import { ArrowRightIcon } from "../../components/shell/shellIcons";
 
 type PortfolioInsightsProps = {
   totalValue: number | null;

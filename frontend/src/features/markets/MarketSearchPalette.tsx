@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { symbolSelected } from "../instrument/instrumentSlice";
-import { StarIcon } from "../../components/shell/krakenIcons";
+import { StarIcon } from "../../components/shell/shellIcons";
 import { useMarketSearch } from "./MarketSearchContext";
 import MarketsTable from "./MarketsTable";
 import {

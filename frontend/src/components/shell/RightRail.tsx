@@ -10,7 +10,7 @@ import {
   QuestionMarkCircleIcon,
   StarIcon,
   UserIcon,
-} from "./krakenIcons";
+} from "./shellIcons";
 
 type RailTab = "notifications" | "favorites" | "apps" | null;
 

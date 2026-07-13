@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { useGetMyTradesQuery } from "../../features/portfolio/portfolioApi";
 import { ActivityFillRow } from "../../features/home/ActivityFillRow";
-import { CloseIcon, TablePinIcon, BellIcon } from "./krakenIcons";
+import { CloseIcon, TablePinIcon, BellIcon } from "./shellIcons";
 
 type InboxTab = "inbox" | "alerts";
 

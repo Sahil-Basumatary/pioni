@@ -2,7 +2,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import { useLiveMarketTrade } from "../../features/market/liveMarketStore";
 import { getMarketMeta } from "../markets/catalog";
 import { useMarketSearch } from "../markets/MarketSearchContext";
-import { StarIcon } from "../../components/shell/krakenIcons";
+import { StarIcon } from "../../components/shell/shellIcons";
 import { assetIconUrl, baseAsset } from "../../components/shell/activityFormat";
 import type { TickerSnapshot } from "../../types/market";
 
