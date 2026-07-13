@@ -35,18 +35,29 @@ def test_request_ids_are_unique_per_request():
     assert first != second
 
 
-def test_rate_limit_returns_429_after_threshold(monkeypatch):
+def test_rate_limit_skips_market_read_gets(monkeypatch):
     monkeypatch.setenv("RATE_LIMIT_ENABLED", "true")
-    client = TestClient(
-        _app_with(
-            (RateLimitMiddleware, {"get_cors_origins": lambda: [], "max_requests": 2, "window_seconds": 60}),
-        )
+    app = FastAPI()
+    app.add_middleware(
+        RateLimitMiddleware,
+        get_cors_origins=lambda: [],
+        max_requests=1,
+        window_seconds=60,
     )
+
+    @app.get("/orderbook/{symbol}")
+    async def book(symbol: str):
+        return {"symbol": symbol}
+
+    @app.get("/ping")
+    async def ping():
+        return {"ok": True}
+
+    client = TestClient(app)
+    assert client.get("/orderbook/BTCUSDT").status_code == 200
+    assert client.get("/orderbook/BTCUSDT").status_code == 200
     assert client.get("/ping").status_code == 200
-    assert client.get("/ping").status_code == 200
-    blocked = client.get("/ping")
-    assert blocked.status_code == 429
-    assert blocked.json()["error"] == "RATE_LIMIT"
+    assert client.get("/ping").status_code == 429
 
 
 def test_rate_limit_bypasses_when_disabled(monkeypatch):

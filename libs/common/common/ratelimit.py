@@ -56,6 +56,13 @@ def _cors_headers_for(origin: str | None, get_cors_origins: Callable[[], list[st
 class RateLimitMiddleware:
     # Pure ASGI so the allow path (the overwhelming majority of requests) is a dict lookup and a
     # deque trim with no BaseHTTPMiddleware wrapping. Only the rare 429 path builds a response.
+    _SKIP_PREFIXES = (
+        "/health",
+        "/orderbook",
+        "/market/",
+        "/metrics",
+    )
+
     def __init__(
         self,
         app: ASGIApp,
@@ -66,7 +73,7 @@ class RateLimitMiddleware:
         self.app = app
         self._get_cors_origins = get_cors_origins
         _max = max_requests or int(
-            os.getenv("RATE_LIMIT_MAX_REQUESTS", os.getenv("RATE_LIMIT_MAX", "30"))
+            os.getenv("RATE_LIMIT_MAX_REQUESTS", os.getenv("RATE_LIMIT_MAX", "120"))
         )
         _window = window_seconds or int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
         self._limiter = RateLimiter(max_requests=_max, window_seconds=_window)
@@ -75,12 +82,16 @@ class RateLimitMiddleware:
         if scope["type"] != "http" or scope["method"] == "OPTIONS" or not _rate_limit_enabled():
             await self.app(scope, receive, send)
             return
+        path = scope.get("path", "")
+        if scope["method"] == "GET" and path.startswith(self._SKIP_PREFIXES):
+            await self.app(scope, receive, send)
+            return
         headers = Headers(scope=scope)
         xff = headers.get("x-forwarded-for", "")
         ip = xff.split(",")[0].strip() if xff else (
             (scope.get("client") or ("unknown",))[0]
         )
-        key = f"{ip}:{scope['path']}"
+        key = f"{ip}:{path}"
         if self._limiter.allow(key):
             await self.app(scope, receive, send)
             return

@@ -141,7 +141,7 @@ export default function OrderTicket() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-3 overflow-y-auto rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-3 shadow-[var(--shadow-card)]">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-3 shadow-[var(--shadow-card)]">
       <div className="grid grid-cols-2 gap-1 rounded-xl bg-[var(--bg)] p-1">
         <button
           type="button"

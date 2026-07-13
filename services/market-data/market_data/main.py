@@ -70,6 +70,7 @@ async def lifespan(app: FastAPI):
         kline_intervals=intervals,
         on_trade=_publisher.handle_trade,
         on_kline=_publisher.handle_kline,
+        on_ticker=_publisher.handle_ticker,
     )
     await _binance_client.start()
     logger.info(

@@ -17,7 +17,8 @@ function formatQty(raw: string | number): string {
   if (!Number.isFinite(n)) return "—";
   if (n >= 1000) return n.toLocaleString("en-US", { maximumFractionDigits: 2 });
   if (n >= 1) return n.toFixed(4);
-  return n.toFixed(6);
+  if (n >= 0.01) return n.toFixed(4);
+  return n.toFixed(5);
 }
 
 function groupLevels(levels: PriceLevel[], step: number, side: "bid" | "ask"): PriceLevel[] {
@@ -48,7 +49,7 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
   const step = GROUPINGS[groupIdx] ?? 0.1;
   const { data, isLoading, isError, refetch } = useGetOrderBookQuery(
     { symbol, depth: 12 },
-    { pollingInterval: 2000 },
+    { pollingInterval: 3000 },
   );
   const trade = useLiveMarketTrade(symbol);
   const lastPrice = trade ? Number(trade.price) : null;
@@ -75,8 +76,8 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
     spread != null && mid != null && mid > 0 ? (spread / mid) * 100 : null;
 
   return (
-    <section className="flex h-full min-h-[280px] flex-col overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-[var(--shadow-card)]">
-      <div className="flex items-center justify-between border-b border-[var(--card-border)] px-2 py-1.5">
+    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-[var(--shadow-card)]">
+      <div className="flex shrink-0 items-center justify-between border-b border-[var(--card-border)] px-2 py-1.5">
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -112,11 +113,11 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
             : "Spread —"}
         </span>
       </div>
-      <div className="grid grid-cols-[1fr_1fr] gap-2 px-3 py-1.5 text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
+      <div className="grid shrink-0 grid-cols-2 gap-2 px-3 py-1.5 text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
         <span>Price</span>
         <span className="text-right">Quantity</span>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-1 pb-2">
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-1 pb-2">
         {isLoading && !data ? (
           <p className="px-2 py-8 text-center text-xs text-[var(--text-muted)]">Loading book…</p>
         ) : isError ? (
@@ -132,7 +133,8 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
           </div>
         ) : !asks.length && !bids.length ? (
           <p className="px-3 py-8 text-center text-xs leading-relaxed text-[var(--text-muted)]">
-            No resting liquidity yet. Limit orders will appear here; market depth seeds next.
+            Waiting for market depth. Synthetic maker liquidity seeds once the orders
+            service is online.
           </p>
         ) : (
           <>
@@ -192,7 +194,7 @@ function BookRow({
   const pct = maxQty > 0 && Number.isFinite(qty) ? Math.min(100, (qty / maxQty) * 100) : 0;
   const isBid = side === "bid";
   return (
-    <div className="relative grid grid-cols-[1fr_1fr] gap-2 px-2 py-0.5 text-xs tabular-nums">
+    <div className="relative grid grid-cols-2 gap-2 px-2 py-0.5 text-xs tabular-nums">
       <div
         className={`pointer-events-none absolute inset-y-0 ${
           isBid ? "left-0 bg-emerald-500/15" : "right-0 bg-rose-500/15"
@@ -200,13 +202,13 @@ function BookRow({
         style={{ width: `${pct}%` }}
       />
       <span
-        className={`relative z-[1] font-medium ${
+        className={`relative z-[1] truncate font-medium ${
           isBid ? "text-emerald-600" : "text-rose-500"
         }`}
       >
         {formatPx(level.price)}
       </span>
-      <span className="relative z-[1] text-right text-[var(--text-primary)]">
+      <span className="relative z-[1] truncate text-right text-[var(--text-primary)]">
         {formatQty(level.total_quantity)}
       </span>
     </div>

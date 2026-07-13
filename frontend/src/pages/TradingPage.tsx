@@ -58,25 +58,31 @@ export default function TradingPage() {
   }, [symbol, status, subscribe, unsubscribe]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-2">
+    <div className="flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden">
       <PairHeader symbol={symbol} />
-      <div className="flex min-h-0 flex-1 flex-col gap-2 md:flex-row">
-        <div className="flex min-h-[360px] w-full shrink-0 flex-col md:w-[260px] xl:w-[300px]">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden md:flex-row">
+        <div className="min-h-[320px] w-full shrink-0 overflow-hidden md:min-h-0 md:w-[280px]">
           <OrderTicket />
         </div>
-        <div className="flex min-h-[320px] w-full shrink-0 flex-col md:w-[220px] xl:w-[260px]">
-          <OrderBookPanel symbol={symbol} />
-        </div>
-        <div className="card-premium flex min-h-[320px] min-w-0 flex-1 flex-col rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-3 backdrop-blur-xl">
-          <CandlestickChart
-            ref={chartRef}
-            symbol={symbol}
-            interval={interval}
-            onIntervalChange={handleIntervalChange}
-          />
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden">
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden md:flex-row">
+            <div className="min-h-[280px] w-full shrink-0 overflow-hidden md:min-h-0 md:w-[280px]">
+              <OrderBookPanel symbol={symbol} />
+            </div>
+            <div className="flex min-h-[280px] min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-2 md:min-h-0">
+              <CandlestickChart
+                ref={chartRef}
+                symbol={symbol}
+                interval={interval}
+                onIntervalChange={handleIntervalChange}
+              />
+            </div>
+          </div>
+          <div className="h-[180px] shrink-0 overflow-hidden">
+            <TradingBottomPanel symbol={symbol} />
+          </div>
         </div>
       </div>
-      <TradingBottomPanel symbol={symbol} />
     </div>
   );
 }

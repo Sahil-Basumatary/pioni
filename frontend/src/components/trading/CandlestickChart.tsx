@@ -103,6 +103,8 @@ const CandlestickChart = forwardRef<
     const container = containerRef.current;
     if (!container) return;
     const chart = createChart(container, {
+      width: container.clientWidth || 400,
+      height: container.clientHeight || 300,
       layout: {
         background: { type: ColorType.Solid, color: "transparent" },
         textColor: "var(--text-muted)",
@@ -147,7 +149,9 @@ const CandlestickChart = forwardRef<
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;
-        chart.applyOptions({ width, height });
+        if (width > 0 && height > 0) {
+          chart.applyOptions({ width, height });
+        }
       }
     });
     resizeObserver.observe(container);
@@ -200,8 +204,8 @@ const CandlestickChart = forwardRef<
           </button>
         ))}
       </div>
-      <div className="relative flex-1 min-h-[360px]">
-        <div ref={containerRef} className="absolute inset-0" />
+      <div className="relative min-h-0 flex-1 overflow-hidden">
+        <div ref={containerRef} className="absolute inset-0 overflow-hidden" />
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-[var(--card-bg)]/60 backdrop-blur-sm z-10">
             <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">

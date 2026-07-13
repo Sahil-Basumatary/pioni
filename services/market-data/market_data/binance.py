@@ -6,7 +6,7 @@ from decimal import Decimal
 from typing import Awaitable, Callable
 import certifi
 import websockets
-from market_data.schemas import NormalizedTrade, NormalizedKline
+from market_data.schemas import NormalizedTrade, NormalizedKline, Ticker24h
 from market_data.settings import binance_ws_url
 
 logger = logging.getLogger(__name__)
@@ -22,11 +22,13 @@ class BinanceWSClient:
         kline_intervals: list[str],
         on_trade: Callable[[NormalizedTrade], Awaitable[None]] | None = None,
         on_kline: Callable[[NormalizedKline], Awaitable[None]] | None = None,
+        on_ticker: Callable[[Ticker24h], Awaitable[None]] | None = None,
     ):
         self._symbols = [s.lower() for s in symbols]
         self._intervals = kline_intervals
         self._on_trade = on_trade
         self._on_kline = on_kline
+        self._on_ticker = on_ticker
         self._ws = None
         self._running = False
         self._reconnect_delay = INITIAL_RECONNECT_DELAY
@@ -37,6 +39,7 @@ class BinanceWSClient:
         streams = []
         for sym in self._symbols:
             streams.append(f"{sym}@trade")
+            streams.append(f"{sym}@ticker")
             for interval in self._intervals:
                 streams.append(f"{sym}@kline_{interval}")
         combined = "/".join(streams)
@@ -68,12 +71,28 @@ class BinanceWSClient:
             is_closed=k["x"],
         )
 
+    def _parse_ticker(self, data: dict) -> Ticker24h:
+        return Ticker24h(
+            symbol=data["s"],
+            price=Decimal(data["c"]),
+            change_24h=Decimal(data["p"]),
+            change_pct_24h=float(data["P"]),
+            high_24h=Decimal(data["h"]),
+            low_24h=Decimal(data["l"]),
+            volume_24h=Decimal(data["v"]),
+            updated_at=int(data["E"]),
+        )
+
     async def _handle_message(self, raw: str) -> None:
         try:
             msg = json.loads(raw)
             stream = msg.get("stream", "")
             data = msg.get("data", {})
-            if "@trade" in stream:
+            if stream.endswith("@ticker"):
+                ticker = self._parse_ticker(data)
+                if self._on_ticker:
+                    await self._on_ticker(ticker)
+            elif "@trade" in stream:
                 trade = self._parse_trade(data)
                 if self._on_trade:
                     await self._on_trade(trade)

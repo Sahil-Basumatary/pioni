@@ -33,6 +33,18 @@ class NormalizedKline(BaseModel):
     is_closed: bool
 
 
+class Ticker24h(BaseModel):
+    symbol: str
+    exchange: str = "binance"
+    price: Decimal
+    change_24h: Decimal
+    change_pct_24h: float
+    high_24h: Decimal
+    low_24h: Decimal
+    volume_24h: Decimal
+    updated_at: int
+
+
 class TickerSnapshot(BaseModel):
     symbol: str
     exchange: str = "binance"

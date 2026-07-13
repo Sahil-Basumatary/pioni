@@ -30,7 +30,7 @@ export default function TradingBottomPanel({ symbol }: { symbol: string }) {
   const [tab, setTab] = useState<Tab>("orders");
 
   return (
-    <section className="flex h-[240px] shrink-0 flex-col overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-[var(--shadow-card)]">
+    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-[var(--shadow-card)]">
       <div className="flex flex-wrap items-center gap-1 border-b border-[var(--card-border)] px-2 py-1.5">
         <TabBtn active={tab === "balances"} onClick={() => setTab("balances")} label="Balances" />
         <TabBtn
@@ -46,7 +46,7 @@ export default function TradingBottomPanel({ symbol }: { symbol: string }) {
         />
         {isSignedIn && <ResetChip />}
       </div>
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div className="min-h-0 flex-1 overflow-auto bg-[var(--card-bg)]">
         {!isSignedIn ? (
           <Empty copy="Sign in from the top bar to see balances, positions, and orders." />
         ) : tab === "balances" ? (
@@ -364,5 +364,7 @@ function OrderRow({ order, showCancel }: { order: Order; showCancel: boolean }) 
 }
 
 function Empty({ copy }: { copy: string }) {
-  return <p className="px-4 py-10 text-center text-sm text-[var(--text-muted)]">{copy}</p>;
+  return (
+    <p className="px-4 py-6 text-center text-sm text-[var(--text-muted)]">{copy}</p>
+  );
 }

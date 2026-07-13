@@ -1,7 +1,7 @@
 import pytest
 from decimal import Decimal
 from market_data.publisher import MarketPublisher
-from market_data.schemas import NormalizedTrade, NormalizedKline
+from market_data.schemas import NormalizedTrade, NormalizedKline, Ticker24h
 
 
 @pytest.fixture
@@ -16,6 +16,19 @@ def _make_trade(symbol="BTCUSDT", price="67890.50") -> NormalizedTrade:
         quantity=Decimal("0.001"),
         timestamp=1700000000000,
         buyer_maker=False,
+    )
+
+
+def _make_ticker(symbol="BTCUSDT") -> Ticker24h:
+    return Ticker24h(
+        symbol=symbol,
+        price=Decimal("63500.00"),
+        change_24h=Decimal("-1200.50"),
+        change_pct_24h=-1.85,
+        high_24h=Decimal("65000.00"),
+        low_24h=Decimal("62000.00"),
+        volume_24h=Decimal("12345.678"),
+        updated_at=1700000000999,
     )
 
 
@@ -44,6 +57,28 @@ async def test_handle_trade_creates_snapshot(publisher):
     assert snap is not None
     assert snap.price == Decimal("67890.50")
     assert snap.symbol == "BTCUSDT"
+
+
+@pytest.mark.asyncio
+async def test_handle_ticker_fills_24h_stats(publisher):
+    await publisher.handle_trade(_make_trade(price="67890.00"))
+    await publisher.handle_ticker(_make_ticker())
+    snap = publisher.get_snapshot("BTCUSDT")
+    assert snap.price == Decimal("67890.00")
+    assert snap.high_24h == Decimal("65000.00")
+    assert snap.low_24h == Decimal("62000.00")
+    assert snap.volume_24h == Decimal("12345.678")
+    assert snap.change_pct_24h == -1.85
+
+
+@pytest.mark.asyncio
+async def test_handle_trade_preserves_24h_stats(publisher):
+    await publisher.handle_ticker(_make_ticker())
+    await publisher.handle_trade(_make_trade(price="64000.00"))
+    snap = publisher.get_snapshot("BTCUSDT")
+    assert snap.price == Decimal("64000.00")
+    assert snap.high_24h == Decimal("65000.00")
+    assert snap.change_pct_24h == -1.85
 
 
 @pytest.mark.asyncio

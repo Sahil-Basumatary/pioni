@@ -1,5 +1,6 @@
 import json
 from decimal import Decimal
+import pytest
 from market_data.binance import BinanceWSClient
 
 SAMPLE_TRADE_MSG = json.dumps({
@@ -55,7 +56,9 @@ def test_build_stream_url():
     )
     url = client._build_stream_url()
     assert "btcusdt@trade" in url
+    assert "btcusdt@ticker" in url
     assert "ethusdt@trade" in url
+    assert "ethusdt@ticker" in url
     assert "btcusdt@kline_1m" in url
     assert "ethusdt@kline_1m" in url
     assert url.startswith("wss://stream.binance.com:9443/stream?streams=")
@@ -84,3 +87,50 @@ def test_parse_kline():
     assert kline.volume == Decimal("150.500")
     assert kline.trades == 420
     assert kline.is_closed is False
+
+
+SAMPLE_TICKER_MSG = json.dumps({
+    "stream": "btcusdt@ticker",
+    "data": {
+        "e": "24hrTicker",
+        "E": 1700000000999,
+        "s": "BTCUSDT",
+        "p": "-1200.50",
+        "P": "-1.85",
+        "c": "63500.00",
+        "h": "65000.00",
+        "l": "62000.00",
+        "v": "12345.678",
+        "q": "780000000.00",
+    },
+})
+
+
+def test_parse_ticker():
+    client = BinanceWSClient(symbols=["BTCUSDT"], kline_intervals=["1m"])
+    raw = json.loads(SAMPLE_TICKER_MSG)
+    ticker = client._parse_ticker(raw["data"])
+    assert ticker.symbol == "BTCUSDT"
+    assert ticker.price == Decimal("63500.00")
+    assert ticker.change_24h == Decimal("-1200.50")
+    assert ticker.change_pct_24h == -1.85
+    assert ticker.high_24h == Decimal("65000.00")
+    assert ticker.low_24h == Decimal("62000.00")
+    assert ticker.volume_24h == Decimal("12345.678")
+
+
+@pytest.mark.asyncio
+async def test_handle_message_routes_ticker():
+    received = []
+
+    async def on_ticker(t):
+        received.append(t)
+
+    client = BinanceWSClient(
+        symbols=["BTCUSDT"],
+        kline_intervals=["1m"],
+        on_ticker=on_ticker,
+    )
+    await client._handle_message(SAMPLE_TICKER_MSG)
+    assert len(received) == 1
+    assert received[0].high_24h == Decimal("65000.00")

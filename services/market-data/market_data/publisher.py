@@ -5,7 +5,7 @@ from collections import defaultdict
 from decimal import Decimal
 import redis.asyncio as aioredis
 from common import CHANNEL_TRADE, CHANNEL_KLINE
-from market_data.schemas import NormalizedTrade, NormalizedKline, TickerSnapshot
+from market_data.schemas import NormalizedTrade, NormalizedKline, TickerSnapshot, Ticker24h
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +27,19 @@ class MarketPublisher:
 
     def set_redis(self, redis_instance: aioredis.Redis | None) -> None:
         self._redis = redis_instance
+
+    async def handle_ticker(self, ticker: Ticker24h) -> None:
+        existing = self._snapshots.get(ticker.symbol)
+        self._snapshots[ticker.symbol] = TickerSnapshot(
+            symbol=ticker.symbol,
+            price=existing.price if existing else ticker.price,
+            change_24h=ticker.change_24h,
+            change_pct_24h=ticker.change_pct_24h,
+            high_24h=ticker.high_24h,
+            low_24h=ticker.low_24h,
+            volume_24h=ticker.volume_24h,
+            updated_at=existing.updated_at if existing else ticker.updated_at,
+        )
 
     async def handle_trade(self, trade: NormalizedTrade) -> None:
         now_ms = int(time.time() * 1000)
