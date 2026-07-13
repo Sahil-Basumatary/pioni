@@ -7,6 +7,8 @@ import "./App.css";
 const SentimentPage = lazy(() => import("./pages/SentimentPage"));
 const TradingPage = lazy(() => import("./pages/TradingPage"));
 const HomePage = lazy(() => import("./pages/HomePage"));
+const HistoryPage = lazy(() => import("./pages/HistoryPage"));
+const MarketsPage = lazy(() => import("./pages/MarketsPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 
@@ -39,6 +41,7 @@ function App() {
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/home" element={<HomePage />} />
+            <Route path="/history" element={<HistoryPage />} />
             <Route path="/trading" element={<TradingPage />} />
             <Route path="/trade/margin" element={
               <ComingSoonPage
@@ -58,12 +61,7 @@ function App() {
                 description="A simulated prop desk experience is planned after the core Spot terminal."
               />
             } />
-            <Route path="/markets" element={
-              <ComingSoonPage
-                title="Markets"
-                description="A full markets browser and ⌘K search palette are coming in the next milestones."
-              />
-            } />
+            <Route path="/markets" element={<MarketsPage />} />
             <Route path="/yield" element={
               <ComingSoonPage
                 title="Yield"

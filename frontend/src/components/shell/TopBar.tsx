@@ -1,8 +1,11 @@
 import { Link, NavLink } from "react-router-dom";
-import { SignedIn, UserButton } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
 import BalanceChip from "./BalanceChip";
+import { useMarketSearch } from "../../features/markets/MarketSearchContext";
 
 export default function TopBar() {
+  const { openSearch } = useMarketSearch();
+
   return (
     <header className="border-b border-[var(--card-border)] bg-[var(--card-bg)]/90 backdrop-blur-lg">
       <div className="mx-auto flex h-14 w-full max-w-[1750px] items-center gap-3 px-2">
@@ -11,9 +14,8 @@ export default function TopBar() {
         </NavLink>
         <button
           type="button"
-          disabled
-          title="Market search comes next"
-          className="ml-2 hidden min-w-0 flex-1 items-center gap-2 rounded-full border border-[var(--card-border)] bg-[var(--bg)] px-3 py-1.5 text-left text-sm text-[var(--text-muted)] opacity-70 sm:flex md:max-w-sm"
+          onClick={openSearch}
+          className="rail-icon ml-2 hidden min-w-0 flex-1 items-center gap-2 rounded-full border border-[var(--card-border)] bg-[var(--bg)] px-3 py-1.5 text-left text-sm text-[var(--text-muted)] hover:border-[var(--accent)] sm:flex md:max-w-sm"
         >
           <SearchIcon />
           <span className="truncate">Search for a market</span>
@@ -38,6 +40,16 @@ export default function TopBar() {
           <SignedIn>
             <UserButton afterSignOutUrl="/home" />
           </SignedIn>
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button
+                type="button"
+                className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white"
+              >
+                Sign in
+              </button>
+            </SignInButton>
+          </SignedOut>
         </div>
       </div>
     </header>

@@ -1,0 +1,230 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { assetIconUrl } from "../../components/shell/activityFormat";
+import { StarIcon } from "../../components/shell/krakenIcons";
+import type { MarketRow } from "./useMarketRows";
+import {
+  formatChangePct,
+  formatMarketPrice,
+  formatVolume,
+  sparklinePath,
+  sparklinePoints,
+} from "./format";
+
+export type MarketsTableVariant = "full" | "compact" | "palette";
+
+type MarketsTableProps = {
+  rows: MarketRow[];
+  variant?: MarketsTableVariant;
+  favorites: string[];
+  onToggleFavorite: (symbol: string) => void;
+  onSelect?: (symbol: string) => void;
+  emptyMessage?: string;
+};
+
+export default function MarketsTable({
+  rows,
+  variant = "full",
+  favorites,
+  onToggleFavorite,
+  onSelect,
+  emptyMessage = "No markets match.",
+}: MarketsTableProps) {
+  if (!rows.length) {
+    return (
+      <p className="px-3 py-10 text-center text-sm text-[var(--text-muted)]">{emptyMessage}</p>
+    );
+  }
+
+  const showCategory = variant === "full";
+  const showRange = variant === "full" || variant === "compact";
+  const showTrend = variant === "full" || variant === "compact";
+  const showVolume = true;
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[640px] border-collapse text-left">
+        <thead>
+          <tr className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
+            <th className="px-2 py-2">Market</th>
+            {showCategory ? <th className="px-2 py-2">Category</th> : null}
+            <th className="px-2 py-2 text-right">Price</th>
+            {showRange ? (
+              <>
+                <th className="hidden px-2 py-2 text-right md:table-cell">24H Low</th>
+                <th className="hidden px-2 py-2 text-right md:table-cell">24H High</th>
+              </>
+            ) : null}
+            <th className="px-2 py-2 text-right">24H Chg.</th>
+            {showTrend ? (
+              <th className="hidden px-2 py-2 text-right lg:table-cell">24H Trend</th>
+            ) : null}
+            {showVolume ? <th className="px-2 py-2 text-right">24H Volume</th> : null}
+            <th className="w-10 px-2 py-2" aria-label="Favorite" />
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <MarketTableRow
+              key={row.symbol}
+              row={row}
+              showCategory={showCategory}
+              showRange={showRange}
+              showTrend={showTrend}
+              showVolume={showVolume}
+              favorited={favorites.includes(row.symbol)}
+              onToggleFavorite={onToggleFavorite}
+              onSelect={onSelect}
+            />
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function MarketTableRow({
+  row,
+  showCategory,
+  showRange,
+  showTrend,
+  showVolume,
+  favorited,
+  onToggleFavorite,
+  onSelect,
+}: {
+  row: MarketRow;
+  showCategory: boolean;
+  showRange: boolean;
+  showTrend: boolean;
+  showVolume: boolean;
+  favorited: boolean;
+  onToggleFavorite: (symbol: string) => void;
+  onSelect?: (symbol: string) => void;
+}) {
+  const changeClass =
+    row.changePct == null
+      ? "text-[var(--text-muted)]"
+      : row.changePct >= 0
+        ? "text-emerald-600"
+        : "text-rose-500";
+
+  const marketCell = (
+    <div className="flex items-center gap-3">
+      <AssetImg symbol={row.symbol} label={row.label} />
+      <div className="min-w-0">
+        <div className="text-sm font-medium text-[var(--text-primary)]">
+          {row.label}
+          <span className="text-[var(--text-muted)]">/USD</span>
+        </div>
+        <div className="truncate text-xs text-[var(--text-muted)]">{row.name}</div>
+      </div>
+    </div>
+  );
+
+  return (
+    <tr className="border-t border-[var(--card-border)] hover:bg-black/[0.02]">
+      <td className="px-2 py-2.5">
+        {onSelect ? (
+          <button
+            type="button"
+            className="rail-icon w-full text-left"
+            onClick={() => onSelect(row.symbol)}
+          >
+            {marketCell}
+          </button>
+        ) : (
+          <Link to="/trading" className="block hover:opacity-90">
+            {marketCell}
+          </Link>
+        )}
+      </td>
+      {showCategory ? (
+        <td className="px-2 py-2.5 text-xs text-[var(--text-muted)]">{row.category}</td>
+      ) : null}
+      <td className="px-2 py-2.5 text-right text-sm font-medium tabular-nums text-[var(--text-primary)]">
+        {formatMarketPrice(row.price)}
+        <span className="ml-1 text-xs font-normal text-[var(--text-muted)]">USD</span>
+      </td>
+      {showRange ? (
+        <>
+          <td className="hidden px-2 py-2.5 text-right text-sm tabular-nums text-[var(--text-muted)] md:table-cell">
+            {formatMarketPrice(row.low)}
+          </td>
+          <td className="hidden px-2 py-2.5 text-right text-sm tabular-nums text-[var(--text-muted)] md:table-cell">
+            {formatMarketPrice(row.high)}
+          </td>
+        </>
+      ) : null}
+      <td className={`px-2 py-2.5 text-right text-xs font-medium tabular-nums ${changeClass}`}>
+        {formatChangePct(row.changePct)}
+      </td>
+      {showTrend ? (
+        <td className="hidden px-2 py-2.5 text-right lg:table-cell">
+          <TrendSparkline symbol={row.symbol} changePct={row.changePct} />
+        </td>
+      ) : null}
+      {showVolume ? (
+        <td className="px-2 py-2.5 text-right text-sm tabular-nums text-[var(--text-primary)]">
+          {formatVolume(row.volume)}
+          <span className="ml-1 text-xs text-[var(--text-muted)]">USD</span>
+        </td>
+      ) : null}
+      <td className="px-2 py-2.5 text-right">
+        <button
+          type="button"
+          aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
+          className={`rail-icon inline-flex h-8 w-8 items-center justify-center rounded-lg ${
+            favorited ? "text-amber-500" : "text-[var(--text-muted)]"
+          }`}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggleFavorite(row.symbol);
+          }}
+        >
+          <StarIcon className="h-4 w-4" />
+        </button>
+      </td>
+    </tr>
+  );
+}
+
+function TrendSparkline({
+  symbol,
+  changePct,
+}: {
+  symbol: string;
+  changePct: number | null;
+}) {
+  const points = sparklinePoints(changePct, symbol);
+  const d = sparklinePath(points, 72, 28);
+  const stroke =
+    changePct == null ? "#6A6A6A" : changePct >= 0 ? "#059669" : "#e11d48";
+  return (
+    <svg width={72} height={28} viewBox="0 0 72 28" aria-hidden="true" className="ml-auto">
+      <path d={d} fill="none" stroke={stroke} strokeWidth={1.5} />
+    </svg>
+  );
+}
+
+function AssetImg({ symbol, label }: { symbol: string; label: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--bg)] text-[10px] font-semibold text-[var(--text-muted)]">
+        {label.slice(0, 1)}
+      </span>
+    );
+  }
+  return (
+    <img
+      src={assetIconUrl(symbol)}
+      alt=""
+      width={24}
+      height={24}
+      className="h-6 w-6 shrink-0 rounded-full object-scale-down"
+      onError={() => setFailed(true)}
+    />
+  );
+}
