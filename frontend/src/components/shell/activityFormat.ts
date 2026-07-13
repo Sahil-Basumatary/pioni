@@ -72,5 +72,5 @@ export function formatActivityTime(iso: string): string {
 
 export function assetIconUrl(symbol: string): string {
   const asset = baseAsset(symbol).toLowerCase();
-  return `https://assets.kraken.com/marketing/web/icons-uni-webp/s_${asset}.webp?i=kds`;
+  return `/icons/assets/${asset}.webp`;
 }

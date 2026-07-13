@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  assetIconUrl,
   formatActivityClock,
   formatActivityDate,
   formatActivityTime,
@@ -35,5 +36,10 @@ describe("activityFormat", () => {
     expect(formatActivityDate(iso)).toMatch(/\d+\/\d+\/\d+/);
     expect(formatActivityClock(iso)).toMatch(/\d+:\d+/);
     expect(formatActivityTime(iso)).not.toBe("—");
+  });
+
+  it("serves asset icons from local public paths", () => {
+    expect(assetIconUrl("BTCUSDT")).toBe("/icons/assets/btc.webp");
+    expect(assetIconUrl("ethusdt")).toBe("/icons/assets/eth.webp");
   });
 });
