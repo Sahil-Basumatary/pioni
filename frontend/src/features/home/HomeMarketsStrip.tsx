@@ -1,4 +1,11 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ComponentType } from "react";
+import {
+  LineChartDownIcon,
+  LineChartUpIcon,
+  PercentageIcon,
+  RocketIcon,
+  StarIcon,
+} from "../../components/shell/shellIcons";
 import { useMarketSearch } from "../markets/MarketSearchContext";
 import MarketsTable from "../markets/MarketsTable";
 import {
@@ -8,8 +15,20 @@ import {
   type MarketSort,
 } from "../markets/useMarketRows";
 
-const TABS = ["Favorites", "Top Traded", "Gainers", "Losers", "New"] as const;
-type Tab = (typeof TABS)[number];
+type IconProps = { className?: string };
+
+const TABS: {
+  id: "Favorites" | "Top Traded" | "Gainers" | "Losers" | "New";
+  Icon: ComponentType<IconProps>;
+}[] = [
+  { id: "Favorites", Icon: StarIcon },
+  { id: "Top Traded", Icon: PercentageIcon },
+  { id: "Gainers", Icon: LineChartUpIcon },
+  { id: "Losers", Icon: LineChartDownIcon },
+  { id: "New", Icon: RocketIcon },
+];
+
+type Tab = (typeof TABS)[number]["id"];
 
 export default function HomeMarketsStrip() {
   const [tab, setTab] = useState<Tab>("Top Traded");
@@ -29,20 +48,21 @@ export default function HomeMarketsStrip() {
     <section className="overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-[var(--shadow-card)]">
       <div className="flex flex-grow justify-between gap-3 px-4 pt-4">
         <div className="flex flex-wrap gap-1" role="tablist">
-          {TABS.map((t) => (
+          {TABS.map(({ id, Icon }) => (
             <button
-              key={t}
+              key={id}
               type="button"
               role="tab"
-              aria-selected={tab === t}
-              onClick={() => setTab(t)}
-              className={`rail-icon rounded-lg px-2 py-1.5 text-xs font-medium ${
-                tab === t
+              aria-selected={tab === id}
+              onClick={() => setTab(id)}
+              className={`rail-icon inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium ${
+                tab === id
                   ? "bg-black/[0.08] text-[var(--text-primary)]"
                   : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               }`}
             >
-              {t}
+              <Icon className="h-4 w-4" />
+              {id}
             </button>
           ))}
         </div>
