@@ -2,7 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { symbolSelected } from "../instrument/instrumentSlice";
-import { StarIcon } from "../../components/shell/shellIcons";
+import {
+  StarIcon,
+  FireIcon,
+  RocketIcon,
+  LineChartUpIcon,
+  LineChartDownIcon,
+} from "../../components/shell/shellIcons";
 import { useMarketSearch } from "./MarketSearchContext";
 import MarketsTable from "./MarketsTable";
 import {
@@ -96,15 +102,27 @@ export default function MarketSearchPalette() {
           />
         </label>
         <div className="flex flex-wrap gap-1 pb-1">
-          <FilterChip label="Hot" active={chip === "hot"} onClick={() => setChip(chip === "hot" ? null : "hot")} />
-          <FilterChip label="New" active={chip === "new"} onClick={() => setChip(chip === "new" ? null : "new")} />
+          <FilterChip
+            label="Hot"
+            icon={<FireIcon className="h-3.5 w-3.5" />}
+            active={chip === "hot"}
+            onClick={() => setChip(chip === "hot" ? null : "hot")}
+          />
+          <FilterChip
+            label="New"
+            icon={<RocketIcon className="h-3.5 w-3.5" />}
+            active={chip === "new"}
+            onClick={() => setChip(chip === "new" ? null : "new")}
+          />
           <FilterChip
             label="Gainers"
+            icon={<LineChartUpIcon className="h-3.5 w-3.5" />}
             active={chip === "gainers"}
             onClick={() => setChip(chip === "gainers" ? null : "gainers")}
           />
           <FilterChip
             label="Losers"
+            icon={<LineChartDownIcon className="h-3.5 w-3.5" />}
             active={chip === "losers"}
             onClick={() => setChip(chip === "losers" ? null : "losers")}
           />
@@ -163,10 +181,12 @@ function TabChip({
 
 function FilterChip({
   label,
+  icon,
   active,
   onClick,
 }: {
   label: string;
+  icon?: React.ReactNode;
   active: boolean;
   onClick: () => void;
 }) {
@@ -174,12 +194,13 @@ function FilterChip({
     <button
       type="button"
       onClick={onClick}
-      className={`rail-icon rounded-full px-2.5 py-1 text-xs font-medium ${
+      className={`rail-icon inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
         active
           ? "bg-[var(--accent)] text-white"
           : "bg-black/[0.04] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
       }`}
     >
+      {icon}
       {label}
     </button>
   );
