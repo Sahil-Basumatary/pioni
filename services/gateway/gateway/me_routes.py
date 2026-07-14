@@ -123,6 +123,18 @@ async def _proxy_portfolio_get(path: str, params: dict | None = None):
     return resp.json()
 
 
+async def _proxy_portfolio_post(path: str):
+    client = await _get_client()
+    try:
+        resp = await client.post(path)
+    except httpx.RequestError as e:
+        logger.error("portfolio service unreachable", extra={"error": str(e)})
+        raise _unavailable() from None
+    if resp.status_code >= 400:
+        raise HTTPException(status_code=resp.status_code, detail=resp.json())
+    return resp.json()
+
+
 @me_router.get("/summary")
 async def my_summary(ctx: AuthContext = Depends(require_auth)):
     portfolio_id = await resolve_portfolio_id(ctx)
@@ -166,3 +178,9 @@ async def my_pnl_chart(
     return await _proxy_portfolio_get(
         f"/portfolios/{portfolio_id}/pnl-chart", params={"days": days},
     )
+
+
+@me_router.post("/portfolio/reset")
+async def reset_my_portfolio(ctx: AuthContext = Depends(require_auth)):
+    portfolio_id = await resolve_portfolio_id(ctx)
+    return await _proxy_portfolio_post(f"/portfolios/{portfolio_id}/reset")

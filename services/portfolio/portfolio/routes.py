@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from common import (
     get_db,
@@ -103,6 +103,35 @@ async def get_portfolio(
     return PortfolioResponse.model_validate(row)
 
 
+@router.post("/portfolios/{portfolio_id}/reset", response_model=PortfolioResponse)
+async def reset_portfolio(
+    portfolio_id: uuid.UUID,
+    session: AsyncSession = Depends(get_db),
+) -> PortfolioResponse:
+    # A practice account must be restartable: wipe holdings, fills and the equity-curve history,
+    # then restore the original virtual balance. Open orders are deliberately left alone — they
+    # are live resting orders held in the orders service's in-memory book, and are cleared via
+    # the cancel path (with the open-orders UI) to avoid book-vs-DB drift.
+    portfolio = await session.get(PortfolioORM, portfolio_id, with_for_update=True)
+    if portfolio is None:
+        raise _not_found(portfolio_id)
+    await session.execute(
+        delete(TradeORM).where(TradeORM.portfolio_id == portfolio_id),
+    )
+    await session.execute(
+        delete(PositionORM).where(PositionORM.portfolio_id == portfolio_id),
+    )
+    await session.execute(
+        delete(PortfolioSnapshotORM).where(
+            PortfolioSnapshotORM.portfolio_id == portfolio_id,
+        ),
+    )
+    portfolio.cash_balance = portfolio.initial_balance
+    await session.flush()
+    await session.refresh(portfolio)
+    return PortfolioResponse.model_validate(portfolio)
+
+
 @router.get(
     "/portfolios/{portfolio_id}/positions",
     response_model=list[PositionResponse],
@@ -185,7 +214,8 @@ async def get_summary(
     return PortfolioSummaryResponse(
         portfolio=PortfolioResponse.model_validate(portfolio),
         positions=[
-            _position_with_valuation(p, v) for p, v in zip(positions, valuations)
+            _position_with_valuation(p, v)
+            for p, v in zip(positions, valuations, strict=True)
         ],
         total_value=portfolio.cash_balance + invested,
         total_realized_pnl=total_realized,

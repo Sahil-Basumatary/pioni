@@ -163,3 +163,35 @@ def test_my_positions_rejects_invalid_query(client):
     _auth_with_portfolio("P1")
     resp = client.get("/me/trades?limit=0")
     assert resp.status_code == 422
+
+
+class _FakePostClient:
+    def __init__(self, response):
+        self._response = response
+        self.calls: list = []
+
+    async def get(self, url, headers=None, params=None):
+        self.calls.append(("GET", url))
+        return self._response
+
+    async def post(self, url):
+        self.calls.append(("POST", url))
+        return self._response
+
+
+def test_reset_my_portfolio_proxies_post(monkeypatch, client):
+    _auth_with_portfolio("P1")
+    fake = _FakePostClient(_FakeResponse(200, {"id": "P1", "cash_balance": "100000"}))
+    _install_client(monkeypatch, fake)
+    resp = client.post("/me/portfolio/reset")
+    assert resp.status_code == 200
+    assert resp.json()["cash_balance"] == "100000"
+    assert ("POST", "/portfolios/P1/reset") in fake.calls
+
+
+def test_reset_my_portfolio_propagates_error(monkeypatch, client):
+    _auth_with_portfolio("P1")
+    fake = _FakePostClient(_FakeResponse(404, {"error": "portfolio_not_found"}))
+    _install_client(monkeypatch, fake)
+    resp = client.post("/me/portfolio/reset")
+    assert resp.status_code == 404
