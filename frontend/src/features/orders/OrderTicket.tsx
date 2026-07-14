@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useAuth, useClerk } from "@clerk/clerk-react";
 import { Link } from "react-router-dom";
 import { useAppSelector } from "../../app/hooks";
@@ -34,6 +34,19 @@ function formatTotalInput(n: number): string {
 }
 
 type Feedback = { tone: "success" | "error"; message: string };
+type TimeInForce = "GTC" | "IOC" | "FOK";
+
+const ADVANCED_TYPES = [
+  { id: "stop-loss", label: "Stop loss" },
+  { id: "take-profit", label: "Take profit" },
+  { id: "trailing-stop", label: "Trailing stop" },
+] as const;
+
+const TIF_OPTIONS: { id: TimeInForce; label: string; ready: boolean }[] = [
+  { id: "GTC", label: "Good till canceled", ready: true },
+  { id: "IOC", label: "Immediate or cancel", ready: false },
+  { id: "FOK", label: "Fill or kill", ready: false },
+];
 
 export default function OrderTicket() {
   const { isSignedIn } = useAuth();
@@ -61,8 +74,16 @@ export default function OrderTicket() {
   const [limitPrice, setLimitPrice] = useState("");
   const [total, setTotal] = useState("");
   const [sizePct, setSizePct] = useState(0);
+  const [tpSl, setTpSl] = useState(false);
+  const [postOnly, setPostOnly] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(true);
+  const [tif, setTif] = useState<TimeInForce>("GTC");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [advancedNote, setAdvancedNote] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [submitOrder, { isLoading }] = useSubmitOrderMutation();
+  const advancedRef = useRef<HTMLDivElement>(null);
+  const advancedMenuId = useId();
   const evaluation = evaluateOrder({
     side,
     orderType,
@@ -76,6 +97,34 @@ export default function OrderTicket() {
   const canAct = isSignedIn ? evaluation.canSubmit : quantity.trim().length > 0;
   const effectivePrice =
     orderType === "LIMIT" ? Number(limitPrice) || null : livePrice;
+  const needsFunds =
+    isSignedIn &&
+    isBuy &&
+    cashBalance != null &&
+    cashBalance <= 0;
+  const estFeeUsd = 0;
+
+  useEffect(() => {
+    if (orderType === "MARKET") setPostOnly(false);
+  }, [orderType]);
+
+  useEffect(() => {
+    if (!advancedOpen) return;
+    function onPointerDown(event: MouseEvent) {
+      if (!advancedRef.current?.contains(event.target as Node)) {
+        setAdvancedOpen(false);
+      }
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setAdvancedOpen(false);
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [advancedOpen]);
 
   function syncFromQuantity(nextQty: string, price: number | null) {
     setQuantity(nextQty);
@@ -117,6 +166,7 @@ export default function OrderTicket() {
       openSignIn({});
       return;
     }
+    if (needsFunds) return;
     try {
       const order = await submitOrder({
         symbol,
@@ -135,6 +185,8 @@ export default function OrderTicket() {
       setQuantity("");
       setTotal("");
       setSizePct(0);
+      setTpSl(false);
+      setPostOnly(false);
     } catch (err) {
       setFeedback({ tone: "error", message: extractError(err) });
     }
@@ -162,14 +214,17 @@ export default function OrderTicket() {
           Sell
         </button>
       </div>
-      <div className="flex gap-1 text-xs">
+      <div className="relative flex flex-wrap items-center gap-1 text-xs" ref={advancedRef}>
         {(["LIMIT", "MARKET"] as const).map((type) => (
           <button
             type="button"
             key={type}
-            onClick={() => setOrderType(type)}
+            onClick={() => {
+              setOrderType(type);
+              setAdvancedNote(null);
+            }}
             className={`rail-icon rounded-lg px-3 py-1.5 font-medium transition-colors ${
-              orderType === type
+              orderType === type && !advancedNote
                 ? "!bg-black/[0.08] text-[var(--text-primary)]"
                 : "bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             }`}
@@ -177,7 +232,51 @@ export default function OrderTicket() {
             {type === "MARKET" ? "Market" : "Limit"}
           </button>
         ))}
+        <button
+          type="button"
+          aria-label="Advanced"
+          aria-haspopup="menu"
+          aria-expanded={advancedOpen}
+          aria-controls={advancedMenuId}
+          onClick={() => setAdvancedOpen((v) => !v)}
+          className={`rail-icon inline-flex items-center gap-1 rounded-lg px-3 py-1.5 font-medium transition-colors ${
+            advancedOpen || advancedNote
+              ? "!bg-black/[0.08] text-[var(--text-primary)]"
+              : "bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+          }`}
+        >
+          Advanced
+          <ChevronTiny open={advancedOpen} />
+        </button>
+        {advancedOpen && (
+          <div
+            id={advancedMenuId}
+            role="menu"
+            className="absolute left-0 top-full z-20 mt-1 min-w-[11rem] overflow-hidden rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] py-1 shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+          >
+            {ADVANCED_TYPES.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setAdvancedNote(item.label);
+                  setAdvancedOpen(false);
+                }}
+                className="rail-icon flex w-full items-center justify-between px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-black/[0.04]"
+              >
+                {item.label}
+                <span className="text-[10px] text-[var(--text-muted)]">Soon</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
+      {advancedNote && (
+        <p className="rounded-lg bg-black/[0.04] px-3 py-2 text-xs text-[var(--text-muted)]">
+          {advancedNote} orders are coming soon — use Limit or Market for now.
+        </p>
+      )}
       {orderType === "LIMIT" && (
         <Field
           label={`Limit price USD`}
@@ -251,20 +350,110 @@ export default function OrderTicket() {
           </Link>
         </span>
       </div>
-      <button
-        type="button"
-        onClick={handleSubmit}
-        disabled={!canAct || isLoading}
-        className={`mt-auto rounded-xl py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-          isBuy ? "bg-emerald-500 hover:bg-emerald-600" : "bg-red-500 hover:bg-red-600"
-        }`}
-      >
-        {isLoading
-          ? "Placing…"
-          : !isSignedIn
-            ? `${isBuy ? "Buy" : "Sell"} ${asset}`
-            : evaluation.reason ?? `${isBuy ? "Buy" : "Sell"} ${asset}`}
-      </button>
+      <div className="flex flex-wrap gap-3">
+        <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-[var(--text-primary)]">
+          <input
+            type="checkbox"
+            checked={tpSl}
+            onChange={(e) => setTpSl(e.target.checked)}
+            className="accent-[var(--accent)]"
+            aria-label="TP/SL"
+          />
+          TP/SL
+        </label>
+        <label
+          className={`inline-flex items-center gap-2 text-xs ${
+            orderType === "LIMIT"
+              ? "cursor-pointer text-[var(--text-primary)]"
+              : "cursor-not-allowed text-[var(--text-muted)]"
+          }`}
+        >
+          <input
+            type="checkbox"
+            checked={postOnly}
+            disabled={orderType !== "LIMIT"}
+            onChange={(e) => setPostOnly(e.target.checked)}
+            className="accent-[var(--accent)]"
+            aria-label="Post only"
+          />
+          Post only
+        </label>
+      </div>
+      {tpSl && (
+        <p className="rounded-lg bg-black/[0.04] px-3 py-2 text-xs text-[var(--text-muted)]">
+          Take-profit / stop-loss attaches on the next milestone — checkbox is wired for layout parity.
+        </p>
+      )}
+      {postOnly && orderType === "LIMIT" && (
+        <p className="text-[11px] text-[var(--text-muted)]">
+          Post-only is display-only for now; the matching engine will enforce it later.
+        </p>
+      )}
+      {needsFunds ? (
+        <Link
+          to="/deposit"
+          className="mt-auto block rounded-xl bg-[var(--accent)] py-2.5 text-center text-sm font-semibold text-white transition-colors hover:opacity-90"
+        >
+          Add USD to trade
+        </Link>
+      ) : (
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={!canAct || isLoading}
+          className={`mt-auto rounded-xl py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+            isBuy ? "bg-emerald-500 hover:bg-emerald-600" : "bg-red-500 hover:bg-red-600"
+          }`}
+        >
+          {isLoading
+            ? "Placing…"
+            : !isSignedIn
+              ? `${isBuy ? "Buy" : "Sell"} ${asset}`
+              : evaluation.reason ?? `${isBuy ? "Buy" : "Sell"} ${asset}`}
+        </button>
+      )}
+      <div className="rounded-xl border border-[var(--card-border)]">
+        <button
+          type="button"
+          aria-expanded={detailsOpen}
+          onClick={() => setDetailsOpen((v) => !v)}
+          className="rail-icon flex w-full items-center justify-between px-3 py-2 text-xs font-medium text-[var(--text-primary)]"
+        >
+          Order details
+          <ChevronTiny open={detailsOpen} />
+        </button>
+        {detailsOpen && (
+          <div className="flex flex-col gap-2 border-t border-[var(--card-border)] px-3 py-2">
+            <label className="flex items-center justify-between gap-2 text-xs text-[var(--text-muted)]">
+              <span>Time in force</span>
+              <select
+                value={tif}
+                onChange={(e) => setTif(e.target.value as TimeInForce)}
+                className="rounded-lg border border-[var(--card-border)] bg-[var(--bg)] px-2 py-1 text-xs text-[var(--text-primary)] outline-none"
+                aria-label="Time in force"
+              >
+                {TIF_OPTIONS.map((opt) => (
+                  <option key={opt.id} value={opt.id} disabled={!opt.ready}>
+                    {opt.label}
+                    {!opt.ready ? " (soon)" : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
+              <span>Est. trading fee</span>
+              <span className="tabular-nums text-[var(--text-primary)]">
+                {estFeeUsd.toFixed(4)} USD
+              </span>
+            </div>
+            {tif === "GTC" && (
+              <p className="text-[10px] text-[var(--text-muted)]">
+                Paper orders rest until filled or canceled.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
       {feedback && (
         <p
           className={`text-xs ${
@@ -305,5 +494,24 @@ function Field({
         className="bg-transparent text-sm font-medium tabular-nums text-[var(--text-primary)] outline-none"
       />
     </label>
+  );
+}
+
+function ChevronTiny({ open }: { open: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 12 12"
+      className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`}
+    >
+      <path
+        d="M2.5 4.5 6 8l3.5-3.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
