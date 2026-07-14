@@ -72,12 +72,25 @@ export const portfolioApi = createApi({
       }),
       providesTags: ["PnlChart"],
     }),
-    getMyTrades: builder.query<PortfolioTrade[], { limit?: number } | void>({
+    getMyTrades: builder.query<
+      PortfolioTrade[],
+      { limit?: number; symbol?: string } | void
+    >({
       query: (args) => ({
         url: "/me/trades",
-        params: { limit: args?.limit ?? 30 },
+        params: {
+          limit: args?.limit ?? 30,
+          ...(args?.symbol ? { symbol: args.symbol } : {}),
+        },
       }),
       providesTags: ["Trades"],
+    }),
+    getMyPositions: builder.query<PortfolioPosition[], { openOnly?: boolean } | void>({
+      query: (args) => ({
+        url: "/me/positions",
+        params: { open_only: args?.openOnly ?? true },
+      }),
+      providesTags: ["Summary"],
     }),
     resetPortfolio: builder.mutation<Portfolio, void>({
       query: () => ({ url: "/me/portfolio/reset", method: "POST" }),
@@ -91,5 +104,6 @@ export const {
   useGetMySummaryQuery,
   useGetMyPnlChartQuery,
   useGetMyTradesQuery,
+  useGetMyPositionsQuery,
   useResetPortfolioMutation,
 } = portfolioApi;
