@@ -1,10 +1,5 @@
 import LegalLayout from "./legal/LegalLayout";
 import { LEGAL } from "./legal/legalConfig";
-
-// Original terms tailored to a simulated, no-real-money educational product under the law of
-// England and Wales. Good-faith template, not certified legal advice — have a solicitor review
-// before a real public launch, especially before ever introducing real money (which triggers FCA
-// registration and AML obligations in the UK).
 export default function TermsPage() {
   return (
     <LegalLayout
