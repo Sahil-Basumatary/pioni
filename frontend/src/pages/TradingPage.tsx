@@ -147,7 +147,16 @@ export default function TradingPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden">
-      {maximized == null && <PairHeader symbol={symbol} />}
+      {maximized == null && (
+        <PairHeader
+          symbol={symbol}
+          onCreateAlert={() => {
+            setMaximized(null);
+            setTicketTab("alerts");
+            setStubTitle((s) => ({ ...s, ticket: null }));
+          }}
+        />
+      )}
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
         {show("ticket") && (
           <div
