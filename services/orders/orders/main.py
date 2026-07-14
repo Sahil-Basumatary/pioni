@@ -16,12 +16,15 @@ from common import (
 import orders.settings as settings
 from orders.routes import router as orders_router
 from orders.service import init_order_service
+from orders.maker_provision import ensure_maker_portfolio
+from orders.maker_worker import LiquidityMaker
 
 setup_logging()
 logger = logging.getLogger(__name__)
 
 _rmq: RabbitMQManager | None = None
 _redis: aioredis.Redis | None = None
+_maker: LiquidityMaker | None = None
 
 
 async def _init_rabbitmq() -> RabbitMQManager:
@@ -63,6 +66,37 @@ async def _close_redis() -> None:
         _redis = None
 
 
+async def _start_maker(svc, redis_conn: aioredis.Redis | None) -> None:
+    global _maker
+    if not settings.maker_liquidity_enabled():
+        logger.info("synthetic maker liquidity disabled")
+        return
+    if redis_conn is None:
+        logger.warning("synthetic maker requires REDIS_URL; leaving books empty")
+        return
+    factory = get_session_factory()
+    try:
+        async with factory() as session:
+            portfolio_id = await ensure_maker_portfolio(session)
+        maker = LiquidityMaker(
+            service=svc,
+            session_factory=factory,
+            redis=redis_conn,
+            portfolio_id=portfolio_id,
+        )
+        await maker.start()
+        _maker = maker
+    except Exception:
+        logger.exception("failed to start synthetic maker")
+
+
+async def _stop_maker() -> None:
+    global _maker
+    if _maker:
+        await _maker.stop()
+        _maker = None
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     factory = get_session_factory()
@@ -72,8 +106,10 @@ async def lifespan(app: FastAPI):
     async with factory() as session:
         restored = await svc.restore_books(session)
         await session.commit()
+    await _start_maker(svc, redis_conn)
     logger.info("orders service started", extra={"restored_orders": restored})
     yield
+    await _stop_maker()
     await _close_redis()
     await _close_rabbitmq()
     await dispose_engine()
@@ -109,4 +145,3 @@ async def readiness():
     except Exception:
         logger.exception("readiness check failed")
         return JSONResponse({"status": "not_ready"}, status_code=503)
-
