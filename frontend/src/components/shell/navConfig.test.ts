@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   PRODUCT_NAV,
   groupContainsPath,
+  groupDefaultTo,
   isPathActive,
   type NavGroupItem,
 } from "./navConfig";
@@ -24,6 +25,11 @@ describe("navConfig", () => {
     expect(groupContainsPath(trade, "/trading")).toBe(true);
     expect(groupContainsPath(trade, "/trade/margin")).toBe(true);
     expect(groupContainsPath(trade, "/markets")).toBe(false);
+  });
+
+  it("defaults the Trade parent to Spot", () => {
+    const trade = PRODUCT_NAV.find((item) => item.id === "trade") as NavGroupItem;
+    expect(groupDefaultTo(trade)).toBe("/trading");
   });
 
   it("matches exact and nested paths", () => {
