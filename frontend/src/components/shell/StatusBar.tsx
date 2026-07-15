@@ -1,10 +1,34 @@
-import { NavLink } from "react-router-dom";
-import { useAppSelector } from "../../app/hooks";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentType,
+} from "react";
+import { createPortal } from "react-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { selectMarketStatus } from "../../features/market/marketSlice";
 import { useLiveMarketTrade } from "../../features/market/liveMarketStore";
-import { useGetPricesQuery } from "../../features/market/marketApi";
+import { symbolSelected } from "../../features/instrument/instrumentSlice";
+import { useMarketSearch } from "../../features/markets/MarketSearchContext";
+import {
+  filterMarketRows,
+  sortMarketRows,
+  useMarketRows,
+  type MarketRow,
+} from "../../features/markets/useMarketRows";
 import { formatUsd } from "../../utils/formatters";
 import type { ConnectionStatus } from "../../hooks/useMarketWebSocket";
+import {
+  LineChartDownIcon,
+  LineChartUpIcon,
+  PercentageIcon,
+  RocketIcon,
+  StarIcon,
+} from "./shellIcons";
 
 const STATUS_DOT: Record<ConnectionStatus, string> = {
   connected: "bg-emerald-500",
@@ -18,40 +42,85 @@ const STATUS_LABEL: Record<ConnectionStatus, string> = {
   disconnected: "Offline",
 };
 
-const TICKERS = [
-  { symbol: "BTCUSDT", label: "BTC/USD" },
-  { symbol: "ETHUSDT", label: "ETH/USD" },
-] as const;
+type TickerType = "Favorites" | "Gainers" | "Top Traded" | "Losers" | "New";
+
+const TICKER_TYPES: {
+  id: TickerType;
+  Icon: ComponentType<{ className?: string }>;
+}[] = [
+  { id: "Favorites", Icon: StarIcon },
+  { id: "Gainers", Icon: LineChartUpIcon },
+  { id: "Top Traded", Icon: PercentageIcon },
+  { id: "Losers", Icon: LineChartDownIcon },
+  { id: "New", Icon: RocketIcon },
+];
+
+type MenuPos = { top: number; left: number };
 
 export default function StatusBar() {
   const status = useAppSelector(selectMarketStatus);
-  const { data: prices } = useGetPricesQuery(undefined, {
-    pollingInterval: 30_000,
-  });
+  const { favorites } = useMarketSearch();
+  const { rows } = useMarketRows(30_000);
+  const [tickerType, setTickerType] = useState<TickerType>("Favorites");
+  const [showChangePct, setShowChangePct] = useState(true);
+  const [showPrice, setShowPrice] = useState(true);
+  const ActiveIcon = TICKER_TYPES.find((t) => t.id === tickerType)?.Icon ?? StarIcon;
+
+  const tickers = useMemo(() => {
+    if (tickerType === "New") return [];
+    const favoritesOnly = tickerType === "Favorites";
+    const filtered = filterMarketRows(rows, "", favoritesOnly, favorites);
+    const sort =
+      tickerType === "Gainers"
+        ? "gainers"
+        : tickerType === "Losers"
+          ? "losers"
+          : "volume";
+    return sortMarketRows(filtered, sort).slice(0, 12);
+  }, [rows, tickerType, favorites]);
 
   return (
     <footer className="sticky bottom-0 z-40 border-t border-[var(--card-border)] bg-[var(--card-bg)]">
-      <div className="mx-auto flex h-9 max-w-[1320px] items-center gap-3 px-4 text-xs text-[var(--text-muted)] lg:px-12">
-        <div className="flex shrink-0 items-center gap-1.5">
+      <div className="mx-auto flex h-9 max-w-[1320px] items-center gap-2 px-4 text-xs text-[var(--text-muted)] lg:px-12">
+        <button
+          type="button"
+          className="rail-icon inline-flex h-7 shrink-0 items-center gap-1.5 rounded-lg bg-emerald-500/15 px-2 text-[11px] font-medium text-emerald-700"
+          aria-label={STATUS_LABEL[status]}
+        >
           <span
-            className={`inline-block h-1.5 w-1.5 rounded-full ${STATUS_DOT[status]}`}
+            className={`inline-block h-1.5 w-1.5 rounded-full ${STATUS_DOT[status]} ${
+              status === "connecting" ? "" : status === "connected" ? "animate-pulse" : ""
+            }`}
             aria-hidden="true"
           />
-          <span className="font-medium text-[var(--text-primary)]">
-            {STATUS_LABEL[status]}
-          </span>
-        </div>
-        <div className="hidden h-3 w-px bg-[var(--card-border)] sm:block" />
-        <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto">
-          {TICKERS.map((ticker) => (
+          {STATUS_LABEL[status]}
+        </button>
+        <TickerTypeChip
+          label={tickerType}
+          Icon={ActiveIcon}
+          tickerType={tickerType}
+          onSelectType={setTickerType}
+          showChangePct={showChangePct}
+          showPrice={showPrice}
+          onToggleChangePct={() => setShowChangePct((v) => !v)}
+          onTogglePrice={() => setShowPrice((v) => !v)}
+        />
+        <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+          {tickers.map((row) => (
             <TickerChip
-              key={ticker.symbol}
-              symbol={ticker.symbol}
-              label={ticker.label}
-              changePct={prices?.[ticker.symbol]?.change_pct_24h ?? null}
+              key={row.symbol}
+              row={row}
+              showChangePct={showChangePct}
+              showPrice={showPrice}
             />
           ))}
-          <span className="hidden truncate text-[11px] md:inline">
+          {tickerType === "New" && (
+            <span className="truncate text-[11px]">New listings will show up here.</span>
+          )}
+          {tickerType === "Favorites" && tickers.length === 0 && (
+            <span className="truncate text-[11px]">Star markets to pin them here.</span>
+          )}
+          <span className="ml-2 hidden shrink-0 truncate text-[11px] md:inline">
             Paper trading only — simulated funds, not real money.
           </span>
         </div>
@@ -86,17 +155,157 @@ export default function StatusBar() {
   );
 }
 
-function TickerChip({
-  symbol,
+function TickerTypeChip({
   label,
-  changePct,
+  Icon,
+  tickerType,
+  onSelectType,
+  showChangePct,
+  showPrice,
+  onToggleChangePct,
+  onTogglePrice,
 }: {
-  symbol: string;
   label: string;
-  changePct: number | null;
+  Icon: ComponentType<{ className?: string }>;
+  tickerType: TickerType;
+  onSelectType: (type: TickerType) => void;
+  showChangePct: boolean;
+  showPrice: boolean;
+  onToggleChangePct: () => void;
+  onTogglePrice: () => void;
 }) {
-  const trade = useLiveMarketTrade(symbol);
-  const price = trade ? formatUsd(trade.price) : "—";
+  const menuId = useId();
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<MenuPos>({ top: 0, left: 0 });
+
+  function placeMenu() {
+    const btn = btnRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    setPos({ top: rect.top - 4, left: rect.left });
+  }
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    placeMenu();
+    const menu = menuRef.current;
+    if (!menu) return;
+    const height = menu.getBoundingClientRect().height;
+    const btn = btnRef.current?.getBoundingClientRect();
+    if (btn) setPos({ top: btn.top - height - 4, left: btn.left });
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(event: MouseEvent) {
+      const target = event.target as Node;
+      if (btnRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setOpen(false);
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("resize", placeMenu);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("resize", placeMenu);
+    };
+  }, [open]);
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={menuId}
+        onClick={() => setOpen((v) => !v)}
+        className="rail-icon inline-flex h-7 shrink-0 items-center gap-1 rounded-lg bg-black/[0.06] px-2 text-[11px] font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+      >
+        <Icon className="h-3.5 w-3.5" />
+        {label}
+      </button>
+      {open &&
+        createPortal(
+          <div
+            ref={menuRef}
+            id={menuId}
+            role="menu"
+            style={{ top: pos.top, left: pos.left }}
+            className="fixed z-[80] min-w-[200px] rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-1 shadow-[var(--shadow-card)]"
+          >
+            <p className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
+              Ticker type
+            </p>
+            {TICKER_TYPES.map(({ id, Icon: TypeIcon }) => (
+              <button
+                key={id}
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  onSelectType(id);
+                  setOpen(false);
+                }}
+                className={`rail-icon flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm ${
+                  tickerType === id
+                    ? "bg-black/[0.06] font-medium text-[var(--text-primary)]"
+                    : "text-[var(--text-muted)] hover:bg-black/[0.04] hover:text-[var(--text-primary)]"
+                }`}
+              >
+                <TypeIcon className="h-4 w-4" />
+                {id}
+              </button>
+            ))}
+            <div className="my-1 border-t border-[var(--card-border)]" />
+            <p className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
+              Settings
+            </p>
+            <label className="rail-icon flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-black/[0.04]">
+              <span>24H Change %</span>
+              <input
+                type="checkbox"
+                checked={showChangePct}
+                onChange={onToggleChangePct}
+                className="h-3.5 w-3.5 accent-[var(--accent)]"
+              />
+            </label>
+            <label className="rail-icon flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-black/[0.04]">
+              <span>Price</span>
+              <input
+                type="checkbox"
+                checked={showPrice}
+                onChange={onTogglePrice}
+                className="h-3.5 w-3.5 accent-[var(--accent)]"
+              />
+            </label>
+          </div>,
+          document.body,
+        )}
+    </>
+  );
+}
+
+function TickerChip({
+  row,
+  showChangePct,
+  showPrice,
+}: {
+  row: MarketRow;
+  showChangePct: boolean;
+  showPrice: boolean;
+}) {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const trade = useLiveMarketTrade(row.symbol);
+  const priceNum = trade ? Number(trade.price) : row.price;
+  const price = priceNum != null && Number.isFinite(priceNum) ? formatUsd(priceNum) : null;
+  const changePct = row.changePct;
   const pctClass =
     changePct == null
       ? "text-[var(--text-muted)]"
@@ -104,15 +313,24 @@ function TickerChip({
         ? "text-emerald-600"
         : "text-red-500";
   const pctLabel =
-    changePct == null
-      ? ""
-      : ` ${changePct >= 0 ? "+" : ""}${changePct.toFixed(2)}%`;
+    changePct == null ? null : `${changePct >= 0 ? "" : "-"}${Math.abs(changePct).toFixed(2)}%`;
 
   return (
-    <span className="shrink-0 tabular-nums">
-      <span className="font-medium text-[var(--text-primary)]">{label}</span>{" "}
-      <span className="text-[var(--text-primary)]">{price}</span>
-      {pctLabel && <span className={pctClass}>{pctLabel}</span>}
-    </span>
+    <button
+      type="button"
+      onClick={() => {
+        dispatch(symbolSelected(row.symbol));
+        navigate("/trading");
+      }}
+      className="rail-icon shrink-0 rounded-md px-1.5 py-0.5 tabular-nums hover:bg-black/[0.04]"
+    >
+      <span className="font-medium text-[var(--text-primary)]">{row.label}/USD</span>
+      {showPrice && price && (
+        <span className="ml-1 text-[var(--text-primary)]">{price}</span>
+      )}
+      {showChangePct && pctLabel && (
+        <span className={`ml-1 ${pctClass}`}>{pctLabel}</span>
+      )}
+    </button>
   );
 }
