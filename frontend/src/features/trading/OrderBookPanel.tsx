@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { useGetOrderBookQuery } from "../orders/ordersApi";
 import { MinusSmallIcon, PlusSmallIcon } from "../../components/shell/shellIcons";
 import {
@@ -8,6 +8,8 @@ import {
   withCumulativeDepth,
   type DepthLevel,
 } from "./orderBookMath";
+
+const ROW_PX = 22;
 
 function formatPx(raw: string | number): string {
   const n = Number(raw);
@@ -25,10 +27,30 @@ function formatQty(raw: string | number): string {
   return n.toFixed(8);
 }
 
+function useMaxRows(): [RefObject<HTMLDivElement | null>, number] {
+  const ref = useRef<HTMLDivElement>(null);
+  const [maxRows, setMaxRows] = useState(12);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => {
+      const h = el.clientHeight;
+      setMaxRows(Math.max(1, Math.floor(h / ROW_PX)));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, maxRows];
+}
+
 export default function OrderBookPanel({ symbol }: { symbol: string }) {
   const [groupIdx, setGroupIdx] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [asksRef, maxAskRows] = useMaxRows();
+  const [bidsRef, maxBidRows] = useMaxRows();
   const step = GROUPINGS[groupIdx] ?? 0.1;
   const { data, isLoading, isError, refetch } = useGetOrderBookQuery(
     { symbol, depth: 40 },
@@ -61,6 +83,9 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
     const grouped = groupLevels(raw, step, "bid");
     return withCumulativeDepth(grouped, true);
   }, [data?.bids, step]);
+
+  const visibleAsks = asks.slice(-maxAskRows);
+  const visibleBids = bids.slice(0, maxBidRows);
 
   const spread = data?.spread != null ? Number(data.spread) : null;
   const mid =
@@ -135,7 +160,7 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
         <span className="text-right">Quantity</span>
         <span className="text-right">Total</span>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-1 pb-1">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden pb-1">
         {isLoading && !data ? (
           <p className="px-2 py-8 text-center text-xs text-[var(--text-muted)]">Loading book…</p>
         ) : isError ? (
@@ -156,8 +181,11 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
           </p>
         ) : (
           <>
-            <div className="flex min-h-0 flex-1 flex-col justify-end overflow-hidden">
-              {asks.map((level) => (
+            <div
+              ref={asksRef}
+              className="flex min-h-0 flex-1 flex-col justify-end overflow-hidden"
+            >
+              {visibleAsks.map((level) => (
                 <BookRow key={`a-${level.price}`} level={level} side="ask" />
               ))}
             </div>
@@ -170,8 +198,11 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
                   : "Spread: —"}
               </span>
             </div>
-            <div className="flex min-h-0 flex-1 flex-col justify-start overflow-hidden">
-              {bids.map((level) => (
+            <div
+              ref={bidsRef}
+              className="flex min-h-0 flex-1 flex-col justify-start overflow-hidden"
+            >
+              {visibleBids.map((level) => (
                 <BookRow key={`b-${level.price}`} level={level} side="bid" />
               ))}
             </div>
@@ -191,7 +222,9 @@ function BookRow({
 }) {
   const isBid = side === "bid";
   return (
-    <div className="relative grid shrink-0 grid-cols-3 gap-1 px-2 py-[3px] text-xs tabular-nums">
+    <div
+      className="relative grid h-[22px] shrink-0 grid-cols-3 items-center gap-1 px-2 text-xs tabular-nums"
+    >
       <div
         className={`pointer-events-none absolute inset-y-0 end-0 ${
           isBid ? "bg-emerald-500/15" : "bg-rose-500/15"
