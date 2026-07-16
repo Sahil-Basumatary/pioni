@@ -86,7 +86,7 @@ export default function ContentWindow({
       className={`relative flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-[var(--shadow-card)] ${className}`}
     >
       <header className="flex h-8 shrink-0 items-center gap-0.5 border-b border-[var(--card-border)] px-1">
-        <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
+        <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {tabs.map((tab) => {
             const active = tab.id === activeTabId;
             return (
