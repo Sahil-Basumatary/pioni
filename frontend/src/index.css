@@ -36,22 +36,8 @@ body {
   color: var(--text-primary);
 }
 
-button {
-  background-color: var(--accent);
-  color: white;
-  transition: background 0.2s;
-}
-button:hover {
-  background-color: var(--accent-soft);
-}
-
 button.rail-icon {
   background-color: transparent;
-  color: inherit;
-}
-button.rail-icon:hover {
-  background-color: rgba(0, 0, 0, 0.04);
-  color: inherit;
 }
 
 .btn-premium {

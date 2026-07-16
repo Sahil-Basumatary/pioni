@@ -43,12 +43,7 @@ function App() {
             <Route path="/home" element={<HomePage />} />
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/trading" element={<TradingPage />} />
-            <Route path="/trade/margin" element={
-              <ComingSoonPage
-                title="Trade Margin"
-                description="Simulated margin trading is next. Spot paper trading is ready now."
-              />
-            } />
+            <Route path="/trade/margin" element={<TradingPage venue="margin" />} />
             <Route path="/trade/futures" element={
               <ComingSoonPage
                 title="Trade Futures"

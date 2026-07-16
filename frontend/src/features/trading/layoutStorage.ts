@@ -1,4 +1,4 @@
-const KEY = "pioni.tradingLayout.v1";
+const KEY = "pioni.tradingLayout.v2";
 
 export type TradingLayoutSizes = {
   ticketWidth: number;
@@ -7,7 +7,7 @@ export type TradingLayoutSizes = {
 };
 
 export const DEFAULT_LAYOUT: TradingLayoutSizes = {
-  ticketWidth: 280,
+  ticketWidth: 336,
   bookWidth: 280,
   bottomHeight: 180,
 };

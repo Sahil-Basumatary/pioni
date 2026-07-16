@@ -29,6 +29,7 @@ import ContentWindow, {
 import ComingSoonBody from "../features/trading/ComingSoonBody";
 import ResizeHandle from "../features/trading/ResizeHandle";
 import { useTradingLayout } from "../features/trading/useTradingLayout";
+import type { TradingVenue } from "../features/trading/tradingVenue";
 import type { Kline } from "../types/market";
 
 type PaneId = "ticket" | "book" | "chart" | "bottom";
@@ -68,7 +69,11 @@ const BOTTOM_ADD = [
   { id: "positions", label: "Positions" },
 ];
 
-export default function TradingPage() {
+export default function TradingPage({
+  venue = "spot",
+}: {
+  venue?: TradingVenue;
+}) {
   const dispatch = useAppDispatch();
   const symbol = useAppSelector(selectSymbol);
   const interval = useAppSelector(selectInterval);
@@ -154,6 +159,7 @@ export default function TradingPage() {
       {maximized == null && (
         <PairHeader
           symbol={symbol}
+          venue={venue}
           onCreateAlert={() => {
             setMaximized(null);
             setTicketTab("alerts");
@@ -194,7 +200,7 @@ export default function TradingPage() {
                   description="Price and order alerts will live here — paper-only."
                 />
               ) : (
-                <OrderTicket />
+                <OrderTicket venue={venue} />
               )}
             </ContentWindow>
           </div>

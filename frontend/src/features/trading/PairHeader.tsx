@@ -7,6 +7,7 @@ import { BellIcon, StarIcon } from "../../components/shell/shellIcons";
 import { assetIconUrl, baseAsset } from "../../components/shell/activityFormat";
 import { useGetOrderBookQuery } from "../orders/ordersApi";
 import type { TickerSnapshot } from "../../types/market";
+import type { TradingVenue } from "./tradingVenue";
 
 const DEFAULT_GATEWAY_URL = "http://localhost:8000";
 const SNAPSHOT_REFRESH_MS = 15_000;
@@ -64,9 +65,11 @@ async function fetchSnapshot(symbol: string): Promise<TickerSnapshot> {
 
 function PairHeader({
   symbol,
+  venue = "spot",
   onCreateAlert,
 }: {
   symbol: string;
+  venue?: TradingVenue;
   onCreateAlert?: () => void;
 }) {
   const trade = useLiveMarketTrade(symbol);
@@ -157,9 +160,16 @@ function PairHeader({
           )}
         </span>
         <span className="text-left">
-          <span className="block text-sm font-semibold text-[var(--text-primary)]">
-            {asset}
-            <span className="text-[var(--text-muted)]">/USD</span>
+          <span className="flex items-center gap-1.5 text-sm font-semibold text-[var(--text-primary)]">
+            <span>
+              {asset}
+              <span className="text-[var(--text-muted)]">/USD</span>
+            </span>
+            {venue === "margin" && (
+              <span className="rounded bg-black/[0.08] px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--text-primary)]">
+                10x
+              </span>
+            )}
           </span>
           <span className="block text-xs text-[var(--text-muted)]">
             {meta?.name ?? asset}
