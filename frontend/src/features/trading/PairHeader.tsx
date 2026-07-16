@@ -14,6 +14,17 @@ const SNAPSHOT_REFRESH_MS = 15_000;
 const FLASH_DURATION_MS = 500;
 const PAPER_MAKER_FEE = "0.00%";
 const PAPER_TAKER_FEE = "0.00%";
+const FUTURES_PAPER_MAKER_FEE = "0.0200%";
+const FUTURES_PAPER_TAKER_FEE = "0.0500%";
+const FUTURES_PAPER_FUNDING = "0.0000% / hr";
+
+function nextFundingAtLabel(): string {
+  const d = new Date();
+  d.setSeconds(0, 0);
+  d.setMinutes(0);
+  d.setHours(d.getHours() + 1);
+  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}
 
 function priceDecimals(price: number): number {
   if (price >= 100) return 2;
@@ -219,7 +230,15 @@ function PairHeader({
                 : "text-[var(--text-primary)]"
           }`}
         >
-          {currentPrice != null ? `${formatPrice(currentPrice)} USD` : "—"}
+          {(() => {
+            const markOrLast =
+              venue === "futures"
+                ? (currentPrice ?? indexPrice)
+                : currentPrice;
+            return markOrLast != null
+              ? `${formatPrice(markOrLast)} USD`
+              : "—";
+          })()}
         </span>
       </div>
       <div className="flex flex-wrap items-center gap-4">
@@ -240,15 +259,48 @@ function PairHeader({
                   : "text-rose-500"
             }`}
           >
-            {formatChangeAbs(changeAbs)}{" "}
-            <span className="text-[var(--text-muted)]">
-              ({formatChangePct(changePct)})
-            </span>
+            {venue === "futures" ? (
+              formatChangePct(changePct)
+            ) : (
+              <>
+                {formatChangeAbs(changeAbs)}{" "}
+                <span className="text-[var(--text-muted)]">
+                  ({formatChangePct(changePct)})
+                </span>
+              </>
+            )}
           </span>
         </div>
-        <Stat label="24H Volume" value={formatVolume(snapshot?.volume_24h)} />
-        <Stat label="24H High" value={snapshot?.high_24h ? formatPrice(snapshot.high_24h) : "—"} />
-        <Stat label="24H Low" value={snapshot?.low_24h ? formatPrice(snapshot.low_24h) : "—"} />
+        {venue === "futures" ? (
+          <>
+            <Stat label="Funding rate" value={FUTURES_PAPER_FUNDING} />
+            <Stat
+              label="Next funding rate"
+              value={`0.0000% @ ${nextFundingAtLabel()}`}
+            />
+            <Stat
+              label="24H Volume"
+              value={
+                snapshot?.volume_24h
+                  ? `${formatVolume(snapshot.volume_24h)} ${asset}`
+                  : "—"
+              }
+            />
+            <Stat label="Open interest" value="—" />
+          </>
+        ) : (
+          <>
+            <Stat label="24H Volume" value={formatVolume(snapshot?.volume_24h)} />
+            <Stat
+              label="24H High"
+              value={snapshot?.high_24h ? formatPrice(snapshot.high_24h) : "—"}
+            />
+            <Stat
+              label="24H Low"
+              value={snapshot?.low_24h ? formatPrice(snapshot.low_24h) : "—"}
+            />
+          </>
+        )}
         <Link
           to="/terms"
           title="Paper trading — no exchange fees"
@@ -258,9 +310,9 @@ function PairHeader({
             Fees
           </span>
           <span className="inline-flex items-center gap-1 text-[13px] font-medium tabular-nums text-[var(--text-primary)]">
-            {PAPER_MAKER_FEE}
+            {venue === "futures" ? FUTURES_PAPER_MAKER_FEE : PAPER_MAKER_FEE}
             <span className="text-[var(--text-muted)]">/</span>
-            {PAPER_TAKER_FEE}
+            {venue === "futures" ? FUTURES_PAPER_TAKER_FEE : PAPER_TAKER_FEE}
             <ChevronRightTiny />
           </span>
         </Link>

@@ -420,18 +420,20 @@ export default function OrderTicket({
         </div>
         {isFutures ? (
           <div className="relative flex shrink-0 items-center" ref={leverageRef}>
-            <button
-              type="button"
-              aria-label={`${marginMode} ${leverage}x`}
-              aria-haspopup="menu"
-              aria-expanded={leverageOpen}
-              aria-controls={leverageMenuId}
-              onClick={() => setLeverageOpen((v) => !v)}
-              className="rail-icon inline-flex items-center gap-0.5 text-xs font-medium leading-4 text-[rgb(72,75,94)]"
-            >
-              {marginMode} {leverage}x
-              <ChevronDownSmallIcon className="h-3.5 w-3.5" />
-            </button>
+            <div className="flex h-8 items-center rounded-xl bg-[rgba(148,151,169,0.08)] px-2">
+              <button
+                type="button"
+                aria-label={`${marginMode} ${leverage}x`}
+                aria-haspopup="menu"
+                aria-expanded={leverageOpen}
+                aria-controls={leverageMenuId}
+                onClick={() => setLeverageOpen((v) => !v)}
+                className="rail-icon inline-flex items-center gap-0.5 text-xs font-medium leading-4 text-[rgb(72,75,94)]"
+              >
+                {marginMode} {leverage}x
+                <ChevronDownSmallIcon className="h-3.5 w-3.5" />
+              </button>
+            </div>
             {leverageOpen && (
               <div
                 id={leverageMenuId}
@@ -665,7 +667,7 @@ export default function OrderTicket({
           />
         </div>
       )}
-      <div className="relative pb-4 pt-1">
+      <div className="flex flex-col gap-1 pt-1">
         <div className="relative flex h-2 items-center">
           <div className="pointer-events-none absolute inset-x-0 h-1 rounded-full bg-[rgba(104,107,130,0.24)]" />
           <div
@@ -683,12 +685,16 @@ export default function OrderTicket({
             aria-label="Order size percent"
           />
         </div>
-        <span
-          className="pointer-events-none absolute top-7 -translate-x-1/2 text-[10px] tabular-nums text-[var(--text-muted)]"
-          style={{ left: `clamp(0.75rem, ${sizePct}%, calc(100% - 0.75rem))` }}
-        >
-          {sizePct}%
-        </span>
+        <div className="relative mb-0.5 h-4">
+          <span
+            className="pointer-events-none absolute top-0 -translate-x-1/2 text-[10px] leading-4 tabular-nums text-[var(--text-muted)]"
+            style={{
+              left: `clamp(0.75rem, ${sizePct}%, calc(100% - 0.75rem))`,
+            }}
+          >
+            {sizePct}%
+          </span>
+        </div>
       </div>
       <div className="flex items-center justify-between gap-2 text-xs">
         <span className="text-[rgb(104,107,130)] underline decoration-dashed underline-offset-4">
