@@ -11,7 +11,11 @@ import StatusBar from "./StatusBar";
 import TopBar from "./TopBar";
 
 function isWorkspaceRoute(pathname: string): boolean {
-  return pathname === "/trading" || pathname.startsWith("/trade/");
+  return (
+    pathname === "/trading" ||
+    pathname === "/trade/margin" ||
+    pathname === "/trade/futures"
+  );
 }
 
 export default function AppShell({ children }: { children: ReactNode }) {
