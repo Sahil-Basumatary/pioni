@@ -18,6 +18,7 @@ import {
 import OrderTicket from "../features/orders/OrderTicket";
 import PairHeader from "../features/trading/PairHeader";
 import OrderBookPanel from "../features/trading/OrderBookPanel";
+import MarketTradesPanel from "../features/trading/MarketTradesPanel";
 import TradingBottomPanel, {
   ResetAccountChip,
   type BottomTab,
@@ -37,7 +38,10 @@ const TICKET_TABS: ContentTab[] = [
   { id: "alerts", label: "Alerts" },
 ];
 
-const BOOK_TABS: ContentTab[] = [{ id: "orderbook", label: "Order book" }];
+const BOOK_TABS: ContentTab[] = [
+  { id: "orderbook", label: "Order book" },
+  { id: "markettrades", label: "Market trades" },
+];
 
 const CHART_TABS: ContentTab[] = [{ id: "marketchart", label: "Market chart" }];
 
@@ -46,7 +50,7 @@ const BOTTOM_TABS: ContentTab[] = [
   { id: "positions", label: "Positions" },
   { id: "orders", label: "Orders", closable: true },
   { id: "closed", label: "Closed orders" },
-  { id: "history", label: "Trade history" },
+  { id: "history", label: "Trades" },
 ];
 
 const TICKET_ADD = [
@@ -218,7 +222,7 @@ export default function TradingPage() {
               className={
                 maximized === "bottom"
                   ? "hidden"
-                  : "flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row"
+                  : "flex min-h-[200px] flex-1 flex-col overflow-hidden md:flex-row"
               }
             >
               {show("book") && (
@@ -248,6 +252,8 @@ export default function TradingPage() {
                         title={labelForStub(stubTitle.book)}
                         description="This widget will unlock in a later milestone."
                       />
+                    ) : bookTab === "markettrades" ? (
+                      <MarketTradesPanel symbol={symbol} />
                     ) : (
                       <OrderBookPanel symbol={symbol} />
                     )}
@@ -267,7 +273,7 @@ export default function TradingPage() {
                 <div
                   className={paneClass(
                     "chart",
-                    "flex min-h-[280px] min-w-0 flex-1 flex-col overflow-hidden md:min-h-0",
+                    "flex min-h-[220px] min-w-0 flex-1 flex-col overflow-hidden md:min-h-0",
                   )}
                 >
                   <ContentWindow
@@ -290,7 +296,7 @@ export default function TradingPage() {
                         description="This widget will unlock in a later milestone."
                       />
                     ) : (
-                      <div className="flex h-full min-h-0 flex-col p-2">
+                      <div className="flex h-full min-h-0 flex-1 flex-col p-2">
                         <CandlestickChart
                           ref={chartRef}
                           symbol={symbol}
