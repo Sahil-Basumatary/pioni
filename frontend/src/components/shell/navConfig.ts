@@ -49,7 +49,7 @@ export function groupContainsPath(item: NavGroupItem, pathname: string): boolean
   return item.children.some((child) => isPathActive(pathname, child.to));
 }
 
-/** Parent Trade control lands on Spot — same as Kraken's Trade = spot route. */
+/** Parent Trade control lands on Spot — same as the reference Trade = spot route. */
 export function groupDefaultTo(item: NavGroupItem): string {
   return item.children.find((child) => child.id === "spot")?.to ?? item.children[0]?.to ?? "/";
 }

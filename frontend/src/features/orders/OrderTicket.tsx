@@ -57,7 +57,9 @@ const TIF_OPTIONS: { id: TimeInForce; label: string; ready: boolean }[] = [
 ];
 
 const MARGIN_LEVERAGE_OPTIONS = [2, 3, 4, 5, 10] as const;
+const FUTURES_LEVERAGE_OPTIONS = [1, 2, 3, 5, 10, 20, 50, 100] as const;
 const DEFAULT_MARGIN_LEVERAGE = 10;
+const DEFAULT_FUTURES_LEVERAGE = 100;
 const PAPER_MAKER_FEE = "0.00%";
 
 export default function OrderTicket({
@@ -66,6 +68,8 @@ export default function OrderTicket({
   venue?: TradingVenue;
 }) {
   const isMargin = venue === "margin";
+  const isFutures = venue === "futures";
+  const isDeriv = isMargin || isFutures;
   const navigate = useNavigate();
   const { isSignedIn } = useAuth();
   const { openSignIn } = useClerk();
@@ -112,9 +116,13 @@ export default function OrderTicket({
   const [sizePct, setSizePct] = useState(0);
   const [tpSl, setTpSl] = useState(false);
   const [postOnly, setPostOnly] = useState(false);
-  const [reduceOnly, setReduceOnly] = useState(isMargin);
+  const [reduceOnly, setReduceOnly] = useState(isDeriv);
   const [statusDeclared, setStatusDeclared] = useState(false);
-  const [leverage, setLeverage] = useState<number>(DEFAULT_MARGIN_LEVERAGE);
+  const [derivativesUnlocked, setDerivativesUnlocked] = useState(false);
+  const [leverage, setLeverage] = useState<number>(
+    isFutures ? DEFAULT_FUTURES_LEVERAGE : DEFAULT_MARGIN_LEVERAGE,
+  );
+  const [marginMode] = useState<"Cross" | "Isolated">("Cross");
   const [leverageOpen, setLeverageOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [tif, setTif] = useState<TimeInForce>("GTC");
@@ -136,12 +144,23 @@ export default function OrderTicket({
   });
   const asset = baseAsset(symbol);
   const isBuy = side === "BUY";
-  const sideLabel = isMargin ? (isBuy ? "Long" : "Short") : isBuy ? "Buy" : "Sell";
-  const submitLabel = isMargin
-    ? `${sideLabel} (${isBuy ? "buy" : "sell"}) ${asset}/USD (${leverage}x)`
-    : `${sideLabel} ${asset}/USD`;
+  const sideLabel = isDeriv
+    ? isBuy
+      ? "Long"
+      : "Short"
+    : isBuy
+      ? "Buy"
+      : "Sell";
+  const submitLabel = isFutures
+    ? `${sideLabel} (${isBuy ? "buy" : "sell"}) ${asset}`
+    : isMargin
+      ? `${sideLabel} (${isBuy ? "buy" : "sell"}) ${asset}/USD (${leverage}x)`
+      : `${sideLabel} ${asset}/USD`;
   const tpSlDisabled = isMargin && !statusDeclared;
   const reduceOnlyLocked = isMargin && !statusDeclared;
+  const leverageOptions = isFutures
+    ? FUTURES_LEVERAGE_OPTIONS
+    : MARGIN_LEVERAGE_OPTIONS;
   const effectivePrice =
     orderType === "LIMIT"
       ? Number(String(limitPrice).replace(/,/g, "")) || null
@@ -161,7 +180,7 @@ export default function OrderTicket({
       ? qtyNum * effectivePrice
       : null;
   const requiredMargin =
-    isMargin && notional != null ? notional / leverage : null;
+    isDeriv && notional != null ? notional / leverage : null;
   const marginHealth =
     requiredMargin == null
       ? "-%"
@@ -172,11 +191,14 @@ export default function OrderTicket({
           : "At risk";
   const requiredMarginDisplay =
     requiredMargin == null
-      ? "—"
+      ? isFutures
+        ? "0.00 USD"
+        : "—"
       : `${requiredMargin.toLocaleString("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })} USD`;
+  const availableLabel = isFutures ? "Available balance" : "Available to trade";
   const relatedBalancePlain = isBuy
     ? cashBalance != null
       ? `${cashBalance.toLocaleString("en-US", {
@@ -296,7 +318,7 @@ export default function OrderTicket({
       setFeedback({
         tone: "success",
         message: filled
-          ? `Filled — ${isMargin ? (isBuy ? "longed" : "shorted") : isBuy ? "bought" : "sold"} ${order.filled_quantity} ${asset}`
+          ? `Filled — ${isDeriv ? (isBuy ? "longed" : "shorted") : isBuy ? "bought" : "sold"} ${order.filled_quantity} ${asset}`
           : `Order placed (${order.status.toLowerCase().replace(/_/g, " ")})`,
       });
       setQuantity("");
@@ -343,6 +365,30 @@ export default function OrderTicket({
           </div>
         </div>
       )}
+      {isFutures && !derivativesUnlocked && (
+        <div className="flex flex-col gap-3 rounded-2xl bg-[rgba(104,107,130,0.04)] p-3">
+          <p className="text-sm font-medium leading-5 text-[var(--text-primary)]">
+            Derivatives trading is restricted to professional clients. To be
+            categorized as a professional client, you must complete an assessment
+            and provide supporting documents.
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setDerivativesUnlocked(true)}
+              className="inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-xl bg-black px-3 py-2 text-sm font-medium leading-5 text-white hover:bg-[rgb(32,32,32)]"
+            >
+              Unlock derivatives
+            </button>
+            <button
+              type="button"
+              className="rail-icon inline-flex h-9 shrink-0 items-center whitespace-nowrap !bg-[rgba(104,107,130,0.08)] px-3 py-2 text-sm font-medium leading-5 text-[var(--text-primary)] hover:!bg-[rgba(104,107,130,0.12)] rounded-xl"
+            >
+              Learn more
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex items-center gap-2">
         <div className="grid flex-1 grid-cols-2 rounded-xl bg-[rgba(104,107,130,0.08)] p-0.5">
           <button
@@ -356,7 +402,7 @@ export default function OrderTicket({
                 : "!bg-transparent !text-[rgb(104,107,130)]"
             }`}
           >
-            {isMargin ? "Long" : "Buy"}
+            {isDeriv ? "Long" : "Buy"}
           </button>
           <button
             type="button"
@@ -369,82 +415,125 @@ export default function OrderTicket({
                 : "!bg-transparent !text-[rgb(104,107,130)]"
             }`}
           >
-            {isMargin ? "Short" : "Sell"}
+            {isDeriv ? "Short" : "Sell"}
           </button>
         </div>
-        <div className="relative flex shrink-0 items-center gap-1.5" ref={leverageRef}>
-          <label className="relative inline-flex h-4 cursor-pointer items-center">
-            <input
-              type="checkbox"
-              role="switch"
-              aria-label="Enable margin"
-              className="sr-only"
-              checked={isMargin}
-              onChange={(e) => {
-                if (e.target.checked) goMargin();
-                else goSpot();
-              }}
-            />
-            <span
-              className={`relative inline-flex h-4 w-6 shrink-0 items-center rounded-full transition-colors ${
-                isMargin ? "bg-[#149e61]" : "bg-[rgba(104,107,130,0.32)]"
-              }`}
+        {isFutures ? (
+          <div className="relative flex shrink-0 items-center" ref={leverageRef}>
+            <button
+              type="button"
+              aria-label={`${marginMode} ${leverage}x`}
+              aria-haspopup="menu"
+              aria-expanded={leverageOpen}
+              aria-controls={leverageMenuId}
+              onClick={() => setLeverageOpen((v) => !v)}
+              className="rail-icon inline-flex items-center gap-0.5 text-xs font-medium leading-4 text-[rgb(72,75,94)]"
             >
-              <span
-                className={`absolute top-[3px] h-2.5 w-2.5 rounded-full bg-white transition-[left] ${
-                  isMargin ? "left-[11px]" : "left-0.5"
-                }`}
+              {marginMode} {leverage}x
+              <ChevronDownSmallIcon className="h-3.5 w-3.5" />
+            </button>
+            {leverageOpen && (
+              <div
+                id={leverageMenuId}
+                role="menu"
+                className="absolute right-0 top-full z-20 mt-1 min-w-[5.5rem] overflow-hidden rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] py-1 shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+              >
+                {leverageOptions.map((x) => (
+                  <button
+                    key={x}
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setLeverage(x);
+                      setLeverageOpen(false);
+                    }}
+                    className={`rail-icon flex w-full px-3 py-1.5 text-left text-xs ${
+                      leverage === x
+                        ? "!bg-black/[0.06] font-semibold text-[var(--text-primary)]"
+                        : "text-[var(--text-primary)] hover:bg-black/[0.04]"
+                    }`}
+                  >
+                    {x}x
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="relative flex shrink-0 items-center gap-1.5" ref={leverageRef}>
+            <label className="relative inline-flex h-4 cursor-pointer items-center">
+              <input
+                type="checkbox"
+                role="switch"
+                aria-label="Enable margin"
+                className="sr-only"
+                checked={isMargin}
+                onChange={(e) => {
+                  if (e.target.checked) goMargin();
+                  else goSpot();
+                }}
               />
-            </span>
-          </label>
-          <button
-            type="button"
-            aria-label={`Margin ${leverage}x`}
-            aria-haspopup="menu"
-            aria-expanded={leverageOpen}
-            aria-controls={leverageMenuId}
-            onClick={() => {
-              if (!isMargin) {
-                goMargin();
-                return;
-              }
-              setLeverageOpen((v) => !v);
-            }}
-            className={`rail-icon inline-flex items-center gap-0.5 text-xs font-medium leading-4 ${
-              isMargin ? "text-[#149e61]" : "text-[rgb(72,75,94)]"
-            }`}
-            style={isMargin ? { color: "rgb(20, 158, 97)" } : undefined}
-          >
-            Margin {leverage}x
-            <ChevronDownSmallIcon className="h-3.5 w-3.5" />
-          </button>
-          {leverageOpen && isMargin && (
-            <div
-              id={leverageMenuId}
-              role="menu"
-              className="absolute right-0 top-full z-20 mt-1 min-w-[5.5rem] overflow-hidden rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] py-1 shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
-            >
-              {MARGIN_LEVERAGE_OPTIONS.map((x) => (
-                <button
-                  key={x}
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    setLeverage(x);
-                    setLeverageOpen(false);
-                  }}
-                  className={`rail-icon flex w-full px-3 py-1.5 text-left text-xs ${
-                    leverage === x
-                      ? "!bg-black/[0.06] font-semibold text-[var(--text-primary)]"
-                      : "text-[var(--text-primary)] hover:bg-black/[0.04]"
+              <span
+                className={`relative inline-flex h-4 w-6 shrink-0 items-center rounded-full transition-colors ${
+                  isMargin ? "bg-[#149e61]" : "bg-[rgba(104,107,130,0.32)]"
+                }`}
+              >
+                <span
+                  className={`absolute top-[3px] h-2.5 w-2.5 rounded-full bg-white transition-[left] ${
+                    isMargin ? "left-[11px]" : "left-0.5"
                   }`}
-                >
-                  {x}x
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+                />
+              </span>
+            </label>
+            <button
+              type="button"
+              aria-label={`Margin ${leverage}x`}
+              aria-haspopup="menu"
+              aria-expanded={leverageOpen}
+              aria-controls={leverageMenuId}
+              onClick={() => {
+                if (!isMargin) {
+                  goMargin();
+                  return;
+                }
+                setLeverageOpen((v) => !v);
+              }}
+              className={`rail-icon inline-flex items-center gap-0.5 text-xs font-medium leading-4 ${
+                isMargin ? "text-[#149e61]" : "text-[rgb(72,75,94)]"
+              }`}
+              style={isMargin ? { color: "rgb(20, 158, 97)" } : undefined}
+            >
+              Margin {leverage}x
+              <ChevronDownSmallIcon className="h-3.5 w-3.5" />
+            </button>
+            {leverageOpen && isMargin && (
+              <div
+                id={leverageMenuId}
+                role="menu"
+                className="absolute right-0 top-full z-20 mt-1 min-w-[5.5rem] overflow-hidden rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] py-1 shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+              >
+                {leverageOptions.map((x) => (
+                  <button
+                    key={x}
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setLeverage(x);
+                      setLeverageOpen(false);
+                    }}
+                    className={`rail-icon flex w-full px-3 py-1.5 text-left text-xs ${
+                      leverage === x
+                        ? "!bg-black/[0.06] font-semibold text-[var(--text-primary)]"
+                        : "text-[var(--text-primary)] hover:bg-black/[0.04]"
+                    }`}
+                  >
+                    {x}x
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <div className="relative flex items-center gap-3 text-xs font-medium" ref={advancedRef}>
         {(["LIMIT", "MARKET"] as const).map((type) => {
@@ -576,17 +665,24 @@ export default function OrderTicket({
           />
         </div>
       )}
-      <div className="relative pt-1 pb-4">
-        <input
-          type="range"
-          min={0}
-          max={100}
-          step={1}
-          value={sizePct}
-          onChange={(e) => applySizePct(Number(e.target.value))}
-          className="h-2 w-full cursor-pointer appearance-none rounded-full bg-[rgba(104,107,130,0.16)] accent-[var(--text-primary)]"
-          aria-label="Order size percent"
-        />
+      <div className="relative pb-4 pt-1">
+        <div className="relative flex h-2 items-center">
+          <div className="pointer-events-none absolute inset-x-0 h-1 rounded-full bg-[rgba(104,107,130,0.24)]" />
+          <div
+            className="pointer-events-none absolute left-0 h-1 rounded-full bg-[rgb(104,107,130)]"
+            style={{ width: `${sizePct}%` }}
+          />
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={1}
+            value={sizePct}
+            onChange={(e) => applySizePct(Number(e.target.value))}
+            className="ticket-size-slider relative z-[1]"
+            aria-label="Order size percent"
+          />
+        </div>
         <span
           className="pointer-events-none absolute top-7 -translate-x-1/2 text-[10px] tabular-nums text-[var(--text-muted)]"
           style={{ left: `clamp(0.75rem, ${sizePct}%, calc(100% - 0.75rem))` }}
@@ -596,7 +692,7 @@ export default function OrderTicket({
       </div>
       <div className="flex items-center justify-between gap-2 text-xs">
         <span className="text-[rgb(104,107,130)] underline decoration-dashed underline-offset-4">
-          Available to trade
+          {availableLabel}
         </span>
         <span className="flex items-center gap-1 tabular-nums text-[var(--text-primary)]">
           <Link
@@ -659,7 +755,7 @@ export default function OrderTicket({
           />
           Post only
         </label>
-        {isMargin && (
+        {(isMargin || isFutures) && (
           <label
             className={`inline-flex items-center gap-2 text-xs ${
               reduceOnlyLocked
@@ -729,14 +825,19 @@ export default function OrderTicket({
         </button>
         {detailsOpen && (
           <div className="flex min-w-0 flex-col gap-2.5 pb-1">
-            {isMargin && (
+            {isDeriv && (
               <>
                 <DetailRow
                   label="Required margin"
                   value={requiredMarginDisplay}
                   labelUnderline
                 />
-                <DetailRow label="Margin health" value={marginHealth} />
+                {isMargin && (
+                  <DetailRow label="Margin health" value={marginHealth} />
+                )}
+                {isFutures && (
+                  <DetailRow label="Est. liquidation" value="—" />
+                )}
               </>
             )}
             <div className="flex min-w-0 items-center justify-between gap-2 text-xs">
@@ -760,23 +861,39 @@ export default function OrderTicket({
                 ))}
               </select>
             </div>
-            <DetailRow
-              label="Est. trading fee"
-              value={`${estFeeUsd.toFixed(10).replace(/\.?0+$/, "") || "0"} ${asset}`}
-            />
-            <div className="flex items-center justify-between text-xs">
-              <button
-                type="button"
-                className="rail-icon text-[rgb(104,107,130)] underline decoration-dashed underline-offset-2"
-              >
-                Your maker fee
-              </button>
-              <span className="tabular-nums font-medium text-[rgb(72,75,94)]">
-                {PAPER_MAKER_FEE}
-              </span>
-            </div>
+            {isFutures ? (
+              <DetailRow
+                label="Est. trading fee"
+                value={
+                  notional != null
+                    ? `${(notional * 0.0002).toLocaleString("en-US", {
+                        minimumFractionDigits: 4,
+                        maximumFractionDigits: 4,
+                      })} USD`
+                    : "0.00 USD"
+                }
+              />
+            ) : (
+              <>
+                <DetailRow
+                  label="Est. trading fee"
+                  value={`${estFeeUsd.toFixed(10).replace(/\.?0+$/, "") || "0"} ${asset}`}
+                />
+                <div className="flex items-center justify-between text-xs">
+                  <button
+                    type="button"
+                    className="rail-icon text-[rgb(104,107,130)] underline decoration-dashed underline-offset-2"
+                  >
+                    Your maker fee
+                  </button>
+                  <span className="tabular-nums font-medium text-[rgb(72,75,94)]">
+                    {PAPER_MAKER_FEE}
+                  </span>
+                </div>
+              </>
+            )}
             {isMargin && <DetailRow label="Est. margin fee" value="—" />}
-            {tif === "GTC" && (
+            {tif === "GTC" && !isFutures && (
               <p className="text-[10px] text-[var(--text-muted)]">
                 Paper orders rest until filled or canceled.
               </p>

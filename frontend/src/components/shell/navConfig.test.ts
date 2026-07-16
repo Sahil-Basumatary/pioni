@@ -24,6 +24,7 @@ describe("navConfig", () => {
     const trade = PRODUCT_NAV.find((item) => item.id === "trade") as NavGroupItem;
     expect(groupContainsPath(trade, "/trading")).toBe(true);
     expect(groupContainsPath(trade, "/trade/margin")).toBe(true);
+    expect(groupContainsPath(trade, "/trade/futures")).toBe(true);
     expect(groupContainsPath(trade, "/markets")).toBe(false);
   });
 

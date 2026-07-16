@@ -1,1 +1,1 @@
-export type TradingVenue = "spot" | "margin";
+export type TradingVenue = "spot" | "margin" | "futures";

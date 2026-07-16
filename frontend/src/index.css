@@ -40,6 +40,54 @@ button.rail-icon {
   background-color: transparent;
 }
 
+.ticket-size-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ticket-size-slider:focus {
+  outline: none;
+}
+
+.ticket-size-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: transparent;
+}
+
+.ticket-size-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 8px;
+  height: 8px;
+  margin-top: -2px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 1px solid rgba(104, 107, 130, 0.32);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.ticket-size-slider::-moz-range-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: transparent;
+  border: none;
+}
+
+.ticket-size-slider::-moz-range-thumb {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 1px solid rgba(104, 107, 130, 0.32);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
 .btn-premium {
   background: var(--accent);
   color: white;

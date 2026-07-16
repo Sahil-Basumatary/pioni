@@ -163,11 +163,20 @@ function PairHeader({
           <span className="flex items-center gap-1.5 text-sm font-semibold text-[var(--text-primary)]">
             <span>
               {asset}
-              <span className="text-[var(--text-muted)]">/USD</span>
+              {venue === "futures" ? (
+                <span className="text-[var(--text-muted)]"> Perp</span>
+              ) : (
+                <span className="text-[var(--text-muted)]">/USD</span>
+              )}
             </span>
             {venue === "margin" && (
               <span className="rounded bg-black/[0.08] px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--text-primary)]">
                 10x
+              </span>
+            )}
+            {venue === "futures" && (
+              <span className="rounded bg-black/[0.08] px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--text-primary)]">
+                100x
               </span>
             )}
           </span>
@@ -198,7 +207,7 @@ function PairHeader({
       <div className="mx-1 h-8 w-px bg-[var(--card-border)]" />
       <div className="flex flex-col gap-0.5">
         <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
-          Last price
+          {venue === "futures" ? "Mark price" : "Last price"}
         </span>
         <span
           data-testid="live-price"

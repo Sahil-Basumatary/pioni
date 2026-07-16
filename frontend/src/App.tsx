@@ -44,12 +44,7 @@ function App() {
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/trading" element={<TradingPage />} />
             <Route path="/trade/margin" element={<TradingPage venue="margin" />} />
-            <Route path="/trade/futures" element={
-              <ComingSoonPage
-                title="Trade Futures"
-                description="Simulated futures will land here after Spot is complete."
-              />
-            } />
+            <Route path="/trade/futures" element={<TradingPage venue="futures" />} />
             <Route path="/trade/prop" element={
               <ComingSoonPage
                 title="Trade Prop"
