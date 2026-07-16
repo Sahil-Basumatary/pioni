@@ -226,6 +226,18 @@ export function ArrowRightIcon({ className }: IconProps) {
   );
 }
 
+export function ArrowTopRightIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M17.9004 6.09961H7.90039V4.90039H19.0996V16.0996H17.9004V6.09961Z" className="fill-current" />
+      <path
+        d="M18.8486 6L18.4238 6.42383L6.42383 18.4238L6 18.8486L5.15137 18L5.57617 17.5762L17.5762 5.57617L18 5.15137L18.8486 6Z"
+        className="fill-current"
+      />
+    </svg>
+  );
+}
+
 export function MaximizeIcon({ className }: IconProps) {
   return (
     <svg {...base} className={className}>

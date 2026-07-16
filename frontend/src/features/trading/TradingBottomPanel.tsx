@@ -8,12 +8,14 @@ import {
 import {
   useGetMyPositionsQuery,
   useGetMySummaryQuery,
+  useGetMyTradesQuery,
   useResetPortfolioMutation,
   type PortfolioPosition,
+  type PortfolioTrade,
 } from "../portfolio/portfolioApi";
 import { baseAsset } from "../../components/shell/activityFormat";
+import { ArrowTopRightIcon } from "../../components/shell/shellIcons";
 import { formatUsd } from "../../utils/formatters";
-import ComingSoonBody from "./ComingSoonBody";
 
 const OPEN_STATUSES = new Set(["OPEN", "PARTIALLY_FILLED", "NEW", "PENDING"]);
 const CLOSED_STATUSES = new Set([
@@ -28,6 +30,15 @@ type BottomTab = "balances" | "positions" | "orders" | "closed" | "history";
 
 export type { BottomTab };
 
+function focusOrderTicket() {
+  const region = document.querySelector('[aria-label="Order form"]');
+  const input =
+    region?.querySelector<HTMLInputElement>('input[aria-label="Quantity BTC"]') ??
+    region?.querySelector<HTMLInputElement>("input");
+  region?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  input?.focus();
+}
+
 export default function TradingBottomPanel({
   symbol,
   tab,
@@ -35,14 +46,10 @@ export default function TradingBottomPanel({
   symbol: string;
   tab: BottomTab;
 }) {
-  const { isSignedIn } = useAuth();
-
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--card-bg)]">
       <div className="min-h-0 flex-1 overflow-auto">
-        {!isSignedIn ? (
-          <Empty copy="Sign in from the top bar to see balances, positions, and orders." />
-        ) : tab === "balances" ? (
+        {tab === "balances" ? (
           <BalancesTab />
         ) : tab === "positions" ? (
           <PositionsTab />
@@ -51,10 +58,7 @@ export default function TradingBottomPanel({
         ) : tab === "closed" ? (
           <OrdersTab symbol={symbol} mode="closed" />
         ) : (
-          <ComingSoonBody
-            title="Trade history"
-            description="Fill-by-fill trade history will land here next."
-          />
+          <TradesTab symbol={symbol} />
         )}
       </div>
     </div>
@@ -103,7 +107,13 @@ export function ResetAccountChip() {
 }
 
 function BalancesTab() {
-  const { data, isLoading, isError, refetch } = useGetMySummaryQuery();
+  const { isSignedIn } = useAuth();
+  const { data, isLoading, isError, refetch } = useGetMySummaryQuery(undefined, {
+    skip: !isSignedIn,
+  });
+  if (!isSignedIn) {
+    return <EmptyTrading message="No balances yet." />;
+  }
   if (isLoading) return <Empty copy="Loading balances…" />;
   if (isError || !data) {
     return (
@@ -162,11 +172,16 @@ function BalancesTab() {
 }
 
 function PositionsTab() {
-  const { data, isLoading, isError, refetch } = useGetMyPositionsQuery({ openOnly: true });
+  const { isSignedIn } = useAuth();
+  const { data, isLoading, isError, refetch } = useGetMyPositionsQuery(
+    { openOnly: true },
+    { skip: !isSignedIn },
+  );
   const open = useMemo(
     () => (data ?? []).filter((p) => Number(p.quantity) !== 0),
     [data],
   );
+  if (!isSignedIn) return <EmptyTrading message="No open positions." />;
   if (isLoading) return <Empty copy="Loading positions…" />;
   if (isError) {
     return (
@@ -182,9 +197,7 @@ function PositionsTab() {
       </div>
     );
   }
-  if (!open.length) {
-    return <Empty copy="No open positions — place a paper trade to open one." />;
-  }
+  if (!open.length) return <EmptyTrading message="No open positions." />;
   return (
     <table className="w-full min-w-[560px] border-collapse text-left text-xs">
       <thead>
@@ -242,16 +255,24 @@ function OrdersTab({
   symbol: string;
   mode: "open" | "closed";
 }) {
-  const { data, isLoading, isError, refetch } = useListOrdersQuery({
-    symbol,
-    limit: 50,
-  });
+  const { isSignedIn } = useAuth();
+  const { data, isLoading, isError, refetch } = useListOrdersQuery(
+    { symbol, limit: 50 },
+    { skip: !isSignedIn },
+  );
   const rows = useMemo(() => {
     const list = data ?? [];
     return mode === "open"
       ? list.filter((o) => OPEN_STATUSES.has(o.status.toUpperCase()))
       : list.filter((o) => CLOSED_STATUSES.has(o.status.toUpperCase()));
   }, [data, mode]);
+  if (!isSignedIn) {
+    return mode === "open" ? (
+      <EmptyTrading message="No open orders." />
+    ) : (
+      <Empty copy="No closed orders." />
+    );
+  }
   if (isLoading) {
     return <Empty copy={mode === "open" ? "Loading orders…" : "Loading closed orders…"} />;
   }
@@ -270,14 +291,10 @@ function OrdersTab({
     );
   }
   if (!rows.length) {
-    return (
-      <Empty
-        copy={
-          mode === "open"
-            ? "No open orders. Start trading"
-            : "No closed orders yet."
-        }
-      />
+    return mode === "open" ? (
+      <EmptyTrading message="No open orders." />
+    ) : (
+      <Empty copy="No closed orders." />
     );
   }
   return (
@@ -337,8 +354,100 @@ function OrderRow({ order, showCancel }: { order: Order; showCancel: boolean }) 
   );
 }
 
+function TradesTab({ symbol }: { symbol: string }) {
+  const { isSignedIn } = useAuth();
+  const { data, isLoading, isError, refetch } = useGetMyTradesQuery(
+    { symbol, limit: 50 },
+    { skip: !isSignedIn },
+  );
+  if (!isSignedIn) return <EmptyTrading message="No trades." />;
+  if (isLoading) return <Empty copy="Loading trades…" />;
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center gap-2 py-10">
+        <Empty copy="Couldn’t load trades." />
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-medium text-white"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+  const rows = data ?? [];
+  if (!rows.length) return <EmptyTrading message="No trades." />;
+  return (
+    <table className="w-full min-w-[640px] border-collapse text-left text-xs">
+      <thead>
+        <tr className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
+          <th className="px-3 py-2 font-medium">Market</th>
+          <th className="px-3 py-2 font-medium">Side</th>
+          <th className="px-3 py-2 font-medium">Price</th>
+          <th className="px-3 py-2 font-medium">Quantity</th>
+          <th className="px-3 py-2 font-medium">Fee</th>
+          <th className="px-3 py-2 font-medium">Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((trade) => (
+          <TradeRow key={trade.id} trade={trade} />
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function TradeRow({ trade }: { trade: PortfolioTrade }) {
+  const isBuy = trade.side === "BUY";
+  const when = new Date(trade.executed_at);
+  const timeLabel = Number.isNaN(when.getTime())
+    ? "—"
+    : when.toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+  return (
+    <tr className="border-t border-[var(--card-border)]">
+      <td className="px-3 py-2 font-medium text-[var(--text-primary)]">
+        {baseAsset(trade.symbol)}/USD
+      </td>
+      <td className={`px-3 py-2 font-medium ${isBuy ? "text-emerald-600" : "text-rose-500"}`}>
+        {trade.side}
+      </td>
+      <td className="px-3 py-2 tabular-nums text-[var(--text-primary)]">
+        {formatUsd(trade.price)}
+      </td>
+      <td className="px-3 py-2 tabular-nums">{trade.quantity}</td>
+      <td className="px-3 py-2 tabular-nums text-[var(--text-muted)]">
+        {formatUsd(trade.fee)}
+      </td>
+      <td className="px-3 py-2 text-[var(--text-muted)]">{timeLabel}</td>
+    </tr>
+  );
+}
+
+function EmptyTrading({ message }: { message: string }) {
+  return (
+    <p className="px-4 py-10 text-center text-sm text-[var(--text-muted)]">
+      {message}{" "}
+      <button
+        type="button"
+        onClick={focusOrderTicket}
+        className="rail-icon inline-flex items-center gap-0.5 bg-transparent p-0 font-medium text-[var(--text-primary)] hover:bg-transparent hover:underline"
+      >
+        Start trading
+        <ArrowTopRightIcon className="h-3.5 w-3.5" />
+      </button>
+    </p>
+  );
+}
+
 function Empty({ copy }: { copy: string }) {
   return (
-    <p className="px-4 py-6 text-center text-sm text-[var(--text-muted)]">{copy}</p>
+    <p className="px-4 py-10 text-center text-sm text-[var(--text-muted)]">{copy}</p>
   );
 }
