@@ -9,6 +9,7 @@ const TradingPage = lazy(() => import("./pages/TradingPage"));
 const HomePage = lazy(() => import("./pages/HomePage"));
 const HistoryPage = lazy(() => import("./pages/HistoryPage"));
 const MarketsPage = lazy(() => import("./pages/MarketsPage"));
+const PropPage = lazy(() => import("./pages/PropPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 
@@ -45,12 +46,7 @@ function App() {
             <Route path="/trading" element={<TradingPage />} />
             <Route path="/trade/margin" element={<TradingPage venue="margin" />} />
             <Route path="/trade/futures" element={<TradingPage venue="futures" />} />
-            <Route path="/trade/prop" element={
-              <ComingSoonPage
-                title="Trade Prop"
-                description="A simulated prop desk experience is planned after the core Spot terminal."
-              />
-            } />
+            <Route path="/trade/prop" element={<PropPage />} />
             <Route path="/markets" element={<MarketsPage />} />
             <Route path="/yield" element={
               <ComingSoonPage
