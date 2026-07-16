@@ -24,6 +24,26 @@ import type { Kline } from "../../types/market";
 export const INTERVALS = ["1m", "5m", "15m", "1h", "4h", "1d"] as const;
 export type Interval = (typeof INTERVALS)[number];
 
+const INTERVAL_LABEL: Record<Interval, string> = {
+  "1m": "1m",
+  "5m": "5m",
+  "15m": "15m",
+  "1h": "1h",
+  "4h": "4h",
+  "1d": "D",
+};
+
+type ChartTool = "crosshair" | "trend" | "horiz" | "fib" | "text" | "measure";
+
+const TOOLS: { id: ChartTool; label: string; ready: boolean }[] = [
+  { id: "crosshair", label: "Crosshair", ready: true },
+  { id: "trend", label: "Trend line", ready: false },
+  { id: "horiz", label: "Horizontal line", ready: false },
+  { id: "fib", label: "Fib retracement", ready: false },
+  { id: "text", label: "Text", ready: false },
+  { id: "measure", label: "Measure", ready: false },
+];
+
 const DEFAULT_GATEWAY_URL = "http://localhost:8000";
 
 interface CandlestickChartProps {
@@ -82,6 +102,8 @@ const CandlestickChart = forwardRef<
   const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tool, setTool] = useState<ChartTool>("crosshair");
+  const [toolNote, setToolNote] = useState<string | null>(null);
 
   useImperativeHandle(ref, () => ({
     updateKline(kline: Kline) {
@@ -99,12 +121,21 @@ const CandlestickChart = forwardRef<
     }
   }, [onIntervalChange]);
 
+  function selectTool(next: ChartTool, ready: boolean, label: string) {
+    setTool(next);
+    if (!ready) {
+      setToolNote(`${label} drawing lands next — crosshair is live now.`);
+      return;
+    }
+    setToolNote(null);
+  }
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     const chart = createChart(container, {
-      width: container.clientWidth || 400,
-      height: container.clientHeight || 300,
+      width: Math.max(1, container.clientWidth || 400),
+      height: Math.max(1, container.clientHeight || 300),
       layout: {
         background: { type: ColorType.Solid, color: "transparent" },
         textColor: "var(--text-muted)",
@@ -188,65 +219,142 @@ const CandlestickChart = forwardRef<
   }, [symbol, interval]);
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center gap-1 px-1 pb-3">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex shrink-0 items-center gap-1 px-1 pb-2">
         {INTERVALS.map((iv) => (
           <button
             key={iv}
+            type="button"
             onClick={() => handleIntervalChange(iv)}
-            className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+            className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
               iv === interval
                 ? "bg-[var(--accent)] text-white"
-                : "bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-black/[0.04]"
+                : "bg-transparent text-[var(--text-muted)] hover:bg-black/[0.04] hover:text-[var(--text-primary)]"
             }`}
           >
-            {iv}
+            {INTERVAL_LABEL[iv]}
           </button>
         ))}
       </div>
-      <div className="relative min-h-0 flex-1 overflow-hidden">
-        <div ref={containerRef} className="absolute inset-0 overflow-hidden" />
-        {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[var(--card-bg)]/60 backdrop-blur-sm z-10">
-            <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
-              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              Loading {symbol} {interval}…
+      {toolNote && (
+        <p className="mb-1 shrink-0 rounded-md bg-black/[0.04] px-2 py-1 text-[11px] text-[var(--text-muted)]">
+          {toolNote}
+        </p>
+      )}
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <div
+          role="toolbar"
+          aria-label="Chart tools"
+          className="flex w-8 shrink-0 flex-col items-center gap-0.5 border-e border-[var(--card-border)] py-1 pe-1"
+        >
+          {TOOLS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              title={item.label}
+              aria-label={item.label}
+              aria-pressed={tool === item.id}
+              onClick={() => selectTool(item.id, item.ready, item.label)}
+              className={`rail-icon flex h-7 w-7 items-center justify-center rounded-md ${
+                tool === item.id
+                  ? "bg-black/[0.08] text-[var(--text-primary)]"
+                  : "text-[var(--text-muted)] hover:bg-black/[0.04] hover:text-[var(--text-primary)]"
+              }`}
+            >
+              <ToolIcon id={item.id} />
+            </button>
+          ))}
+        </div>
+        <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
+          <div ref={containerRef} className="absolute inset-0 overflow-hidden" />
+          {loading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--card-bg)]/60 backdrop-blur-sm">
+              <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Loading {symbol} {interval}…
+              </div>
             </div>
-          </div>
-        )}
-        {error && !loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[var(--card-bg)]/80 backdrop-blur-sm z-10">
-            <div className="text-center space-y-3">
-              <p className="text-sm text-[var(--text-muted)]">{error}</p>
-              <button
-                onClick={() => {
-                  setError(null);
-                  setLoading(true);
-                  fetchKlines(symbol, interval)
-                    .then((klines) => {
-                      candleSeriesRef.current?.setData(klines.map(klineToCandle));
-                      volumeSeriesRef.current?.setData(klines.map(klineToVolume));
-                      chartRef.current?.timeScale().fitContent();
-                      setLoading(false);
-                    })
-                    .catch((err) => {
-                      setError(err instanceof Error ? err.message : "Fetch failed");
-                      setLoading(false);
-                    });
-                }}
-                className="px-4 py-1.5 rounded-lg text-xs font-medium bg-[var(--accent)] text-white hover:bg-[var(--accent-soft)] transition-colors"
-              >
-                Retry
-              </button>
+          )}
+          {error && !loading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--card-bg)]/80 backdrop-blur-sm">
+              <div className="space-y-3 text-center">
+                <p className="text-sm text-[var(--text-muted)]">{error}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError(null);
+                    setLoading(true);
+                    fetchKlines(symbol, interval)
+                      .then((klines) => {
+                        candleSeriesRef.current?.setData(klines.map(klineToCandle));
+                        volumeSeriesRef.current?.setData(klines.map(klineToVolume));
+                        chartRef.current?.timeScale().fitContent();
+                        setLoading(false);
+                      })
+                      .catch((err) => {
+                        setError(err instanceof Error ? err.message : "Fetch failed");
+                        setLoading(false);
+                      });
+                  }}
+                  className="rounded-lg bg-[var(--accent)] px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[var(--accent-soft)]"
+                >
+                  Retry
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
 });
+
+function ToolIcon({ id }: { id: ChartTool }) {
+  const cls = "h-4 w-4";
+  if (id === "crosshair") {
+    return (
+      <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
+        <path d="M11.4 3.4h1.2v7h7v1.2h-7v7h-1.2v-7h-7V10.4h7z" className="fill-current" />
+      </svg>
+    );
+  }
+  if (id === "trend") {
+    return (
+      <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
+        <path d="M4.2 17.8 17.1 4.9l.85.85L5.05 18.65z" className="fill-current" />
+        <path d="M16.2 5.1h3.7v3.7h-1.2V6.3H16.2z" className="fill-current" />
+      </svg>
+    );
+  }
+  if (id === "horiz") {
+    return (
+      <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
+        <path d="M3.4 11.4h17.2v1.2H3.4z" className="fill-current" />
+      </svg>
+    );
+  }
+  if (id === "fib") {
+    return (
+      <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
+        <path d="M4 6.4h16v1.2H4zm0 5h16v1.2H4zm0 5h16v1.2H4z" className="fill-current" />
+      </svg>
+    );
+  }
+  if (id === "text") {
+    return (
+      <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
+        <path d="M6.4 5.4h11.2v1.4H13v11.8h-2V6.8H6.4z" className="fill-current" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" className={cls} aria-hidden="true">
+      <path d="M5.2 17.3 16.6 5.9l.85.85L6.05 18.15zM4.4 18.8h4.2v1.2H4.4z" className="fill-current" />
+    </svg>
+  );
+}
 
 export default CandlestickChart;
