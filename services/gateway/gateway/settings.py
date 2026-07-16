@@ -10,14 +10,13 @@ def cors_origins() -> list[str]:
     raw = os.getenv("CORS_ORIGINS", "").strip()
     if raw:
         return [o.strip() for o in raw.split(",") if o.strip()]
-    return [
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:5175",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5175",
-        "http://127.0.0.1:5174"
-    ]
+    # Vite hops ports when 5173 is taken — cover the common local range.
+    ports = range(5173, 5191)
+    origins: list[str] = []
+    for port in ports:
+        origins.append(f"http://localhost:{port}")
+        origins.append(f"http://127.0.0.1:{port}")
+    return origins
 
 def prewarm_tickers() -> list[str]:
     raw = os.getenv("PREWARM_TICKERS", "TSLA,AAPL,NVDA,AMZN,GOOGL")
