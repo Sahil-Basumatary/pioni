@@ -10,6 +10,8 @@ const HomePage = lazy(() => import("./pages/HomePage"));
 const HistoryPage = lazy(() => import("./pages/HistoryPage"));
 const MarketsPage = lazy(() => import("./pages/MarketsPage"));
 const PropPage = lazy(() => import("./pages/PropPage"));
+const EarnPage = lazy(() => import("./pages/EarnPage"));
+const ConvertPage = lazy(() => import("./pages/ConvertPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 
@@ -48,30 +50,15 @@ function App() {
             <Route path="/trade/futures" element={<TradingPage venue="futures" />} />
             <Route path="/trade/prop" element={<PropPage />} />
             <Route path="/markets" element={<MarketsPage />} />
-            <Route path="/yield" element={
-              <ComingSoonPage
-                title="Yield"
-                description="Simulated yield products will appear here once the Spot terminal is complete."
-              />
-            } />
-            <Route path="/earn" element={
-              <ComingSoonPage
-                title="Earn"
-                description="Simulated earn flows will appear here in our paper-trading theme."
-              />
-            } />
+            <Route path="/yield" element={<EarnPage />} />
+            <Route path="/earn" element={<EarnPage />} />
             <Route path="/deposit" element={
               <ComingSoonPage
                 title="Deposit"
                 description="Paper deposits will reset or top up practice balance without touching real money."
               />
             } />
-            <Route path="/convert" element={
-              <ComingSoonPage
-                title="Convert"
-                description="A simulated convert flow is planned after Spot trading and settlement are solid."
-              />
-            } />
+            <Route path="/convert" element={<ConvertPage />} />
             <Route path="/sentiment" element={<SentimentPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />

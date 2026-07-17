@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useClerk, useAuth } from "@clerk/clerk-react";
 import { Link, useNavigate } from "react-router-dom";
 import NotificationsPanel from "./NotificationsPanel";
+import { useConvert } from "../../features/convert/ConvertContext";
 import {
   BellIcon,
   BookIcon,
@@ -19,6 +20,7 @@ export default function RightRail() {
   const { isSignedIn } = useAuth();
   const clerk = useClerk();
   const navigate = useNavigate();
+  const { openConvert } = useConvert();
 
   function toggle(next: RailTab) {
     setTab((current) => (current === next ? null : next));
@@ -56,7 +58,16 @@ export default function RightRail() {
               <AppLink to="/trading" label="Trade" onClick={() => setTab(null)} />
               <AppLink to="/markets" label="Markets" onClick={() => setTab(null)} />
               <AppLink to="/yield" label="Yield" onClick={() => setTab(null)} />
-              <AppLink to="/convert" label="Convert" onClick={() => setTab(null)} />
+              <button
+                type="button"
+                onClick={() => {
+                  setTab(null);
+                  openConvert();
+                }}
+                className="rounded-lg px-3 py-2 text-left text-sm text-[var(--text-primary)] hover:bg-black/[0.04]"
+              >
+                Convert
+              </button>
             </nav>
           </SideCard>
         </div>

@@ -129,6 +129,63 @@ export function DepositIcon({ className }: IconProps) {
   );
 }
 
+export function ConvertIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path
+        d="M17.9238 7.57617L21.9238 11.5762L22.3486 12L21.9238 12.4238L17.9238 16.4238L17.5 16.8486L16.6514 16L17.0762 15.5762L20.6523 12L17.0762 8.42383L16.6514 8L17.5 7.15137L17.9238 7.57617Z"
+        className="fill-current"
+      />
+      <path
+        d="M7.34863 8L6.92383 8.42383L3.34766 12L6.92383 15.5762L7.34863 16L6.5 16.8486L6.07617 16.4238L2.07617 12.4238L1.65137 12L2.07617 11.5762L6.07617 7.57617L6.5 7.15137L7.34863 8Z"
+        className="fill-current"
+      />
+      <path d="M21.5996 11.4004V12.5996H2.40039V11.4004H21.5996Z" className="fill-current" />
+    </svg>
+  );
+}
+
+export function Transfer2Icon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path
+        d="M13.4004 4.44727L10.4238 7.42383L10 7.84863L9.15137 7L9.57617 6.57617L13.5762 2.57617L14 2.15137L14.4238 2.57617L18.4238 6.57617L18.8486 7L18 7.84863L17.5762 7.42383L14.5996 4.44727V12.0996H13.4004V4.44727Z"
+        className="fill-current"
+      />
+      <path
+        d="M9.40039 11.9004H10.5996V19.5527L13.5762 16.5762L14 16.1514L14.8486 17L14.4238 17.4238L10.4238 21.4238L10 21.8486L9.57617 21.4238L5.57617 17.4238L5.15137 17L6 16.1514L6.42383 16.5762L9.40039 19.5527V11.9004Z"
+        className="fill-current"
+      />
+    </svg>
+  );
+}
+
+export function SearchIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path
+        d="M17.9004 11C17.9004 7.18923 14.8107 4.09961 11 4.09961C7.18923 4.09961 4.09961 7.18923 4.09961 11C4.09961 14.8107 7.18923 17.9004 11 17.9004C14.8107 17.9004 17.9004 14.8107 17.9004 11ZM19.0996 11C19.0996 15.4735 15.4735 19.0996 11 19.0996C6.52649 19.0996 2.90039 15.4735 2.90039 11C2.90039 6.52649 6.52649 2.90039 11 2.90039C15.4735 2.90039 19.0996 6.52649 19.0996 11Z"
+        className="fill-current"
+      />
+      <path
+        d="M16.7238 15.8762L21.0988 20.2502L20.2502 21.0988L15.8762 16.7238L15.4514 16.3L16.3 15.4514L16.7238 15.8762Z"
+        className="fill-current"
+      />
+    </svg>
+  );
+}
+
+export function ChevronDownIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path
+        d="M20.8486 9L20.4238 9.42383L12.4238 17.4238L12 17.8486L11.5762 17.4238L3.57617 9.42383L3.15137 9L4 8.15137L4.42383 8.57617L12 16.1523L19.5762 8.57617L20 8.15137L20.8486 9Z"
+        className="fill-current"
+      />
+    </svg>
+  );
+}
+
 export function WithdrawIcon({ className }: IconProps) {
   return (
     <svg {...base} className={className}>

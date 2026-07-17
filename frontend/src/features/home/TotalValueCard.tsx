@@ -7,6 +7,7 @@ import {
   StakeIcon,
   WithdrawIcon,
 } from "../../components/shell/shellIcons";
+import { useConvert } from "../convert/ConvertContext";
 import type { PnlChartPoint } from "../portfolio/portfolioApi";
 import EquityChart from "./EquityChart";
 
@@ -37,6 +38,7 @@ export default function TotalValueCard({
   onRangeChange,
   loading,
 }: TotalValueCardProps) {
+  const { openConvert } = useConvert();
   const value = totalValue ?? 0;
   const display = totalValue == null ? "—" : formatAmount(value);
   const change = computeChange(points, value);
@@ -135,10 +137,10 @@ export default function TotalValueCard({
         <div className="flex flex-row gap-4 px-4 py-2">
           <ActionLink to="/deposit" label="Deposit" icon={<DepositIcon className="h-4 w-4" />} />
           <ActionLink to="/deposit" label="Withdraw" icon={<WithdrawIcon className="h-4 w-4" />} />
-          <ActionLink
-            to="/convert"
+          <ActionButton
             label="Convert"
             icon={<ConvertVerticalIcon className="h-4 w-4" />}
+            onClick={() => openConvert()}
           />
           <ActionLink to="/earn" label="Earn" icon={<StakeIcon className="h-4 w-4" />} />
         </div>
@@ -165,6 +167,27 @@ function ActionLink({
       {icon}
       {label}
     </Link>
+  );
+}
+
+function ActionButton({
+  label,
+  icon,
+  onClick,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex h-8 items-center justify-center gap-1 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+    >
+      {icon}
+      {label}
+    </button>
   );
 }
 

@@ -88,6 +88,54 @@ button.rail-icon {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 
+.convert-size-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.convert-size-slider:focus {
+  outline: none;
+}
+
+.convert-size-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: transparent;
+}
+
+.convert-size-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.convert-size-slider::-moz-range-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: transparent;
+  border: none;
+}
+
+.convert-size-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
 .btn-premium {
   background: var(--accent);
   color: white;

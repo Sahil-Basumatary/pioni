@@ -1,10 +1,15 @@
 import { Link, NavLink } from "react-router-dom";
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, UserButton, useClerk } from "@clerk/clerk-react";
 import BalanceChip from "./BalanceChip";
+import LayoutsMenu from "./LayoutsMenu";
 import { useMarketSearch } from "../../features/markets/MarketSearchContext";
+import { useConvert } from "../../features/convert/ConvertContext";
+import { ConvertIcon, DepositIcon, SearchIcon } from "./shellIcons";
 
 export default function TopBar() {
   const { openSearch } = useMarketSearch();
+  const { openConvert } = useConvert();
+  const { openSignIn } = useClerk();
 
   return (
     <header className="border-b border-[var(--card-border)] bg-[var(--card-bg)]/90 backdrop-blur-lg">
@@ -17,67 +22,44 @@ export default function TopBar() {
           onClick={openSearch}
           className="rail-icon ml-2 hidden min-w-0 flex-1 items-center gap-2 rounded-full border border-[var(--card-border)] bg-[var(--bg)] px-3 py-1.5 text-left text-sm text-[var(--text-muted)] hover:border-[var(--accent)] sm:flex md:max-w-sm"
         >
-          <SearchIcon />
+          <SearchIcon className="h-3.5 w-3.5 shrink-0 text-[var(--text-muted)]" />
           <span className="truncate">Search for a market</span>
           <kbd className="ml-auto rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--text-muted)]">
             ⌘K
           </kbd>
         </button>
         <div className="ml-auto flex items-center gap-2">
+          <LayoutsMenu />
           <Link
             to="/deposit"
-            className="hidden rounded-lg border border-[var(--card-border)] bg-transparent px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg)] sm:inline-flex"
+            className="hidden items-center gap-1.5 rounded-lg border border-[var(--card-border)] bg-transparent px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg)] sm:inline-flex"
           >
+            <DepositIcon className="h-4 w-4" />
             Deposit
           </Link>
-          <Link
-            to="/convert"
-            className="hidden rounded-lg border border-[var(--card-border)] bg-transparent px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg)] md:inline-flex"
+          <button
+            type="button"
+            onClick={() => openConvert()}
+            className="hidden items-center gap-1.5 rounded-lg border border-[var(--card-border)] bg-transparent px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg)] md:inline-flex"
           >
+            <ConvertIcon className="h-4 w-4" />
             Convert
-          </Link>
+          </button>
           <BalanceChip />
           <SignedIn>
             <UserButton afterSignOutUrl="/home" />
           </SignedIn>
           <SignedOut>
-            <SignInButton mode="modal">
-              <button
-                type="button"
-                className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white"
-              >
-                Sign in
-              </button>
-            </SignInButton>
+            <button
+              type="button"
+              onClick={() => openSignIn({})}
+              className="relative z-[60] rounded-lg bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--accent-soft)]"
+            >
+              Sign in
+            </button>
           </SignedOut>
         </div>
       </div>
     </header>
-  );
-}
-
-function SearchIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 16 16"
-      className="h-3.5 w-3.5 shrink-0 text-[var(--text-muted)]"
-    >
-      <circle
-        cx="7"
-        cy="7"
-        r="4.5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-      <path
-        d="m10.5 10.5 3 3"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
   );
 }

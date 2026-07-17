@@ -5,6 +5,8 @@ import {
   MarketSearchProvider,
 } from "../../features/markets/MarketSearchContext";
 import MarketSearchPalette from "../../features/markets/MarketSearchPalette";
+import { ConvertProvider } from "../../features/convert/ConvertContext";
+import ConvertDialog from "../../features/convert/ConvertDialog";
 import ProductNav from "./ProductNav";
 import RightRail from "./RightRail";
 import StatusBar from "./StatusBar";
@@ -25,27 +27,30 @@ export default function AppShell({ children }: { children: ReactNode }) {
   return (
     <MarketSocketProvider>
       <MarketSearchProvider>
-        <div
-          className="flex h-dvh w-full flex-col overflow-hidden"
-          style={{ background: "var(--bg)", color: "var(--text-primary)" }}
-        >
-          <div className="sticky top-0 z-50 shrink-0">
-            <TopBar />
-            <ProductNav />
+        <ConvertProvider>
+          <div
+            className="flex h-dvh w-full flex-col overflow-hidden"
+            style={{ background: "var(--bg)", color: "var(--text-primary)" }}
+          >
+            <div className="sticky top-0 z-50 shrink-0">
+              <TopBar />
+              <ProductNav />
+            </div>
+            <div className="flex min-h-0 flex-1">
+              <main
+                className={`mx-auto flex min-h-0 w-full max-w-[1750px] flex-1 flex-col px-2 py-2 ${
+                  workspace ? "overflow-hidden" : "overflow-y-auto"
+                }`}
+              >
+                {children}
+              </main>
+              <RightRail />
+            </div>
+            <StatusBar />
+            <MarketSearchPalette />
+            <ConvertDialog />
           </div>
-          <div className="flex min-h-0 flex-1">
-            <main
-              className={`mx-auto flex min-h-0 w-full max-w-[1750px] flex-1 flex-col px-2 py-2 ${
-                workspace ? "overflow-hidden" : "overflow-y-auto"
-              }`}
-            >
-              {children}
-            </main>
-            <RightRail />
-          </div>
-          <StatusBar />
-          <MarketSearchPalette />
-        </div>
+        </ConvertProvider>
       </MarketSearchProvider>
     </MarketSocketProvider>
   );
