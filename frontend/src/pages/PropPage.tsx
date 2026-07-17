@@ -8,46 +8,15 @@ import {
   PropShieldTickIcon,
   PropWithdrawIcon,
 } from "../features/prop/propBenefitIcons";
-
-const WALLET_SIZES = [5_000, 10_000, 25_000, 50_000, 100_000, 200_000] as const;
-
-type PlanId = "starter" | "intermediate" | "advanced";
-
-type Plan = {
-  id: PlanId;
-  label: string;
-  targetProfit: string;
-  maxDailyLoss: string;
-  maxDrawdown: string;
-  evaluationFee: string;
-};
-
-const PLANS: Plan[] = [
-  {
-    id: "starter",
-    label: "Starter",
-    targetProfit: "10%",
-    maxDailyLoss: "3%",
-    maxDrawdown: "6%",
-    evaluationFee: "85.00 USD",
-  },
-  {
-    id: "intermediate",
-    label: "Intermediate",
-    targetProfit: "12%",
-    maxDailyLoss: "3%",
-    maxDrawdown: "5%",
-    evaluationFee: "65.00 USD",
-  },
-  {
-    id: "advanced",
-    label: "Advanced",
-    targetProfit: "9%",
-    maxDailyLoss: "3%",
-    maxDrawdown: "3%",
-    evaluationFee: "40.00 USD",
-  },
-];
+import {
+  PLAN_RULES,
+  WALLET_SIZES,
+  formatWallet,
+  plansForWallet,
+  resolvePlanId,
+  type PlanId,
+  type WalletSize,
+} from "../features/prop/propPlans";
 
 type BenefitIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -115,19 +84,27 @@ const FAQ: { q: string; a: string }[] = [
   },
 ];
 
-function formatWallet(n: number): string {
-  return `${n.toLocaleString("en-US")} USD`;
-}
-
 export default function PropPage() {
-  const [walletSize, setWalletSize] = useState<(typeof WALLET_SIZES)[number]>(10_000);
+  const [walletSize, setWalletSize] = useState<WalletSize>(10_000);
   const [planId, setPlanId] = useState<PlanId>("starter");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [notified, setNotified] = useState(false);
+  const plans = useMemo(() => plansForWallet(walletSize), [walletSize]);
+  const activePlanId = resolvePlanId(planId, walletSize);
   const plan = useMemo(
-    () => PLANS.find((p) => p.id === planId) ?? PLANS[0],
-    [planId],
+    () => plans.find((p) => p.id === activePlanId) ?? plans[0],
+    [plans, activePlanId],
   );
+
+  const selectWallet = (size: WalletSize) => {
+    setWalletSize(size);
+    setPlanId((current) => resolvePlanId(current, size));
+  };
+
+  const selectPlan = (id: PlanId) => {
+    if (!plans.find((p) => p.id === id)?.available) return;
+    setPlanId(id);
+  };
 
   return (
     <div className="mx-auto w-full max-w-[900px] pb-20 pt-1 text-[rgb(16,17,20)]">
@@ -282,7 +259,7 @@ export default function PropPage() {
               <button
                 key={size}
                 type="button"
-                onClick={() => setWalletSize(size)}
+                onClick={() => selectWallet(size)}
                 className={`rail-icon rounded-[10px] px-3 py-1.5 text-sm font-medium transition-colors ${
                   active
                     ? "!bg-white text-[rgb(16,17,20)]"
@@ -300,15 +277,18 @@ export default function PropPage() {
             <thead>
               <tr className="border-b border-[var(--card-border)] text-left text-[rgb(104,107,130)]">
                 <th className="px-4 py-3 font-medium">Plans</th>
-                {PLANS.map((p) => (
+                {plans.map((p) => (
                   <th key={p.id} className="px-4 py-3 font-medium">
                     <button
                       type="button"
-                      onClick={() => setPlanId(p.id)}
+                      disabled={!p.available}
+                      onClick={() => selectPlan(p.id)}
                       className={`rail-icon ${
-                        planId === p.id
-                          ? "font-semibold text-[rgb(16,17,20)]"
-                          : "text-[rgb(104,107,130)]"
+                        !p.available
+                          ? "cursor-not-allowed text-[rgb(104,107,130)]/50"
+                          : activePlanId === p.id
+                            ? "font-semibold text-[rgb(16,17,20)]"
+                            : "text-[rgb(104,107,130)]"
                       }`}
                     >
                       {p.label}
@@ -320,23 +300,27 @@ export default function PropPage() {
             <tbody>
               <PlanTableRow
                 label="Target profit"
-                values={PLANS.map((p) => p.targetProfit)}
-                active={planId}
+                values={plans.map((p) => p.targetProfit)}
+                active={activePlanId}
+                available={plans.map((p) => p.available)}
               />
               <PlanTableRow
                 label="Max daily loss"
-                values={PLANS.map((p) => p.maxDailyLoss)}
-                active={planId}
+                values={plans.map((p) => p.maxDailyLoss)}
+                active={activePlanId}
+                available={plans.map((p) => p.available)}
               />
               <PlanTableRow
                 label="Max drawdown"
-                values={PLANS.map((p) => p.maxDrawdown)}
-                active={planId}
+                values={plans.map((p) => p.maxDrawdown)}
+                active={activePlanId}
+                available={plans.map((p) => p.available)}
               />
               <PlanTableRow
                 label="Evaluation fee"
-                values={PLANS.map((p) => p.evaluationFee)}
-                active={planId}
+                values={plans.map((p) => p.evaluationFee)}
+                active={activePlanId}
+                available={plans.map((p) => p.available)}
                 last
               />
             </tbody>
@@ -474,23 +458,27 @@ function PlanTableRow({
   label,
   values,
   active,
+  available,
   last = false,
 }: {
   label: string;
   values: string[];
   active: PlanId;
+  available: boolean[];
   last?: boolean;
 }) {
   return (
     <tr className={last ? "" : "border-b border-[var(--card-border)]"}>
       <td className="px-4 py-3 text-[rgb(104,107,130)]">{label}</td>
-      {PLANS.map((p, i) => (
+      {PLAN_RULES.map((p, i) => (
         <td
           key={p.id}
           className={`px-4 py-3 tabular-nums ${
-            active === p.id
-              ? "font-medium text-[rgb(16,17,20)]"
-              : "text-[rgb(72,75,94)]"
+            !available[i]
+              ? "text-[rgb(104,107,130)]/50"
+              : active === p.id
+                ? "font-medium text-[rgb(16,17,20)]"
+                : "text-[rgb(72,75,94)]"
           }`}
         >
           {values[i]}

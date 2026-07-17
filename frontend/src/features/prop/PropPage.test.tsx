@@ -33,15 +33,23 @@ describe("PropPage", () => {
     expect(screen.queryByText(/kraken/i)).not.toBeInTheDocument();
   });
 
-  it("expands FAQ answers and updates wallet selection", async () => {
+  it("expands FAQ answers and updates wallet selection and fees", async () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
         <PropPage />
       </MemoryRouter>,
     );
+    expect(screen.getByText("85.00 USD")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "50,000 USD" }));
     expect(screen.getByText(/Starter 50,000 USD/)).toBeInTheDocument();
+    expect(screen.getByText("400.00 USD")).toBeInTheDocument();
+    expect(screen.getByText("280.00 USD")).toBeInTheDocument();
+    expect(screen.getByText("180.00 USD")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "200,000 USD" }));
+    expect(screen.getByText("1,090.00 USD")).toBeInTheDocument();
+    expect(screen.getByText("660.00 USD")).toBeInTheDocument();
+    expect(screen.getAllByText("—").length).toBeGreaterThan(0);
     await user.click(screen.getByRole("button", { name: "What is prop trading?" }));
     expect(
       screen.getByText(/Prop trading \(proprietary trading\) is when traders trade/),
