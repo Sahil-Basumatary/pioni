@@ -4,6 +4,7 @@ import {
   DEFAULT_LAYOUT,
   LAYOUT_LIMITS,
   readTradingLayout,
+  TRADING_LAYOUT_EVENT,
   writeTradingLayout,
   type TradingLayoutSizes,
 } from "./layoutStorage";
@@ -29,6 +30,16 @@ export function useTradingLayout() {
   useEffect(() => {
     writeTradingLayout(sizes);
   }, [sizes]);
+
+  useEffect(() => {
+    function onPreset(event: Event) {
+      const detail = (event as CustomEvent<{ sizes: TradingLayoutSizes }>).detail;
+      if (!detail?.sizes) return;
+      setSizes({ ...detail.sizes });
+    }
+    window.addEventListener(TRADING_LAYOUT_EVENT, onPreset);
+    return () => window.removeEventListener(TRADING_LAYOUT_EVENT, onPreset);
+  }, []);
 
   useEffect(() => {
     return () => {

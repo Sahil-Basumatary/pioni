@@ -1,4 +1,6 @@
 const KEY = "pioni.tradingLayout.v2";
+const PRESET_KEY = "pioni.tradingLayout.preset";
+export const TRADING_LAYOUT_EVENT = "pioni:trading-layout";
 
 export type TradingLayoutSizes = {
   ticketWidth: number;
@@ -6,10 +8,30 @@ export type TradingLayoutSizes = {
   bottomHeight: number;
 };
 
+export type LayoutPresetId = "classic" | "advanced" | "terminal";
+
 export const DEFAULT_LAYOUT: TradingLayoutSizes = {
   ticketWidth: 336,
   bookWidth: 280,
   bottomHeight: 180,
+};
+
+export const LAYOUT_PRESETS: Record<
+  LayoutPresetId,
+  { label: string; sizes: TradingLayoutSizes }
+> = {
+  classic: {
+    label: "Classic",
+    sizes: { ticketWidth: 300, bookWidth: 240, bottomHeight: 150 },
+  },
+  advanced: {
+    label: "Advanced",
+    sizes: { ...DEFAULT_LAYOUT },
+  },
+  terminal: {
+    label: "Terminal",
+    sizes: { ticketWidth: 260, bookWidth: 340, bottomHeight: 220 },
+  },
 };
 
 export const LAYOUT_LIMITS = {
@@ -52,4 +74,20 @@ export function readTradingLayout(): TradingLayoutSizes {
 
 export function writeTradingLayout(sizes: TradingLayoutSizes): void {
   localStorage.setItem(KEY, JSON.stringify(sizes));
+}
+
+export function readLayoutPreset(): LayoutPresetId {
+  const raw = localStorage.getItem(PRESET_KEY);
+  if (raw === "classic" || raw === "advanced" || raw === "terminal") return raw;
+  return "advanced";
+}
+
+export function applyLayoutPreset(id: LayoutPresetId): TradingLayoutSizes {
+  const sizes = { ...LAYOUT_PRESETS[id].sizes };
+  writeTradingLayout(sizes);
+  localStorage.setItem(PRESET_KEY, id);
+  window.dispatchEvent(
+    new CustomEvent(TRADING_LAYOUT_EVENT, { detail: { id, sizes } }),
+  );
+  return sizes;
 }

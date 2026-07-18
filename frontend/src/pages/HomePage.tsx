@@ -7,6 +7,7 @@ import {
 import HomeActivity from "../features/home/HomeActivity";
 import HomeHoldingsPanel from "../features/home/HomeHoldingsPanel";
 import HomeMarketsStrip from "../features/home/HomeMarketsStrip";
+import { PAPER_HOME_CASH } from "../features/home/paperHomeDemo";
 import PortfolioInsights from "../features/home/PortfolioInsights";
 import TotalValueCard, {
   RANGE_DAYS,
@@ -26,16 +27,23 @@ export default function HomePage() {
     { skip: !isSignedIn },
   );
 
-  const totalValue =
-    summary?.total_value != null ? Number(summary.total_value) : isSignedIn ? null : null;
+  const totalValue = summary?.total_value != null
+    ? Number(summary.total_value)
+    : isSignedIn
+      ? null
+      : PAPER_HOME_CASH;
   const cash =
     summary?.portfolio.cash_balance != null
       ? Number(summary.portfolio.cash_balance)
-      : null;
+      : isSignedIn
+        ? null
+        : PAPER_HOME_CASH;
   const upnl =
     summary?.total_unrealized_pnl != null
       ? Number(summary.total_unrealized_pnl)
-      : null;
+      : isSignedIn
+        ? null
+        : 0;
 
   return (
     <div className="mx-auto flex w-full max-w-[1750px] flex-col gap-2">
@@ -50,7 +58,7 @@ export default function HomePage() {
           />
           <PortfolioInsights
             totalValue={totalValue}
-            cashBalance={cash}
+            availableMargin={cash}
             unrealizedPnl={upnl}
           />
           <HomeHoldingsPanel />

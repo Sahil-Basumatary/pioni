@@ -1,8 +1,15 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 import { useGetMyTradesQuery } from "../portfolio/portfolioApi";
 import { SettingsSliderHorizontalIcon } from "../../components/shell/shellIcons";
+import {
+  assetIconUrl,
+  formatActivityClock,
+  formatActivityDate,
+} from "../../components/shell/activityFormat";
 import { ActivityFillRow } from "./ActivityFillRow";
+import { PAPER_HOME_ACTIVITY, type PaperActivityItem } from "./paperHomeDemo";
 
 const PREVIEW_LIMIT = 5;
 
@@ -12,6 +19,11 @@ export default function HomeActivity() {
     { limit: PREVIEW_LIMIT },
     { skip: !isSignedIn },
   );
+
+  const items: PaperActivityItem[] =
+    isSignedIn && data && data.length > 0
+      ? data.map((trade) => ({ kind: "fill" as const, id: trade.id, trade }))
+      : PAPER_HOME_ACTIVITY;
 
   return (
     <section className="flex h-full min-h-[280px] flex-col overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-4 shadow-[var(--shadow-card)]">
@@ -29,13 +41,9 @@ export default function HomeActivity() {
       </div>
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="min-h-0 flex-1 overflow-y-auto">
-          {!isSignedIn ? (
-            <p className="px-2 py-8 text-center text-sm text-[var(--text-muted)]">
-              Sign in from the top bar to see fills here.
-            </p>
-          ) : isLoading ? (
+          {isSignedIn && isLoading ? (
             <p className="px-2 py-8 text-center text-sm text-[var(--text-muted)]">Loading…</p>
-          ) : isError ? (
+          ) : isSignedIn && isError ? (
             <div className="flex flex-col items-center gap-2 px-2 py-8">
               <p className="text-sm text-[var(--text-muted)]">Couldn’t load activity.</p>
               <button
@@ -46,15 +54,15 @@ export default function HomeActivity() {
                 Retry
               </button>
             </div>
-          ) : !data?.length ? (
-            <p className="px-2 py-8 text-center text-sm text-[var(--text-muted)]">
-              No activity yet — your first paper trade will appear here.
-            </p>
           ) : (
             <ul className="flex list-none flex-col -mx-2">
-              {data.map((trade) => (
-                <ActivityFillRow key={trade.id} trade={trade} />
-              ))}
+              {items.map((item) =>
+                item.kind === "fill" ? (
+                  <ActivityFillRow key={item.id} trade={item.trade} />
+                ) : (
+                  <ActivityWithdrawalRow key={item.id} item={item} />
+                ),
+              )}
             </ul>
           )}
         </div>
@@ -66,5 +74,60 @@ export default function HomeActivity() {
         </Link>
       </div>
     </section>
+  );
+}
+
+function ActivityWithdrawalRow({
+  item,
+}: {
+  item: Extract<PaperActivityItem, { kind: "withdrawal" }>;
+}) {
+  const [imgFailed, setImgFailed] = useState(false);
+  return (
+    <li>
+      <button
+        type="button"
+        className="rail-icon flex w-full flex-row justify-between gap-3 rounded-lg p-2 text-left hover:bg-black/[0.03]"
+      >
+        <div className="flex min-w-0 flex-grow flex-row items-center gap-3">
+          <span className="relative inline-flex h-6 w-6 shrink-0 overflow-hidden rounded-full bg-[var(--bg)]">
+            {!imgFailed ? (
+              <img
+                src={assetIconUrl(item.asset)}
+                alt=""
+                width={24}
+                height={24}
+                className="absolute inset-0 size-full rounded-full object-scale-down"
+                onError={() => setImgFailed(true)}
+              />
+            ) : (
+              <span className="flex size-full items-center justify-center text-[10px] font-semibold text-[var(--text-muted)]">
+                {item.asset.slice(0, 1)}
+              </span>
+            )}
+          </span>
+          <div className="flex min-w-0 flex-grow flex-col gap-1">
+            <span className="text-xs text-[var(--text-muted)]">
+              {item.asset} withdrawal
+            </span>
+            <span className="text-xs font-medium text-[var(--text-primary)]">
+              <span className="text-rose-500">−{item.amount}</span> {item.asset}{" "}
+              <span className="font-normal text-[var(--text-muted)]">≈</span>{" "}
+              <span>
+                {item.quoteAmount}
+                <span className="text-[var(--text-muted)]">USD</span>
+              </span>
+            </span>
+          </div>
+        </div>
+        <time
+          dateTime={item.at}
+          className="inline-flex shrink-0 flex-col items-end gap-1 whitespace-nowrap text-xs font-semibold text-[var(--text-muted)]"
+        >
+          <span>{formatActivityDate(item.at)}</span>
+          <span>{formatActivityClock(item.at)}</span>
+        </time>
+      </button>
+    </li>
   );
 }

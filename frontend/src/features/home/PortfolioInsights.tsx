@@ -3,17 +3,17 @@ import { ArrowRightIcon } from "../../components/shell/shellIcons";
 
 type PortfolioInsightsProps = {
   totalValue: number | null;
-  cashBalance: number | null;
+  availableMargin: number | null;
   unrealizedPnl: number | null;
 };
 
 export default function PortfolioInsights({
   totalValue,
-  cashBalance,
+  availableMargin,
   unrealizedPnl,
 }: PortfolioInsightsProps) {
   const tv = fmt(totalValue);
-  const cash = fmt(cashBalance);
+  const margin = fmt(availableMargin);
   const upnl = fmt(unrealizedPnl);
 
   return (
@@ -23,7 +23,7 @@ export default function PortfolioInsights({
         to="/home"
         rows={[
           { label: "Total value", value: tv, suffix: "USD" },
-          { label: "Available cash", value: cash, suffix: "USD" },
+          { label: "Available margin", value: margin, suffix: "USD" },
         ]}
       />
       <InsightTile
@@ -45,11 +45,11 @@ export default function PortfolioInsights({
         ]}
       />
       <InsightTile
-        title="Margin"
-        to="/trade/margin"
+        title="Inverse Futures"
+        to="/trade/futures"
         rows={[
-          { label: "Status", value: "Healthy", suffix: "" },
-          { label: "Used margin", value: "0.00", suffix: "USD" },
+          { label: "Total value", value: "0.00", suffix: "USD" },
+          { label: "Available margin", value: "0.00", suffix: "USD" },
         ]}
       />
       <Link
