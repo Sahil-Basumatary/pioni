@@ -8,7 +8,9 @@ import {
   BellIcon,
   ConvertIcon,
   DepositIcon,
+  MinusSmallIcon,
   SearchIcon,
+  StarFilledIcon,
   StarIcon,
 } from "../../components/shell/shellIcons";
 import { assetIconUrl, baseAsset } from "../../components/shell/activityFormat";
@@ -43,8 +45,9 @@ function formatCompact(raw: string | number | null | undefined): string {
   if (!Number.isFinite(num)) return "—";
   if (num >= 1e9) return `${(num / 1e9).toFixed(1)}B`;
   if (num >= 1e6) return `${(num / 1e6).toFixed(1)}M`;
-  if (num >= 1e3) return `${(num / 1e3).toFixed(0)}`;
-  return num.toFixed(0);
+  if (num >= 1e3) return `${(num / 1e3).toFixed(1)}K`;
+  if (num >= 100) return num.toFixed(0);
+  return num.toFixed(2);
 }
 
 function formatChangeAbs(raw: string | null | undefined): string {
@@ -61,9 +64,32 @@ function formatChangePct(pct: number | null): string {
 
 async function fetchSnapshot(symbol: string): Promise<TickerSnapshot> {
   const base = import.meta.env.VITE_GATEWAY_URL || DEFAULT_GATEWAY_URL;
-  const res = await fetch(`${base}/market/prices/${symbol}`);
+  try {
+    const res = await fetch(`${base}/market/prices/${symbol}`);
+    if (res.ok) return res.json();
+  } catch {
+    // fall through
+  }
+  const res = await fetch(
+    `https://api.binance.com/api/v3/ticker/24hr?symbol=${encodeURIComponent(symbol)}`,
+  );
   if (!res.ok) throw new Error(`ticker fetch ${res.status}`);
-  return res.json();
+  const t = await res.json();
+  const last = Number(t.lastPrice);
+  const open = Number(t.openPrice);
+  const change = last - open;
+  const pct = open > 0 ? (change / open) * 100 : null;
+  return {
+    symbol,
+    exchange: "binance",
+    price: String(t.lastPrice ?? ""),
+    change_24h: Number.isFinite(change) ? String(change) : null,
+    change_pct_24h: pct != null && Number.isFinite(pct) ? pct : null,
+    high_24h: t.highPrice ?? null,
+    low_24h: t.lowPrice ?? null,
+    volume_24h: t.volume ?? null,
+    updated_at: Date.now(),
+  };
 }
 
 function AnalyticsHeader({ symbol }: { symbol: string }) {
@@ -177,7 +203,11 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
             favorited ? "text-amber-500" : "text-[var(--text-muted)]"
           }`}
         >
-          <StarIcon className="h-4 w-4" />
+          {favorited ? (
+            <StarFilledIcon className="h-4 w-4" />
+          ) : (
+            <StarIcon className="h-4 w-4" />
+          )}
         </button>
       </div>
       <div className="flex min-w-0 grow items-center overflow-hidden">
@@ -262,6 +292,13 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
         >
           <ConvertIcon className="h-4 w-4" />
           Convert
+        </button>
+        <button
+          type="button"
+          aria-label="Collapse"
+          className="rail-icon inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[rgba(104,107,130,0.08)] text-[var(--text-primary)] hover:bg-[rgba(104,107,130,0.12)]"
+        >
+          <MinusSmallIcon className="h-4 w-4" />
         </button>
       </div>
     </div>

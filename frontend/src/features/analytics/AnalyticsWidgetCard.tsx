@@ -10,6 +10,7 @@ type Props = {
   title: string;
   interval: AnalyticsInterval;
   onIntervalChange: (interval: AnalyticsInterval) => void;
+  showInterval?: boolean;
   children?: ReactNode;
 };
 
@@ -17,6 +18,7 @@ export default function AnalyticsWidgetCard({
   title,
   interval,
   onIntervalChange,
+  showInterval = true,
   children,
 }: Props) {
   const [overflowOpen, setOverflowOpen] = useState(false);
@@ -25,7 +27,8 @@ export default function AnalyticsWidgetCard({
   return (
     <section className="flex h-[400px] flex-col rounded-2xl bg-[var(--card-bg)] p-4 shadow-[var(--shadow-card)]">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-normal text-[var(--text-primary)]">{title}</h2>
+        <h2 className="text-sm font-medium text-[rgb(16,17,20)]">{title}</h2>
+        {showInterval && (
         <div className="flex items-center gap-1">
           <div
             role="tablist"
@@ -82,6 +85,7 @@ export default function AnalyticsWidgetCard({
             )}
           </div>
         </div>
+        )}
       </div>
       <div className="min-h-0 flex-1">{children}</div>
     </section>

@@ -32,6 +32,7 @@ export default function AnalyticsPage() {
               key={widget.id}
               title={widget.title}
               interval={interval}
+              showInterval={widget.id !== "orderbook"}
               onIntervalChange={(next) =>
                 setIntervals((prev) => ({ ...prev, [widget.id]: next }))
               }

@@ -50,6 +50,17 @@ export function StarIcon({ className }: IconProps) {
   );
 }
 
+export function StarFilledIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path
+        d="M11.9996 0.339844L8.63701 7.37888L0.894531 8.39835L6.55847 13.769L5.13672 21.4386L11.9996 17.7179L18.8625 21.4386L17.4407 13.769L23.1047 8.39835L15.3622 7.37888L11.9996 0.339844Z"
+        className="fill-current"
+      />
+    </svg>
+  );
+}
+
 export function QuestionMarkCircleIcon({ className }: IconProps) {
   return (
     <svg {...base} className={className}>

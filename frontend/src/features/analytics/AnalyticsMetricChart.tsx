@@ -88,6 +88,7 @@ export default function AnalyticsMetricChart({
         color: HIST,
         priceLineVisible: true,
         lastValueVisible: true,
+        priceLineColor: LINE,
         priceFormat: format,
       });
     } else if (kind === "line") {
@@ -96,6 +97,7 @@ export default function AnalyticsMetricChart({
         lineWidth: 2,
         priceLineVisible: true,
         lastValueVisible: true,
+        priceLineColor: LINE,
         priceFormat: format,
       });
     } else {
@@ -106,6 +108,7 @@ export default function AnalyticsMetricChart({
         lineWidth: 2,
         priceLineVisible: true,
         lastValueVisible: true,
+        priceLineColor: LINE,
         priceFormat: format,
       });
     }
