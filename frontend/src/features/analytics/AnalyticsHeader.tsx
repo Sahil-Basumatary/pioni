@@ -148,12 +148,12 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
       : null;
 
   return (
-    <div className="my-2 flex h-8 w-full items-center justify-between gap-1 px-2">
+    <div className="my-2 flex min-h-10 w-full items-center justify-between gap-1 px-2">
       <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={openSearch}
-          className="rail-icon flex h-8 items-center gap-2 rounded-full border border-[var(--card-border)] bg-[var(--card-bg)] px-2.5 hover:bg-black/[0.03]"
+          className="rail-icon flex h-10 items-center gap-2 rounded-full border border-[var(--card-border)] bg-[var(--card-bg)] px-2.5 hover:bg-black/[0.03]"
         >
           <SearchIcon className="h-3.5 w-3.5 shrink-0 text-[var(--text-muted)]" />
           <span className="relative inline-flex h-5 w-5 shrink-0 overflow-hidden rounded-full bg-[var(--bg)]">
@@ -170,21 +170,21 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
               </span>
             )}
           </span>
-          <span className="text-left leading-tight">
-            <span className="flex items-center gap-1.5 text-sm font-semibold text-[var(--text-primary)]">
+          <span className="flex flex-col justify-center text-left leading-none">
+            <span className="flex items-center gap-1.5 text-[13px] font-semibold leading-none text-[var(--text-primary)]">
               <span>
                 {asset}
                 <span className="text-[var(--text-muted)]">/USD</span>
               </span>
-              <span className="rounded bg-black/[0.08] px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--text-primary)]">
+              <span className="rounded bg-black/[0.08] px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums text-[var(--text-primary)]">
                 10x
               </span>
             </span>
-            <span className="block text-[11px] text-[var(--text-muted)]">
+            <span className="mt-0.5 text-[11px] leading-none text-[var(--text-muted)]">
               {meta?.name ?? asset}
             </span>
           </span>
-          <kbd className="ml-2 rounded-md border border-[var(--card-border)] bg-[var(--bg)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--text-muted)]">
+          <kbd className="ml-1 rounded-md border border-[var(--card-border)] bg-[var(--bg)] px-1.5 py-0.5 text-[10px] font-medium leading-none text-[var(--text-muted)]">
             ⌘K
           </kbd>
         </button>
@@ -264,12 +264,12 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
           <Link
             to="/terms"
             title="Paper trading — no exchange fees"
-            className="flex h-8 flex-col justify-between whitespace-nowrap outline-none hover:opacity-80"
+            className="flex h-10 flex-col justify-center gap-0.5 whitespace-nowrap outline-none hover:opacity-80"
           >
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-[rgb(104,107,130)]">
+            <span className="text-[10px] font-semibold uppercase leading-none tracking-wide text-[rgb(104,107,130)]">
               FEES
             </span>
-            <span className="text-xs font-medium tabular-nums text-[var(--text-primary)]">
+            <span className="text-xs font-medium leading-none tabular-nums text-[var(--text-primary)]">
               {PAPER_MAKER_FEE}
               <span className="text-[var(--text-muted)]"> / </span>
               {PAPER_TAKER_FEE}
@@ -280,7 +280,7 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
       <div className="flex shrink-0 items-center justify-end gap-1">
         <Link
           to="/deposit"
-          className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-[rgba(104,107,130,0.08)] px-3 text-sm font-medium text-[var(--text-primary)] hover:bg-[rgba(104,107,130,0.12)]"
+          className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-[rgba(104,107,130,0.08)] px-3 text-sm font-medium text-[var(--text-primary)] hover:bg-[rgba(104,107,130,0.12)]"
         >
           <DepositIcon className="h-4 w-4" />
           Deposit
@@ -288,7 +288,7 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
         <button
           type="button"
           onClick={() => openConvert()}
-          className="rail-icon inline-flex h-8 items-center gap-1.5 rounded-lg bg-[rgba(104,107,130,0.08)] px-3 text-sm font-medium text-[var(--text-primary)] hover:bg-[rgba(104,107,130,0.12)]"
+          className="rail-icon inline-flex h-10 items-center gap-1.5 rounded-lg bg-[rgba(104,107,130,0.08)] px-3 text-sm font-medium text-[var(--text-primary)] hover:bg-[rgba(104,107,130,0.12)]"
         >
           <ConvertIcon className="h-4 w-4" />
           Convert
@@ -296,7 +296,7 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
         <button
           type="button"
           aria-label="Collapse"
-          className="rail-icon inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[rgba(104,107,130,0.08)] text-[var(--text-primary)] hover:bg-[rgba(104,107,130,0.12)]"
+          className="rail-icon inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[rgba(104,107,130,0.08)] text-[var(--text-primary)] hover:bg-[rgba(104,107,130,0.12)]"
         >
           <MinusSmallIcon className="h-4 w-4" />
         </button>
@@ -313,11 +313,11 @@ function Metric({
   value: ReactNode;
 }) {
   return (
-    <div className="flex h-8 flex-col justify-between whitespace-nowrap">
-      <span className="text-[10px] font-semibold uppercase tracking-wide text-[rgb(104,107,130)]">
+    <div className="flex h-10 flex-col justify-center gap-0.5 whitespace-nowrap">
+      <span className="text-[10px] font-semibold uppercase leading-none tracking-wide text-[rgb(104,107,130)]">
         {label}
       </span>
-      <span className="text-xs font-medium tabular-nums leading-tight text-[var(--text-primary)]">
+      <span className="text-xs font-medium tabular-nums leading-none text-[var(--text-primary)]">
         {value}
       </span>
     </div>
