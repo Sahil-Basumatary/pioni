@@ -12,6 +12,7 @@ const MarketsPage = lazy(() => import("./pages/MarketsPage"));
 const PropPage = lazy(() => import("./pages/PropPage"));
 const EarnPage = lazy(() => import("./pages/EarnPage"));
 const ConvertPage = lazy(() => import("./pages/ConvertPage"));
+const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 
@@ -59,6 +60,11 @@ function App() {
               />
             } />
             <Route path="/convert" element={<ConvertPage />} />
+            <Route
+              path="/analytics"
+              element={<Navigate to="/analytics/btcusdt" replace />}
+            />
+            <Route path="/analytics/:pair" element={<AnalyticsPage />} />
             <Route path="/sentiment" element={<SentimentPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />

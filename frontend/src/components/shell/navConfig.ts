@@ -35,6 +35,7 @@ export const PRODUCT_NAV: NavItem[] = [
     ],
   },
   { kind: "link", id: "markets", label: "Markets", to: "/markets" },
+  { kind: "link", id: "analytics", label: "Analytics", to: "/analytics" },
   { kind: "link", id: "yield", label: "Yield", to: "/yield" },
   { kind: "link", id: "earn", label: "Earn", to: "/earn" },
   { kind: "link", id: "history", label: "History", to: "/history" },
