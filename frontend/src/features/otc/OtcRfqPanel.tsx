@@ -10,6 +10,7 @@ import {
 import { useGetMyPortfolioQuery } from "../portfolio/portfolioApi";
 import { useLiveMarketTrade } from "../market/liveMarketStore";
 import OtcPairPicker from "./OtcPairPicker";
+import { useToast } from "../toasts/useToast";
 import {
   OTC_MIN_USD,
   OTC_OVERALL_EXPOSURE_USD,
@@ -29,6 +30,7 @@ const DEFAULT_PAIR =
 
 export default function OtcRfqPanel() {
   const { isSignedIn } = useAuth();
+  const toast = useToast();
   const { data: portfolio } = useGetMyPortfolioQuery(undefined, { skip: !isSignedIn });
   const [side, setSide] = useState<Side>("BUY");
   const [pair, setPair] = useState<OtcPortalPair>(DEFAULT_PAIR);
@@ -36,7 +38,6 @@ export default function OtcRfqPanel() {
   const [amount, setAmount] = useState("");
   const [settlement] = useState<Settlement>("automated");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
   const [editing, setEditing] = useState<"qty" | "amount" | null>(null);
 
   const live = useLiveMarketTrade(pair.symbol);
@@ -54,11 +55,6 @@ export default function OtcRfqPanel() {
 
   const cash = Number(portfolio?.cash_balance ?? 0);
   const availableLabel = formatOtcUsd(Number.isFinite(cash) ? cash : 0, cash >= 1 ? 2 : 4);
-
-  const showToast = (msg: string) => {
-    setToast(msg);
-    window.setTimeout(() => setToast(null), 2600);
-  };
 
   const onQty = (raw: string) => {
     setEditing("qty");
@@ -87,13 +83,18 @@ export default function OtcRfqPanel() {
 
   const getQuote = () => {
     if (!canQuote) {
-      showToast(`Minimum simulated size is ${formatOtcUsd(OTC_MIN_USD)}`);
+      toast({
+        title: `Minimum simulated size is ${formatOtcUsd(OTC_MIN_USD)}`,
+        tone: "warning",
+      });
       return;
     }
     const mid = px * (side === "BUY" ? 1.0005 : 0.9995);
-    showToast(
-      `Paper quote · ${side === "BUY" ? "Buy" : "Sell"} ${qty || "—"} ${pair.base} @ ${mid.toLocaleString("en-US", { maximumFractionDigits: 2 })} ${pair.quote} · 0.00% fee`,
-    );
+    toast({
+      title: `Paper quote · ${side === "BUY" ? "Buy" : "Sell"} ${qty || "—"} ${pair.base} @ ${mid.toLocaleString("en-US", { maximumFractionDigits: 2 })} ${pair.quote}`,
+      body: "0.00% fee · simulated only",
+      tone: "positive",
+    });
   };
 
   const benefitIcon = useMemo(
@@ -106,11 +107,6 @@ export default function OtcRfqPanel() {
 
   return (
     <>
-      {toast && (
-        <div className="fixed bottom-16 left-1/2 z-40 -translate-x-1/2 rounded-xl bg-[var(--accent)] px-4 py-2 text-sm text-white shadow-[0_2px_6px_rgba(0,0,0,0.07)]">
-          {toast}
-        </div>
-      )}
       <div className="grid gap-2 lg:grid-cols-[332px_minmax(0,1fr)]">
         <div className="flex flex-col gap-2">
           <section
@@ -211,7 +207,7 @@ export default function OtcRfqPanel() {
                 <button
                   type="button"
                   aria-label="Add funds"
-                  onClick={() => showToast("Paper deposit — use TopBar Deposit")}
+                  onClick={() => toast("Paper deposit — use TopBar Deposit")}
                   className="inline-flex"
                 >
                   <PlusCircleIcon className="size-4 text-[var(--text-muted)]" />
@@ -265,7 +261,7 @@ export default function OtcRfqPanel() {
                   <button
                     key={b.id}
                     type="button"
-                    onClick={() => showToast(`Paper ${b.title} — coming soon`)}
+                    onClick={() => toast(`Paper ${b.title} — coming soon`)}
                     className="flex w-full items-center gap-3 rounded-xl px-2 py-3 text-left hover:bg-black/[0.03]"
                   >
                     <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[rgba(42,42,42,0.08)]">

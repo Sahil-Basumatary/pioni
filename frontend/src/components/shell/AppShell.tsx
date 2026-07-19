@@ -7,6 +7,8 @@ import {
 import MarketSearchPalette from "../../features/markets/MarketSearchPalette";
 import { ConvertProvider } from "../../features/convert/ConvertContext";
 import ConvertDialog from "../../features/convert/ConvertDialog";
+import ToastHost from "../../features/toasts/ToastHost";
+import OrderStatusSocketProvider from "../../features/toasts/OrderStatusSocketProvider";
 import ProductNav from "./ProductNav";
 import RightRail from "./RightRail";
 import StatusBar from "./StatusBar";
@@ -28,28 +30,31 @@ export default function AppShell({ children }: { children: ReactNode }) {
     <MarketSocketProvider>
       <MarketSearchProvider>
         <ConvertProvider>
-          <div
-            className="flex h-dvh w-full flex-col overflow-hidden"
-            style={{ background: "var(--bg)", color: "var(--text-primary)" }}
-          >
-            <div className="sticky top-0 z-50 shrink-0">
-              <TopBar />
-              <ProductNav />
+          <OrderStatusSocketProvider>
+            <div
+              className="flex h-dvh w-full flex-col overflow-hidden"
+              style={{ background: "var(--bg)", color: "var(--text-primary)" }}
+            >
+              <div className="sticky top-0 z-50 shrink-0">
+                <TopBar />
+                <ProductNav />
+              </div>
+              <div className="flex min-h-0 flex-1">
+                <main
+                  className={`mx-auto flex min-h-0 w-full max-w-[1750px] flex-1 flex-col px-2 py-2 ${
+                    workspace ? "overflow-hidden" : "overflow-y-auto"
+                  }`}
+                >
+                  {children}
+                </main>
+                <RightRail />
+              </div>
+              <StatusBar />
+              <MarketSearchPalette />
+              <ConvertDialog />
+              <ToastHost />
             </div>
-            <div className="flex min-h-0 flex-1">
-              <main
-                className={`mx-auto flex min-h-0 w-full max-w-[1750px] flex-1 flex-col px-2 py-2 ${
-                  workspace ? "overflow-hidden" : "overflow-y-auto"
-                }`}
-              >
-                {children}
-              </main>
-              <RightRail />
-            </div>
-            <StatusBar />
-            <MarketSearchPalette />
-            <ConvertDialog />
-          </div>
+          </OrderStatusSocketProvider>
         </ConvertProvider>
       </MarketSearchProvider>
     </MarketSocketProvider>

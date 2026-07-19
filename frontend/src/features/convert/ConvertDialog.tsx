@@ -13,6 +13,7 @@ import {
   quoteReceive,
   type ConvertAsset,
 } from "./convertQuote";
+import { useToast } from "../toasts/useToast";
 
 function assetBySymbol(symbol: string): ConvertAsset {
   return CONVERT_ASSETS.find((a) => a.symbol === symbol) ?? CONVERT_ASSETS[0];
@@ -42,7 +43,7 @@ export default function ConvertDialog() {
   const [fromRaw, setFromRaw] = useState("");
   const [pct, setPct] = useState(100);
   const [menu, setMenu] = useState<"from" | "to" | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const toast = useToast();
 
   useEffect(() => {
     if (!open) return;
@@ -78,10 +79,7 @@ export default function ConvertDialog() {
 
   if (!open) return null;
 
-  const flash = (msg: string) => {
-    setToast(msg);
-    window.setTimeout(() => setToast(null), 2200);
-  };
+  const flash = (msg: string) => toast(msg);
 
   const applyPct = (nextPct: number) => {
     setPct(nextPct);
@@ -129,11 +127,6 @@ export default function ConvertDialog() {
         className="absolute inset-0 bg-[rgba(0,0,0,0.4)]"
         onClick={closeConvert}
       />
-      {toast && (
-        <div className="fixed bottom-16 left-1/2 z-[100] -translate-x-1/2 rounded-xl bg-[var(--accent)] px-4 py-2 text-sm text-white shadow-[var(--shadow-card)]">
-          {toast}
-        </div>
-      )}
       <div
         role="dialog"
         aria-modal="true"

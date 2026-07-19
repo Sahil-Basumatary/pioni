@@ -2,6 +2,7 @@ import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
 import instrumentReducer from "../features/instrument/instrumentSlice";
 import marketReducer from "../features/market/marketSlice";
+import toastReducer from "../features/toasts/toastSlice";
 import { marketApi } from "../features/market/marketApi";
 import { portfolioApi } from "../features/portfolio/portfolioApi";
 import { ordersApi } from "../features/orders/ordersApi";
@@ -9,6 +10,7 @@ import { ordersApi } from "../features/orders/ordersApi";
 const rootReducer = combineReducers({
   instrument: instrumentReducer,
   market: marketReducer,
+  toasts: toastReducer,
   [marketApi.reducerPath]: marketApi.reducer,
   [portfolioApi.reducerPath]: portfolioApi.reducer,
   [ordersApi.reducerPath]: ordersApi.reducer,

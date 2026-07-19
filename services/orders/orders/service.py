@@ -282,6 +282,7 @@ class OrderService:
                 "order_id": maker_id,
                 "portfolio_id": maker.portfolio_id,
                 "symbol": maker.symbol,
+                "side": maker.side,
                 "status": maker.status,
                 "filled_quantity": maker.filled_quantity,
                 "average_fill_price": maker.average_fill_price,
@@ -310,6 +311,7 @@ class OrderService:
         await session.flush()
         cancel_portfolio = db_order.portfolio_id
         cancel_symbol = db_order.symbol
+        cancel_side = db_order.side
         cancel_filled = db_order.filled_quantity or Decimal("0")
         cancel_avg = db_order.average_fill_price
         asyncio.create_task(
@@ -317,6 +319,7 @@ class OrderService:
                 order_id=order_id,
                 portfolio_id=cancel_portfolio,
                 symbol=cancel_symbol,
+                side=cancel_side,
                 remaining=remaining,
                 filled_quantity=cancel_filled,
                 average_fill_price=cancel_avg,
@@ -477,6 +480,7 @@ class OrderService:
                 order_id=order_id,
                 portfolio_id=req.portfolio_id,
                 symbol=req.symbol,
+                side=req.side,
                 status=result.status,
                 filled_quantity=filled_quantity,
                 average_fill_price=average_fill_price,
@@ -486,6 +490,7 @@ class OrderService:
                     order_id=update["order_id"],
                     portfolio_id=update["portfolio_id"],
                     symbol=update["symbol"],
+                    side=update.get("side"),
                     status=update["status"],
                     filled_quantity=update["filled_quantity"],
                     average_fill_price=update["average_fill_price"],
@@ -499,6 +504,7 @@ class OrderService:
         order_id: uuid.UUID,
         portfolio_id: uuid.UUID,
         symbol: str,
+        side: OrderSide,
         remaining: Decimal,
         filled_quantity: Decimal,
         average_fill_price: Decimal | None,
@@ -517,6 +523,7 @@ class OrderService:
                 order_id=order_id,
                 portfolio_id=portfolio_id,
                 symbol=symbol,
+                side=side,
                 status=OrderStatus.CANCELLED,
                 filled_quantity=filled_quantity,
                 average_fill_price=average_fill_price,
@@ -530,6 +537,7 @@ class OrderService:
         order_id: uuid.UUID,
         portfolio_id: uuid.UUID,
         symbol: str,
+        side: OrderSide | None,
         status: OrderStatus,
         filled_quantity: Decimal | None,
         average_fill_price: Decimal | None,
@@ -542,6 +550,7 @@ class OrderService:
             "order_id": str(order_id),
             "portfolio_id": str(portfolio_id),
             "symbol": symbol,
+            "side": side.value if side else None,
             "status": status.value,
             "filled_quantity": str(filled_quantity or 0),
             "average_fill_price": str(average_fill_price or 0),

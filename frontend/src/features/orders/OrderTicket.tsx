@@ -12,6 +12,9 @@ import { useSubmitOrderMutation, useGetOrderBookQuery, type OrderSide, type Orde
 import { evaluateOrder } from "./orderValidation";
 import type { TradingVenue } from "../trading/tradingVenue";
 import { ChevronDownSmallIcon } from "../../components/shell/shellIcons";
+import { useToast } from "../toasts/useToast";
+import { toastFromOrder } from "../toasts/orderToastCopy";
+import { watchOpenOrder } from "../toasts/orderWatch";
 
 function baseAsset(symbol: string): string {
   return symbol.replace(/USDT$|USD$|USDC$/i, "") || symbol;
@@ -130,6 +133,7 @@ export default function OrderTicket({
   const [advancedNote, setAdvancedNote] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [submitOrder, { isLoading }] = useSubmitOrderMutation();
+  const toast = useToast();
   const advancedRef = useRef<HTMLDivElement>(null);
   const leverageRef = useRef<HTMLDivElement>(null);
   const advancedMenuId = useId();
@@ -321,6 +325,8 @@ export default function OrderTicket({
           ? `Filled — ${isDeriv ? (isBuy ? "longed" : "shorted") : isBuy ? "bought" : "sold"} ${order.filled_quantity} ${asset}`
           : `Order placed (${order.status.toLowerCase().replace(/_/g, " ")})`,
       });
+      toast(toastFromOrder(order));
+      watchOpenOrder(order.id, order.status);
       setQuantity("");
       setTotal("");
       setSizePct(0);
@@ -328,7 +334,9 @@ export default function OrderTicket({
       setPostOnly(false);
       setReduceOnly(false);
     } catch (err) {
-      setFeedback({ tone: "error", message: extractError(err) });
+      const message = extractError(err);
+      setFeedback({ tone: "error", message });
+      toast({ title: message, tone: "negative" });
     }
   }
 

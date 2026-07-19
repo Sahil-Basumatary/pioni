@@ -8,26 +8,19 @@ import {
   formatAssetQty,
   formatUsd,
 } from "../features/earn/earnData";
+import { useToast } from "../features/toasts/useToast";
 
 type BottomTab = "payouts" | "activity";
 
 export default function EarnPage() {
   const [autoEarn, setAutoEarn] = useState(false);
   const [bottomTab, setBottomTab] = useState<BottomTab>("payouts");
-  const [toast, setToast] = useState<string | null>(null);
+  const toast = useToast();
 
-  const flash = (msg: string) => {
-    setToast(msg);
-    window.setTimeout(() => setToast(null), 2200);
-  };
+  const flash = (msg: string) => toast(msg);
 
   return (
     <div className="mx-auto flex w-full max-w-[1320px] flex-col gap-5 pb-16 pt-1 text-[var(--text-primary)]">
-      {toast && (
-        <div className="fixed bottom-16 left-1/2 z-40 -translate-x-1/2 rounded-xl bg-[var(--accent)] px-4 py-2 text-sm text-white shadow-[var(--shadow-card)]">
-          {toast}
-        </div>
-      )}
 
       <section className="rounded-2xl bg-[var(--card-bg)] p-4 shadow-[0_1px_4px_rgba(16,24,40,0.04)]">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">

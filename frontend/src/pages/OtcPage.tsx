@@ -4,18 +4,14 @@ import { useClerk, SignedIn, SignedOut } from "@clerk/clerk-react";
 import { ChevronDownSmallIcon } from "../components/shell/shellIcons";
 import { OTC_FAQ, OTC_RESOURCES, OTC_WHY } from "../features/otc/otcContent";
 import { isOtcUnlocked, setOtcUnlocked } from "../features/otc/otcPortalContent";
+import { useToast } from "../features/toasts/useToast";
 
 export default function OtcPage() {
   const { openSignIn } = useClerk();
   const navigate = useNavigate();
+  const toast = useToast();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
   const [confirmUnlock, setConfirmUnlock] = useState(false);
-
-  const showToast = (message: string) => {
-    setToast(message);
-    window.setTimeout(() => setToast(null), 2400);
-  };
 
   const goPortal = () => {
     setOtcUnlocked(true);
@@ -37,11 +33,6 @@ export default function OtcPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col px-2 pb-16 pt-1 text-[var(--text-primary)]">
-      {toast && (
-        <div className="fixed bottom-16 left-1/2 z-40 -translate-x-1/2 rounded-xl bg-[var(--accent)] px-4 py-2 text-sm text-white shadow-[0_2px_6px_rgba(0,0,0,0.07)]">
-          {toast}
-        </div>
-      )}
       {confirmUnlock && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
@@ -163,7 +154,7 @@ export default function OtcPage() {
           <div className="flex flex-col gap-8 lg:flex-row">
             <button
               type="button"
-              onClick={() => showToast("Paper OTC walkthrough — coming soon")}
+              onClick={() => toast("Paper OTC walkthrough — coming soon")}
               className="relative w-full overflow-hidden rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
               style={{ aspectRatio: "16 / 9" }}
               aria-label="Play OTC walkthrough"
@@ -225,7 +216,7 @@ export default function OtcPage() {
               <button
                 type="button"
                 onClick={() =>
-                  showToast(`Paper ${item.cta.toLowerCase()} — coming soon`)
+                  toast(`Paper ${item.cta.toLowerCase()} — coming soon`)
                 }
                 className="mt-auto inline-flex h-10 w-fit items-center rounded-lg bg-[rgba(104,107,130,0.08)] px-4 text-sm font-medium text-[var(--text-primary)] hover:bg-[rgba(104,107,130,0.12)]"
               >
