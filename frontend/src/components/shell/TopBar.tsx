@@ -2,14 +2,58 @@ import { Link, NavLink } from "react-router-dom";
 import { SignedIn, SignedOut, UserButton, useClerk } from "@clerk/clerk-react";
 import BalanceChip from "./BalanceChip";
 import LayoutsMenu from "./LayoutsMenu";
+import TradeMenu from "./TradeMenu";
+import { PRODUCT_NAV } from "./navConfig";
 import { useMarketSearch } from "../../features/markets/MarketSearchContext";
 import { useConvert } from "../../features/convert/ConvertContext";
 import { ConvertIcon, DepositIcon, SearchIcon } from "./shellIcons";
 
-export default function TopBar() {
+const tradeNav = PRODUCT_NAV.find((item) => item.kind === "group" && item.id === "trade");
+
+export default function TopBar({ compact = false }: { compact?: boolean }) {
   const { openSearch } = useMarketSearch();
   const { openConvert } = useConvert();
   const { openSignIn } = useClerk();
+
+  if (compact) {
+    return (
+      <header
+        className="shrink-0 border-b border-[var(--card-border)] bg-[var(--card-bg)]"
+        role="navigation"
+      >
+        <div className="flex h-12 w-full items-center justify-between gap-0 overflow-hidden px-2 ps-4">
+          <div className="flex h-full min-w-0 grow items-center gap-3">
+            <NavLink to="/home" className="flex shrink-0 items-center gap-1.5 p-1">
+              <img src="/logo.svg" alt="Pioni" className="h-5" />
+            </NavLink>
+            {tradeNav && tradeNav.kind === "group" && (
+              <TradeMenu item={tradeNav} variant="topbar" />
+            )}
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <div className="inline-flex items-center rounded-lg bg-black/[0.06] px-2.5 py-1.5 text-sm font-medium tabular-nums text-[var(--text-primary)]">
+              <BalanceChip />
+              <SignedOut>
+                <span aria-hidden="true">-</span>
+              </SignedOut>
+            </div>
+            <SignedIn>
+              <UserButton afterSignOutUrl="/home" />
+            </SignedIn>
+            <SignedOut>
+              <button
+                type="button"
+                onClick={() => openSignIn({})}
+                className="relative z-[60] rounded-lg bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--accent-soft)]"
+              >
+                Sign in
+              </button>
+            </SignedOut>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="border-b border-[var(--card-border)] bg-[var(--card-bg)]/90 backdrop-blur-lg">

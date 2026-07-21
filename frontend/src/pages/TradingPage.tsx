@@ -29,6 +29,12 @@ import ContentWindow, {
 import ComingSoonBody from "../features/trading/ComingSoonBody";
 import ResizeHandle from "../features/trading/ResizeHandle";
 import { useTradingLayout } from "../features/trading/useTradingLayout";
+import {
+  MobilePanelShell,
+  MobileTradeTabs,
+  type MobileTradeTab,
+} from "../features/trading/MobileTradeTabs";
+import { useCompactShell } from "../hooks/useCompactShell";
 import type { TradingVenue } from "../features/trading/tradingVenue";
 import type { Kline } from "../types/market";
 
@@ -69,6 +75,24 @@ const BOTTOM_ADD = [
   { id: "positions", label: "Positions" },
 ];
 
+const MOBILE_TABS: MobileTradeTab[] = [
+  { id: "orders", label: "Orders" },
+  { id: "marketchart", label: "Market chart" },
+  { id: "orderform", label: "Order form" },
+  { id: "positions", label: "Positions" },
+  { id: "marketsummary", label: "Market summary" },
+  { id: "balances", label: "Balances" },
+  { id: "depth", label: "Depth chart" },
+  { id: "favorites", label: "Favorites" },
+  { id: "markettrades", label: "Market trades" },
+  { id: "orderbook", label: "Order book" },
+  { id: "simpleorderform", label: "Simple order form" },
+  { id: "portfolio", label: "Portfolio" },
+  { id: "closed", label: "Closed orders" },
+  { id: "history", label: "Trades" },
+  { id: "alerts", label: "Alerts" },
+];
+
 export default function TradingPage({
   venue = "spot",
 }: {
@@ -79,6 +103,7 @@ export default function TradingPage({
   const interval = useAppSelector(selectInterval);
   const status = useAppSelector(selectMarketStatus);
   const { isSignedIn } = useAuth();
+  const compact = useCompactShell();
   const { subscribe, unsubscribe, registerKlineHandler } = useMarketSocket();
   const chartRef = useRef<CandlestickChartHandle>(null);
   const prevSymbolRef = useRef<string | null>(null);
@@ -94,6 +119,7 @@ export default function TradingPage({
   const [chartTab, setChartTab] = useState("marketchart");
   const [bottomTab, setBottomTab] = useState<BottomTab>("orders");
   const [bottomTabs, setBottomTabs] = useState(BOTTOM_TABS);
+  const [mobileTab, setMobileTab] = useState("marketchart");
   const [stubTitle, setStubTitle] = useState<Record<PaneId, string | null>>({
     ticket: null,
     book: null,
@@ -148,6 +174,82 @@ export default function TradingPage({
     if (bottomTab === id) {
       setBottomTab((next[0]?.id as BottomTab) ?? "orders");
     }
+  }
+
+  function renderMobilePanel() {
+    switch (mobileTab) {
+      case "marketchart":
+        return (
+          <div className="flex h-full min-h-0 flex-1 flex-col p-2">
+            <CandlestickChart
+              ref={chartRef}
+              symbol={symbol}
+              interval={interval}
+              onIntervalChange={handleIntervalChange}
+            />
+          </div>
+        );
+      case "orderform":
+      case "simpleorderform":
+        return <OrderTicket venue={venue} />;
+      case "orderbook":
+        return <OrderBookPanel symbol={symbol} />;
+      case "markettrades":
+        return <MarketTradesPanel symbol={symbol} />;
+      case "orders":
+      case "positions":
+      case "balances":
+      case "closed":
+      case "history":
+        return (
+          <div className="flex h-full min-h-0 flex-col">
+            {isSignedIn && (
+              <div className="flex justify-end border-b border-[var(--card-border)] px-2 py-1">
+                <ResetAccountChip />
+              </div>
+            )}
+            <TradingBottomPanel
+              symbol={symbol}
+              tab={mobileTab as BottomTab}
+            />
+          </div>
+        );
+      case "alerts":
+        return (
+          <ComingSoonBody
+            title="Alerts"
+            description="Price and order alerts will live here — paper-only."
+          />
+        );
+      default:
+        return (
+          <ComingSoonBody
+            title={MOBILE_TABS.find((t) => t.id === mobileTab)?.label ?? mobileTab}
+            description="This widget will unlock in a later milestone."
+          />
+        );
+    }
+  }
+
+  if (compact) {
+    return (
+      <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+        <PairHeader
+          symbol={symbol}
+          venue={venue}
+          compact
+          onCreateAlert={() => setMobileTab("alerts")}
+        />
+        <div className="grid min-h-0 flex-1 grid-rows-[auto_1fr] overflow-hidden">
+          <MobileTradeTabs
+            tabs={MOBILE_TABS}
+            activeId={mobileTab}
+            onChange={setMobileTab}
+          />
+          <MobilePanelShell>{renderMobilePanel()}</MobilePanelShell>
+        </div>
+      </div>
+    );
   }
 
   const show = (pane: PaneId) => maximized == null || maximized === pane;

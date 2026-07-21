@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useLiveMarketTrade } from "../../features/market/liveMarketStore";
 import { getMarketMeta } from "../markets/catalog";
 import { useMarketSearch } from "../markets/MarketSearchContext";
-import { BellIcon, StarIcon } from "../../components/shell/shellIcons";
+import { BellIcon, StarFilledIcon, StarIcon } from "../../components/shell/shellIcons";
 import { assetIconUrl, baseAsset } from "../../components/shell/activityFormat";
 import { useGetOrderBookQuery } from "../orders/ordersApi";
 import type { TickerSnapshot } from "../../types/market";
@@ -78,10 +78,12 @@ function PairHeader({
   symbol,
   venue = "spot",
   onCreateAlert,
+  compact = false,
 }: {
   symbol: string;
   venue?: TradingVenue;
   onCreateAlert?: () => void;
+  compact?: boolean;
 }) {
   const trade = useLiveMarketTrade(symbol);
   const { favorites, toggleFav, openSearch } = useMarketSearch();
@@ -148,6 +150,212 @@ function PairHeader({
     bid != null && ask != null && Number.isFinite(bid) && Number.isFinite(ask)
       ? (bid + ask) / 2
       : currentPrice;
+
+  const lastLabel = venue === "futures" ? "Mark price" : "Last price";
+  const markOrLast =
+    venue === "futures" ? (currentPrice ?? indexPrice) : currentPrice;
+  const lastValue =
+    markOrLast != null ? `${formatPrice(markOrLast)} USD` : "—";
+  const priceFlashClass =
+    flashDir === "up"
+      ? "text-emerald-500"
+      : flashDir === "down"
+        ? "text-red-500"
+        : "text-[var(--text-primary)]";
+
+  const pairButton = (
+    <button
+      type="button"
+      aria-label="Select market"
+      onClick={openSearch}
+      className="rail-icon flex items-center gap-2 rounded-lg px-1 py-0.5 hover:bg-black/[0.04]"
+    >
+      <span className="relative inline-flex h-6 w-6 shrink-0 overflow-hidden rounded-full bg-[var(--bg)]">
+        {!imgFailed ? (
+          <img
+            src={assetIconUrl(symbol)}
+            alt=""
+            className="absolute inset-0 size-full object-scale-down"
+            onError={() => setImgFailed(true)}
+          />
+        ) : (
+          <span className="flex size-full items-center justify-center text-[10px] font-semibold text-[var(--text-muted)]">
+            {asset.slice(0, 1)}
+          </span>
+        )}
+      </span>
+      <span className="min-w-0 text-left">
+        <span className="flex items-center gap-1 text-xs font-semibold leading-none text-[var(--text-primary)]">
+          <span>
+            <span>{asset}</span>
+            {venue === "futures" ? (
+              <span className="text-[var(--text-muted)]"> Perp</span>
+            ) : (
+              <span className="text-[var(--text-muted)]">/USD</span>
+            )}
+          </span>
+          {venue === "margin" && (
+            <span className="rounded bg-black/[0.08] px-1 py-0.5 text-[10px] font-semibold tabular-nums">
+              10x
+            </span>
+          )}
+          {venue === "futures" && (
+            <span className="rounded bg-black/[0.08] px-1 py-0.5 text-[10px] font-semibold tabular-nums">
+              100x
+            </span>
+          )}
+        </span>
+        <span className="mt-0.5 block truncate text-[11px] leading-none text-[var(--text-muted)]">
+          {meta?.name ?? asset}
+        </span>
+      </span>
+    </button>
+  );
+
+  const alertFav = (
+    <>
+      <button
+        type="button"
+        aria-label="Create alert"
+        title="Create alert"
+        onClick={onCreateAlert}
+        className="rail-icon flex h-7 w-7 items-center justify-center rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+      >
+        <BellIcon className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
+        onClick={() => toggleFav(symbol)}
+        className={`rail-icon flex h-7 w-7 items-center justify-center rounded-full ${
+          favorited ? "text-amber-500" : "text-[var(--text-muted)]"
+        }`}
+      >
+        {favorited ? (
+          <StarFilledIcon className="h-4 w-4" />
+        ) : (
+          <StarIcon className="h-4 w-4" />
+        )}
+      </button>
+    </>
+  );
+
+  const metrics = (
+    <>
+      <div className="flex shrink-0 flex-col gap-0.5">
+        <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
+          {lastLabel}
+        </span>
+        <span
+          data-testid="live-price"
+          className={`text-[13px] font-semibold tabular-nums tracking-tight transition-colors duration-300 ${priceFlashClass} ${
+            compact ? "" : "text-xl"
+          }`}
+        >
+          {lastValue}
+        </span>
+      </div>
+      <Stat
+        label="Index price"
+        value={indexPrice != null ? `${formatPrice(indexPrice)} USD` : "—"}
+      />
+      <div className="flex shrink-0 flex-col gap-0.5">
+        <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
+          24H Change
+        </span>
+        <span
+          className={`text-[13px] font-medium tabular-nums ${
+            changePct == null
+              ? "text-[var(--text-primary)]"
+              : changePct >= 0
+                ? "text-emerald-600"
+                : "text-rose-500"
+          }`}
+        >
+          {venue === "futures" ? (
+            formatChangePct(changePct)
+          ) : (
+            <>
+              {formatChangeAbs(changeAbs)}{" "}
+              <span className="text-[var(--text-muted)]">
+                ({formatChangePct(changePct)})
+              </span>
+            </>
+          )}
+        </span>
+      </div>
+      {venue === "futures" ? (
+        <>
+          <Stat label="Funding rate" value={FUTURES_PAPER_FUNDING} />
+          <Stat
+            label="Next funding rate"
+            value={`0.0000% @ ${nextFundingAtLabel()}`}
+          />
+          <Stat
+            label="24H Volume"
+            value={
+              snapshot?.volume_24h
+                ? `${formatVolume(snapshot.volume_24h)} ${asset}`
+                : "—"
+            }
+          />
+          <Stat label="Open interest" value="—" />
+        </>
+      ) : (
+        <>
+          <Stat
+            label="24H Volume"
+            value={
+              snapshot?.volume_24h
+                ? `${formatVolume(snapshot.volume_24h)}${asset}`
+                : "—"
+            }
+          />
+          {!compact && (
+            <>
+              <Stat
+                label="24H High"
+                value={snapshot?.high_24h ? formatPrice(snapshot.high_24h) : "—"}
+              />
+              <Stat
+                label="24H Low"
+                value={snapshot?.low_24h ? formatPrice(snapshot.low_24h) : "—"}
+              />
+            </>
+          )}
+        </>
+      )}
+      <Link
+        to="/terms"
+        title="Paper trading — no exchange fees"
+        className="flex shrink-0 flex-col gap-0.5 rounded-lg px-1 py-0.5 hover:bg-black/[0.04]"
+      >
+        <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
+          Fees
+        </span>
+        <span className="inline-flex items-center gap-1 text-[13px] font-medium tabular-nums text-[var(--text-primary)]">
+          {venue === "futures" ? FUTURES_PAPER_MAKER_FEE : PAPER_MAKER_FEE}
+          <span className="text-[var(--text-muted)]">/</span>
+          {venue === "futures" ? FUTURES_PAPER_TAKER_FEE : PAPER_TAKER_FEE}
+          <ChevronRightTiny />
+        </span>
+      </Link>
+    </>
+  );
+
+  if (compact) {
+    return (
+      <div className="mx-2 mb-1 flex h-12 flex-row items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1">
+          {pairButton}
+          {alertFav}
+        </div>
+        <div className="flex min-w-0 grow items-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex items-center gap-3 py-2">{metrics}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 shadow-[var(--shadow-card)]">
@@ -216,107 +424,7 @@ function PairHeader({
         <BellIcon className="h-4 w-4" />
       </button>
       <div className="mx-1 h-8 w-px bg-[var(--card-border)]" />
-      <div className="flex flex-col gap-0.5">
-        <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
-          {venue === "futures" ? "Mark price" : "Last price"}
-        </span>
-        <span
-          data-testid="live-price"
-          className={`text-xl font-semibold tabular-nums tracking-tight transition-colors duration-300 ${
-            flashDir === "up"
-              ? "text-emerald-500"
-              : flashDir === "down"
-                ? "text-red-500"
-                : "text-[var(--text-primary)]"
-          }`}
-        >
-          {(() => {
-            const markOrLast =
-              venue === "futures"
-                ? (currentPrice ?? indexPrice)
-                : currentPrice;
-            return markOrLast != null
-              ? `${formatPrice(markOrLast)} USD`
-              : "—";
-          })()}
-        </span>
-      </div>
-      <div className="flex flex-wrap items-center gap-4">
-        <Stat
-          label="Index price"
-          value={indexPrice != null ? `${formatPrice(indexPrice)} USD` : "—"}
-        />
-        <div className="flex flex-col gap-0.5">
-          <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
-            24H Change
-          </span>
-          <span
-            className={`text-[13px] font-medium tabular-nums ${
-              changePct == null
-                ? "text-[var(--text-primary)]"
-                : changePct >= 0
-                  ? "text-emerald-600"
-                  : "text-rose-500"
-            }`}
-          >
-            {venue === "futures" ? (
-              formatChangePct(changePct)
-            ) : (
-              <>
-                {formatChangeAbs(changeAbs)}{" "}
-                <span className="text-[var(--text-muted)]">
-                  ({formatChangePct(changePct)})
-                </span>
-              </>
-            )}
-          </span>
-        </div>
-        {venue === "futures" ? (
-          <>
-            <Stat label="Funding rate" value={FUTURES_PAPER_FUNDING} />
-            <Stat
-              label="Next funding rate"
-              value={`0.0000% @ ${nextFundingAtLabel()}`}
-            />
-            <Stat
-              label="24H Volume"
-              value={
-                snapshot?.volume_24h
-                  ? `${formatVolume(snapshot.volume_24h)} ${asset}`
-                  : "—"
-              }
-            />
-            <Stat label="Open interest" value="—" />
-          </>
-        ) : (
-          <>
-            <Stat label="24H Volume" value={formatVolume(snapshot?.volume_24h)} />
-            <Stat
-              label="24H High"
-              value={snapshot?.high_24h ? formatPrice(snapshot.high_24h) : "—"}
-            />
-            <Stat
-              label="24H Low"
-              value={snapshot?.low_24h ? formatPrice(snapshot.low_24h) : "—"}
-            />
-          </>
-        )}
-        <Link
-          to="/terms"
-          title="Paper trading — no exchange fees"
-          className="flex flex-col gap-0.5 rounded-lg px-1 py-0.5 hover:bg-black/[0.04]"
-        >
-          <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
-            Fees
-          </span>
-          <span className="inline-flex items-center gap-1 text-[13px] font-medium tabular-nums text-[var(--text-primary)]">
-            {venue === "futures" ? FUTURES_PAPER_MAKER_FEE : PAPER_MAKER_FEE}
-            <span className="text-[var(--text-muted)]">/</span>
-            {venue === "futures" ? FUTURES_PAPER_TAKER_FEE : PAPER_TAKER_FEE}
-            <ChevronRightTiny />
-          </span>
-        </Link>
-      </div>
+      <div className="flex flex-wrap items-center gap-4">{metrics}</div>
     </div>
   );
 }

@@ -10,7 +10,13 @@ import {
 
 type MenuPos = { top: number; left: number };
 
-export default function TradeMenu({ item }: { item: NavGroupItem }) {
+export default function TradeMenu({
+  item,
+  variant = "nav",
+}: {
+  item: NavGroupItem;
+  variant?: "nav" | "topbar";
+}) {
   const location = useLocation();
   const navigate = useNavigate();
   const menuId = useId();
@@ -88,11 +94,19 @@ export default function TradeMenu({ item }: { item: NavGroupItem }) {
         aria-expanded={open}
         aria-controls={menuId}
         onClick={onTradeClick}
-        className={`rail-icon inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-          active || open
-            ? "!bg-[var(--accent)] !text-white hover:!bg-[var(--accent-soft)]"
-            : "bg-transparent text-[var(--text-muted)] hover:bg-[var(--bg)] hover:text-[var(--text-primary)]"
-        }`}
+        className={
+          variant === "topbar"
+            ? `rail-icon inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-medium transition-colors ${
+                open
+                  ? "bg-black/[0.06] text-[var(--text-primary)]"
+                  : "bg-transparent text-[var(--text-primary)] hover:bg-black/[0.04]"
+              }`
+            : `rail-icon inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                active || open
+                  ? "!bg-[var(--accent)] !text-white hover:!bg-[var(--accent-soft)]"
+                  : "bg-transparent text-[var(--text-muted)] hover:bg-[var(--bg)] hover:text-[var(--text-primary)]"
+              }`
+        }
       >
         {item.label}
         <svg
