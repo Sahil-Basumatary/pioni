@@ -28,7 +28,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const workspace = isWorkspaceRoute(pathname);
   const compact = useCompactShell();
-  const compactTrade = compact && workspace;
 
   return (
     <MarketSocketProvider>
@@ -40,19 +39,19 @@ export default function AppShell({ children }: { children: ReactNode }) {
               style={{ background: "var(--bg)", color: "var(--text-primary)" }}
             >
               <div className="sticky top-0 z-50 shrink-0">
-                {compactTrade && <GetAppBanner />}
-                <TopBar compact={compactTrade} />
-                {!compactTrade && <ProductNav />}
+                {compact && <GetAppBanner />}
+                <TopBar compact={compact} />
+                {!compact && <ProductNav />}
               </div>
               <div className="flex min-h-0 flex-1">
                 <main
                   className={`mx-auto flex min-h-0 w-full max-w-[1750px] flex-1 flex-col ${
-                    compactTrade ? "px-0 py-0" : "px-2 py-2"
+                    compact && workspace ? "px-0 py-0" : "px-2 py-2"
                   } ${workspace ? "overflow-hidden" : "overflow-y-auto"}`}
                 >
                   {children}
                 </main>
-                {!compactTrade && <RightRail />}
+                {!compact && <RightRail />}
               </div>
               <StatusBar />
               <MarketSearchPalette />

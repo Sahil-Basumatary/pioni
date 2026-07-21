@@ -2,13 +2,10 @@ import { Link, NavLink } from "react-router-dom";
 import { SignedIn, SignedOut, UserButton, useClerk } from "@clerk/clerk-react";
 import BalanceChip from "./BalanceChip";
 import LayoutsMenu from "./LayoutsMenu";
-import TradeMenu from "./TradeMenu";
-import { PRODUCT_NAV } from "./navConfig";
+import ProductSwitcher from "./ProductSwitcher";
 import { useMarketSearch } from "../../features/markets/MarketSearchContext";
 import { useConvert } from "../../features/convert/ConvertContext";
 import { ConvertIcon, DepositIcon, SearchIcon } from "./shellIcons";
-
-const tradeNav = PRODUCT_NAV.find((item) => item.kind === "group" && item.id === "trade");
 
 export default function TopBar({ compact = false }: { compact?: boolean }) {
   const { openSearch } = useMarketSearch();
@@ -26,9 +23,7 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
             <NavLink to="/home" className="flex shrink-0 items-center gap-1.5 p-1">
               <img src="/logo.svg" alt="Pioni" className="h-5" />
             </NavLink>
-            {tradeNav && tradeNav.kind === "group" && (
-              <TradeMenu item={tradeNav} variant="topbar" />
-            )}
+            <ProductSwitcher />
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <div className="inline-flex items-center rounded-lg bg-black/[0.06] px-2.5 py-1.5 text-sm font-medium tabular-nums text-[var(--text-primary)]">
