@@ -11,6 +11,7 @@ import {
 } from "../../components/shell/shellIcons";
 import { useMarketSearch } from "./MarketSearchContext";
 import CategoryIndicesCard from "./CategoryIndicesCard";
+import CategoryHeatmapCard from "./CategoryHeatmapCard";
 import MarketsTable from "./MarketsTable";
 import {
   filterMarketRows,
@@ -168,7 +169,12 @@ export default function MarketsPage() {
             />
           </div>
         </div>
-        {showIndices ? <CategoryIndicesCard rows={rows} /> : null}
+        {showIndices ? (
+          <>
+            <CategoryIndicesCard rows={rows} />
+            <CategoryHeatmapCard rows={rows} />
+          </>
+        ) : null}
         <div className="flex flex-wrap items-center gap-2 px-3 pb-2 pt-2">
           <label className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-[var(--card-border)] bg-[var(--bg)] px-3 py-2 focus-within:border-[var(--accent)] sm:min-w-[12rem] sm:max-w-sm">
             <SearchGlyph />
