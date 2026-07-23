@@ -136,10 +136,10 @@ function BalancesTab() {
   return (
     <table className="w-full min-w-[480px] border-collapse text-left text-xs">
       <thead>
-        <tr className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
-          <th className="px-3 py-2 font-medium">Asset</th>
-          <th className="px-3 py-2 font-medium">Balance</th>
-          <th className="px-3 py-2 font-medium">Value</th>
+        <tr className="text-[11px] text-[var(--text-muted)]">
+          <th className="px-3 py-1.5 font-medium">Asset</th>
+          <th className="px-3 py-1.5 font-medium">Balance</th>
+          <th className="px-3 py-1.5 font-medium">Value</th>
         </tr>
       </thead>
       <tbody>
@@ -204,12 +204,12 @@ function PositionsTab() {
   return (
     <table className="w-full min-w-[560px] border-collapse text-left text-xs">
       <thead>
-        <tr className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
-          <th className="px-3 py-2 font-medium">Market</th>
-          <th className="px-3 py-2 font-medium">Size</th>
-          <th className="px-3 py-2 font-medium">Entry</th>
-          <th className="px-3 py-2 font-medium">Mark</th>
-          <th className="px-3 py-2 font-medium">Unrealized P&L</th>
+        <tr className="text-[11px] text-[var(--text-muted)]">
+          <th className="px-3 py-1.5 font-medium">Market</th>
+          <th className="px-3 py-1.5 font-medium">Size</th>
+          <th className="px-3 py-1.5 font-medium">Entry</th>
+          <th className="px-3 py-1.5 font-medium">Mark</th>
+          <th className="px-3 py-1.5 font-medium">Unrealized P&L</th>
         </tr>
       </thead>
       <tbody>
@@ -281,8 +281,15 @@ function OrdersTab({
   }
   if (isError) {
     return (
-      <div className="flex flex-col items-center gap-2 py-10">
-        <Empty copy="Couldn’t load orders." />
+      <div className="flex flex-col items-center gap-2 py-8">
+        {mode === "open" ? (
+          <EmptyTrading message="No open orders." />
+        ) : (
+          <Empty copy="No closed orders." />
+        )}
+        <p className="text-[11px] text-[var(--text-muted)]">
+          Live orders unavailable right now.
+        </p>
         <button
           type="button"
           onClick={() => refetch()}
@@ -303,15 +310,15 @@ function OrdersTab({
   return (
     <table className="w-full min-w-[640px] border-collapse text-left text-xs">
       <thead>
-        <tr className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
-          <th className="px-3 py-2 font-medium">Market</th>
-          <th className="px-3 py-2 font-medium">Side</th>
-          <th className="px-3 py-2 font-medium">Type</th>
-          <th className="px-3 py-2 font-medium">Price</th>
-          <th className="px-3 py-2 font-medium">Quantity</th>
-          <th className="px-3 py-2 font-medium">Filled</th>
-          <th className="px-3 py-2 font-medium">Status</th>
-          {mode === "open" && <th className="px-3 py-2 font-medium" />}
+        <tr className="text-[11px] text-[var(--text-muted)]">
+          <th className="px-3 py-1.5 font-medium">Market</th>
+          <th className="px-3 py-1.5 font-medium">Side</th>
+          <th className="px-3 py-1.5 font-medium">Type</th>
+          <th className="px-3 py-1.5 font-medium">Price</th>
+          <th className="px-3 py-1.5 font-medium">Quantity</th>
+          <th className="px-3 py-1.5 font-medium">Filled</th>
+          <th className="px-3 py-1.5 font-medium">Status</th>
+          {mode === "open" && <th className="px-3 py-1.5 font-medium" />}
         </tr>
       </thead>
       <tbody>
@@ -332,7 +339,7 @@ function OrderRow({ order, showCancel }: { order: Order; showCancel: boolean }) 
         {baseAsset(order.symbol)}/USD
       </td>
       <td className={`px-3 py-2 font-medium ${isBuy ? "text-emerald-600" : "text-rose-500"}`}>
-        {order.side}
+        {isBuy ? "Buy" : "Sell"}
       </td>
       <td className="px-3 py-2 text-[var(--text-muted)]">{order.order_type}</td>
       <td className="px-3 py-2 tabular-nums text-[var(--text-primary)]">
@@ -384,13 +391,13 @@ function TradesTab({ symbol }: { symbol: string }) {
   return (
     <table className="w-full min-w-[640px] border-collapse text-left text-xs">
       <thead>
-        <tr className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
-          <th className="px-3 py-2 font-medium">Market</th>
-          <th className="px-3 py-2 font-medium">Side</th>
-          <th className="px-3 py-2 font-medium">Price</th>
-          <th className="px-3 py-2 font-medium">Quantity</th>
-          <th className="px-3 py-2 font-medium">Fee</th>
-          <th className="px-3 py-2 font-medium">Time</th>
+        <tr className="text-[11px] text-[var(--text-muted)]">
+          <th className="px-3 py-1.5 font-medium">Market</th>
+          <th className="px-3 py-1.5 font-medium">Side</th>
+          <th className="px-3 py-1.5 font-medium">Price</th>
+          <th className="px-3 py-1.5 font-medium">Quantity</th>
+          <th className="px-3 py-1.5 font-medium">Fee</th>
+          <th className="px-3 py-1.5 font-medium">Time</th>
         </tr>
       </thead>
       <tbody>
@@ -419,7 +426,7 @@ function TradeRow({ trade }: { trade: PortfolioTrade }) {
         {baseAsset(trade.symbol)}/USD
       </td>
       <td className={`px-3 py-2 font-medium ${isBuy ? "text-emerald-600" : "text-rose-500"}`}>
-        {trade.side}
+        {isBuy ? "Buy" : "Sell"}
       </td>
       <td className="px-3 py-2 tabular-nums text-[var(--text-primary)]">
         {formatUsd(trade.price)}
@@ -435,7 +442,7 @@ function TradeRow({ trade }: { trade: PortfolioTrade }) {
 
 function EmptyTrading({ message }: { message: string }) {
   return (
-    <p className="px-4 py-10 text-center text-sm text-[var(--text-muted)]">
+    <p className="px-4 py-8 text-center text-xs text-[var(--text-muted)]">
       {message}{" "}
       <button
         type="button"
@@ -451,6 +458,6 @@ function EmptyTrading({ message }: { message: string }) {
 
 function Empty({ copy }: { copy: string }) {
   return (
-    <p className="px-4 py-10 text-center text-sm text-[var(--text-muted)]">{copy}</p>
+    <p className="px-4 py-8 text-center text-xs text-[var(--text-muted)]">{copy}</p>
   );
 }

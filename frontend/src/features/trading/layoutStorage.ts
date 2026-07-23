@@ -11,9 +11,9 @@ export type TradingLayoutSizes = {
 export type LayoutPresetId = "classic" | "advanced" | "terminal";
 
 export const DEFAULT_LAYOUT: TradingLayoutSizes = {
-  ticketWidth: 336,
-  bookWidth: 280,
-  bottomHeight: 180,
+  ticketWidth: 320,
+  bookWidth: 288,
+  bottomHeight: 200,
 };
 
 export const LAYOUT_PRESETS: Record<

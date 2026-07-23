@@ -255,7 +255,7 @@ function PairHeader({
           className={`whitespace-nowrap tabular-nums tracking-tight transition-colors duration-300 ${priceFlashClass} ${
             compact
               ? "text-[14px] font-medium"
-              : "text-xl font-semibold"
+              : "text-[15px] font-semibold"
           }`}
         >
           {lastValue}
@@ -324,7 +324,7 @@ function PairHeader({
             label="24H Volume"
             value={
               snapshot?.volume_24h
-                ? `${formatVolume(snapshot.volume_24h)}${asset}`
+                ? `${formatVolume(snapshot.volume_24h)} ${asset}`
                 : "—"
             }
           />
@@ -388,7 +388,7 @@ function PairHeader({
   return (
     <div
       data-tour="pair-header"
-      className="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 shadow-[var(--shadow-card)]"
+      className="flex flex-wrap items-center gap-3 border-b border-[var(--card-border)] bg-[var(--card-bg)] px-2 py-1.5"
     >
       <button
         type="button"
@@ -437,16 +437,6 @@ function PairHeader({
       </button>
       <button
         type="button"
-        aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
-        onClick={() => toggleFav(symbol)}
-        className={`rail-icon flex h-8 w-8 items-center justify-center rounded-lg ${
-          favorited ? "text-amber-500" : "text-[var(--text-muted)]"
-        }`}
-      >
-        <StarIcon className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
         aria-label="Create alert"
         title="Create alert"
         onClick={onCreateAlert}
@@ -454,8 +444,22 @@ function PairHeader({
       >
         <BellIcon className="h-4 w-4" />
       </button>
+      <button
+        type="button"
+        aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
+        onClick={() => toggleFav(symbol)}
+        className={`rail-icon flex h-8 w-8 items-center justify-center rounded-lg ${
+          favorited ? "text-amber-500" : "text-[var(--text-muted)]"
+        }`}
+      >
+        {favorited ? (
+          <StarFilledIcon className="h-4 w-4" />
+        ) : (
+          <StarIcon className="h-4 w-4" />
+        )}
+      </button>
       <div className="mx-1 h-8 w-px bg-[var(--card-border)]" />
-      <div className="flex flex-wrap items-center gap-4">{metrics}</div>
+      <div className="flex flex-wrap items-center gap-5">{metrics}</div>
     </div>
   );
 }

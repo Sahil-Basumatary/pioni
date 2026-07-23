@@ -24,6 +24,7 @@ function formatTime(ts: number): string {
     hour: "numeric",
     minute: "2-digit",
     second: "2-digit",
+    hour12: true,
   });
 }
 
@@ -32,20 +33,23 @@ export default function MarketTradesPanel({ symbol }: { symbol: string }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--card-bg)]">
-      <div className="grid shrink-0 grid-cols-3 gap-2 border-b border-[var(--card-border)] px-3 py-1.5 text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
+      <div className="grid shrink-0 grid-cols-3 gap-2 px-2 py-1 text-[10px] font-medium text-[var(--text-muted)]">
         <span>Price</span>
         <span className="text-right">Quantity</span>
         <span className="text-right">Time</span>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {trades.length === 0 ? (
-          <p className="px-3 py-10 text-center text-sm text-[var(--text-muted)]">
-            Waiting for live trades…
+          <p className="px-3 py-8 text-center text-xs text-[var(--text-muted)]">
+            Waiting for trades…
           </p>
         ) : (
-          <ul className="divide-y divide-[var(--card-border)]/60">
+          <ul>
             {trades.map((trade, index) => (
-              <TradeRow key={`${trade.timestamp}-${trade.price}-${trade.quantity}-${index}`} trade={trade} />
+              <TradeRow
+                key={`${trade.timestamp}-${trade.price}-${trade.quantity}-${index}`}
+                trade={trade}
+              />
             ))}
           </ul>
         )}
@@ -57,7 +61,7 @@ export default function MarketTradesPanel({ symbol }: { symbol: string }) {
 function TradeRow({ trade }: { trade: Trade }) {
   const isBuy = !trade.buyer_maker;
   return (
-    <li className="grid grid-cols-3 gap-2 px-3 py-1 text-[11px] tabular-nums">
+    <li className="grid h-[22px] grid-cols-3 items-center gap-2 px-2 text-[11px] tabular-nums">
       <span className={isBuy ? "text-emerald-600" : "text-rose-500"}>
         {formatPx(trade.price)}
       </span>

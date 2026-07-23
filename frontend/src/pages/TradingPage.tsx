@@ -62,17 +62,17 @@ const BOTTOM_TABS: ContentTab[] = [
 
 const TICKET_ADD = [
   { id: "depth", label: "Depth chart" },
-  { id: "trades", label: "Trades" },
+  { id: "trades", label: "Trades", soon: false },
 ];
 const BOOK_OVERFLOW = [
   { id: "depth", label: "Depth chart" },
-  { id: "trades", label: "Trades" },
+  { id: "trades", label: "Trades", soon: false },
 ];
 const CHART_OVERFLOW = [{ id: "depth", label: "Depth chart" }];
 const BOTTOM_OVERFLOW = [{ id: "fills", label: "Fills" }];
 const BOTTOM_ADD = [
-  { id: "balances", label: "Balances" },
-  { id: "positions", label: "Positions" },
+  { id: "balances", label: "Balances", soon: false },
+  { id: "positions", label: "Positions", soon: false },
 ];
 
 const MOBILE_TABS: MobileTradeTab[] = [
@@ -185,6 +185,43 @@ export default function TradingPage({
     setStubTitle((prev) => ({ ...prev, [pane]: null }));
   }
 
+  function onBookMenuSelect(id: string) {
+    if (id === "trades") {
+      clearStub("book");
+      setBookTab("markettrades");
+      return;
+    }
+    if (id === "orderbook") {
+      clearStub("book");
+      setBookTab("orderbook");
+      return;
+    }
+    showStub("book", id);
+  }
+
+  function onTicketMenuSelect(id: string) {
+    if (id === "trades") {
+      clearStub("ticket");
+      // Surface market trades in the book pane — matches Pro widget picker.
+      setBookTab("markettrades");
+      return;
+    }
+    showStub("ticket", id);
+  }
+
+  function onBottomMenuSelect(id: string) {
+    if (id === "balances" || id === "positions") {
+      clearStub("bottom");
+      setBottomTab(id);
+      if (!bottomTabs.some((tab) => tab.id === id)) {
+        const label = id === "balances" ? "Balances" : "Positions";
+        setBottomTabs((tabs) => [...tabs, { id, label }]);
+      }
+      return;
+    }
+    showStub("bottom", id);
+  }
+
   function onBottomTabClose(id: string) {
     if (bottomTabs.length <= 1) return;
     const next = bottomTabs.filter((t) => t.id !== id);
@@ -275,7 +312,7 @@ export default function TradingPage({
     maximized === pane ? "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden" : base;
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col gap-2 overflow-hidden">
+    <div className="flex h-full min-h-0 flex-1 flex-col gap-1 overflow-hidden">
       {maximized == null && (
         <PairHeader
           symbol={symbol}
@@ -305,7 +342,7 @@ export default function TradingPage({
                 setTicketTab(id);
               }}
               addItems={TICKET_ADD}
-              onMenuSelect={(id) => showStub("ticket", id)}
+              onMenuSelect={onTicketMenuSelect}
               maximized={maximized === "ticket"}
               onMaximizeToggle={() => toggleMaximize("ticket")}
             >
@@ -353,6 +390,7 @@ export default function TradingPage({
             >
               {show("book") && (
                 <div
+                  data-tour-slot="chart-card"
                   className={paneClass(
                     "book",
                     "min-h-[280px] w-full shrink-0 overflow-hidden max-md:!w-full md:min-h-0",
@@ -369,7 +407,7 @@ export default function TradingPage({
                     }}
                     overflowItems={BOOK_OVERFLOW}
                     addItems={TICKET_ADD}
-                    onMenuSelect={(id) => showStub("book", id)}
+                    onMenuSelect={onBookMenuSelect}
                     maximized={maximized === "book"}
                     onMaximizeToggle={() => toggleMaximize("book")}
                   >
@@ -422,7 +460,7 @@ export default function TradingPage({
                         description="This widget will unlock in a later milestone."
                       />
                     ) : (
-                      <div className="flex h-full min-h-0 flex-1 flex-col p-2">
+                      <div className="flex h-full min-h-0 flex-1 flex-col">
                         <CandlestickChart
                           ref={chartRef}
                           symbol={symbol}
@@ -464,7 +502,7 @@ export default function TradingPage({
                 onTabClose={onBottomTabClose}
                 overflowItems={BOTTOM_OVERFLOW}
                 addItems={BOTTOM_ADD}
-                onMenuSelect={(id) => showStub("bottom", id)}
+                onMenuSelect={onBottomMenuSelect}
                 headerEnd={isSignedIn ? <ResetAccountChip /> : undefined}
                 maximized={maximized === "bottom"}
                 onMaximizeToggle={() => toggleMaximize("bottom")}

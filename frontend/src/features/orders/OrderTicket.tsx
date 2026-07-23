@@ -351,7 +351,7 @@ export default function OrderTicket({
   return (
     <div
       data-tour="order-ticket"
-      className="flex h-full min-h-0 min-w-0 flex-col gap-1.5 overflow-x-hidden overflow-y-auto bg-[var(--card-bg)] p-2.5"
+      className="flex h-full min-h-0 min-w-0 flex-col gap-2 overflow-x-hidden overflow-y-auto bg-[var(--card-bg)] p-2"
     >
       {isMargin && !statusDeclared && (
         <div className="flex flex-col gap-3 rounded-2xl bg-[rgba(104,107,130,0.04)] p-3">
@@ -401,13 +401,13 @@ export default function OrderTicket({
         </div>
       )}
       <div className="flex items-center gap-2">
-        <div className="grid flex-1 grid-cols-2 rounded-xl bg-[rgba(104,107,130,0.08)] p-0.5">
+      <div className="grid flex-1 grid-cols-2 rounded-lg bg-[rgba(104,107,130,0.08)] p-0.5">
           <button
             type="button"
             role="tab"
             aria-selected={isBuy}
             onClick={() => setSide("BUY")}
-            className={`rail-icon rounded-[10px] px-2 py-1.5 text-xs font-medium transition-colors ${
+            className={`rail-icon rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
               isBuy
                 ? "!bg-[rgba(20,158,97,0.24)] !text-[#08844f] hover:!bg-[rgba(20,158,97,0.28)]"
                 : "!bg-transparent !text-[rgb(104,107,130)]"
@@ -420,7 +420,7 @@ export default function OrderTicket({
             role="tab"
             aria-selected={!isBuy}
             onClick={() => setSide("SELL")}
-            className={`rail-icon rounded-[10px] px-2 py-1.5 text-xs font-medium transition-colors ${
+            className={`rail-icon rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
               !isBuy
                 ? "!bg-[rgba(245,57,94,0.24)] !text-[#d11d45] hover:!bg-[rgba(245,57,94,0.28)]"
                 : "!bg-transparent !text-[rgb(104,107,130)]"
@@ -791,13 +791,13 @@ export default function OrderTicket({
         )}
       </div>
       {tpSl && !tpSlDisabled && (
-        <p className="rounded-lg bg-black/[0.04] px-3 py-2 text-xs text-[var(--text-muted)]">
-          Take-profit / stop-loss attaches on the next milestone — checkbox is wired for layout parity.
+        <p className="px-0.5 text-[11px] leading-4 text-[var(--text-muted)]">
+          TP/SL attaches on the next fill path — control is for layout parity.
         </p>
       )}
       {postOnly && orderType === "LIMIT" && (
-        <p className="text-[11px] text-[var(--text-muted)]">
-          Post-only is display-only for now; the matching engine will enforce it later.
+        <p className="px-0.5 text-[11px] leading-4 text-[var(--text-muted)]">
+          Post-only is display-only for now.
         </p>
       )}
       {needsFunds ? (

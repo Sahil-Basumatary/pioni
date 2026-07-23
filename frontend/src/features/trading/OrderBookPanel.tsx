@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGetOrderBookQuery } from "../orders/ordersApi";
 import { MinusSmallIcon, PlusSmallIcon } from "../../components/shell/shellIcons";
 import {
@@ -8,8 +8,6 @@ import {
   withCumulativeDepth,
   type DepthLevel,
 } from "./orderBookMath";
-
-const ROW_PX = 22;
 
 function formatPx(raw: string | number): string {
   const n = Number(raw);
@@ -27,33 +25,14 @@ function formatQty(raw: string | number): string {
   return n.toFixed(8);
 }
 
-function useMaxRows(): [RefObject<HTMLDivElement | null>, number] {
-  const ref = useRef<HTMLDivElement>(null);
-  const [maxRows, setMaxRows] = useState(12);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const update = () => {
-      const h = el.clientHeight;
-      setMaxRows(Math.max(1, Math.floor(h / ROW_PX)));
-    };
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-  return [ref, maxRows];
-}
-
 export default function OrderBookPanel({ symbol }: { symbol: string }) {
   const [groupIdx, setGroupIdx] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [asksRef, maxAskRows] = useMaxRows();
-  const [bidsRef, maxBidRows] = useMaxRows();
+  const asksRef = useRef<HTMLDivElement>(null);
   const step = GROUPINGS[groupIdx] ?? 0.1;
   const { data, isLoading, isError, refetch } = useGetOrderBookQuery(
-    { symbol, depth: 40 },
+    { symbol, depth: 50 },
     { pollingInterval: 3000 },
   );
 
@@ -84,8 +63,12 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
     return withCumulativeDepth(grouped, true);
   }, [data?.bids, step]);
 
-  const visibleAsks = asks.slice(-maxAskRows);
-  const visibleBids = bids.slice(0, maxBidRows);
+  // Keep best asks pinned to the spread (bottom of the ask pane), like Pro.
+  useEffect(() => {
+    const el = asksRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [asks]);
 
   const spread = data?.spread != null ? Number(data.spread) : null;
   const mid =
@@ -155,7 +138,7 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
           <PlusSmallIcon className="h-4 w-4" />
         </button>
       </div>
-      <div className="grid shrink-0 grid-cols-3 gap-1 px-2 py-1.5 text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
+      <div className="grid shrink-0 grid-cols-3 gap-1 px-2 py-1 text-[10px] font-medium text-[var(--text-muted)]">
         <span>Price</span>
         <span className="text-right">Quantity</span>
         <span className="text-right">Total</span>
@@ -175,17 +158,16 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
             </button>
           </div>
         ) : !asks.length && !bids.length ? (
-          <p className="px-3 py-8 text-center text-xs leading-relaxed text-[var(--text-muted)]">
-            Waiting for market depth. Synthetic maker liquidity seeds once the orders
-            service is online.
+          <p className="px-3 py-8 text-center text-xs text-[var(--text-muted)]">
+            Waiting for market depth…
           </p>
         ) : (
           <>
             <div
               ref={asksRef}
-              className="flex min-h-0 flex-1 flex-col justify-end overflow-hidden"
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
             >
-              {visibleAsks.map((level) => (
+              {asks.map((level) => (
                 <BookRow key={`a-${level.price}`} level={level} side="ask" />
               ))}
             </div>
@@ -198,11 +180,8 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
                   : "Spread: —"}
               </span>
             </div>
-            <div
-              ref={bidsRef}
-              className="flex min-h-0 flex-1 flex-col justify-start overflow-hidden"
-            >
-              {visibleBids.map((level) => (
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+              {bids.map((level) => (
                 <BookRow key={`b-${level.price}`} level={level} side="bid" />
               ))}
             </div>

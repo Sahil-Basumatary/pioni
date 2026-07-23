@@ -220,15 +220,15 @@ const CandlestickChart = forwardRef<
 
   return (
     <div data-tour="chart" className="flex h-full min-h-0 flex-col">
-      <div className="flex shrink-0 items-center gap-1 px-1 pb-2">
+      <div className="flex shrink-0 items-center gap-0.5 border-b border-[var(--card-border)] px-1 py-1">
         {INTERVALS.map((iv) => (
           <button
             key={iv}
             type="button"
             onClick={() => handleIntervalChange(iv)}
-            className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+            className={`rounded px-2 py-1 text-[11px] font-medium transition-colors ${
               iv === interval
-                ? "bg-[var(--accent)] text-white"
+                ? "bg-black/[0.08] text-[var(--text-primary)]"
                 : "bg-transparent text-[var(--text-muted)] hover:bg-black/[0.04] hover:text-[var(--text-primary)]"
             }`}
           >
@@ -237,7 +237,7 @@ const CandlestickChart = forwardRef<
         ))}
       </div>
       {toolNote && (
-        <p className="mb-1 shrink-0 rounded-md bg-black/[0.04] px-2 py-1 text-[11px] text-[var(--text-muted)]">
+        <p className="shrink-0 px-2 py-1 text-[11px] text-[var(--text-muted)]">
           {toolNote}
         </p>
       )}
@@ -245,7 +245,7 @@ const CandlestickChart = forwardRef<
         <div
           role="toolbar"
           aria-label="Chart tools"
-          className="flex w-8 shrink-0 flex-col items-center gap-0.5 border-e border-[var(--card-border)] py-1 pe-1"
+          className="flex w-7 shrink-0 flex-col items-center gap-0.5 border-e border-[var(--card-border)] py-1"
         >
           {TOOLS.map((item) => (
             <button
@@ -255,7 +255,7 @@ const CandlestickChart = forwardRef<
               aria-label={item.label}
               aria-pressed={tool === item.id}
               onClick={() => selectTool(item.id, item.ready, item.label)}
-              className={`rail-icon flex h-7 w-7 items-center justify-center rounded-md ${
+              className={`rail-icon flex h-6 w-6 items-center justify-center rounded ${
                 tool === item.id
                   ? "bg-black/[0.08] text-[var(--text-primary)]"
                   : "text-[var(--text-muted)] hover:bg-black/[0.04] hover:text-[var(--text-primary)]"
@@ -268,7 +268,7 @@ const CandlestickChart = forwardRef<
         <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
           <div ref={containerRef} className="absolute inset-0 overflow-hidden" />
           {loading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--card-bg)]/60 backdrop-blur-sm">
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--card-bg)]/70">
               <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
                 <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
@@ -279,7 +279,7 @@ const CandlestickChart = forwardRef<
             </div>
           )}
           {error && !loading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--card-bg)]/80 backdrop-blur-sm">
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--card-bg)]/80">
               <div className="space-y-3 text-center">
                 <p className="text-sm text-[var(--text-muted)]">{error}</p>
                 <button
