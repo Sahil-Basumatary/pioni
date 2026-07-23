@@ -10,6 +10,7 @@ import ConvertDialog from "../../features/convert/ConvertDialog";
 import ToastHost from "../../features/toasts/ToastHost";
 import OrderStatusSocketProvider from "../../features/toasts/OrderStatusSocketProvider";
 import { TourProvider } from "../../features/onboarding/TourProvider";
+import WelcomeCard from "../../features/onboarding/WelcomeCard";
 import { useCompactShell } from "../../hooks/useCompactShell";
 import GetAppBanner from "./GetAppBanner";
 import ProductNav from "./ProductNav";
@@ -58,6 +59,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 <StatusBar />
                 <MarketSearchPalette />
                 <ConvertDialog />
+                <WelcomeCard />
                 <ToastHost />
               </div>
             </TourProvider>

@@ -1,0 +1,176 @@
+.pioni-welcome-enter {
+  animation: pioniWelcomeIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pioni-welcome-overlay {
+  animation: pioniWelcomeFade 0.28s ease both;
+}
+
+@keyframes pioniWelcomeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pioniWelcomeFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.pioni-welcome-float {
+  animation: pioniWelcomeFloat 5.5s ease-in-out infinite;
+  transform-origin: 240px 140px;
+}
+
+.pioni-welcome-chip {
+  animation: pioniWelcomeChip 4.8s ease-in-out infinite;
+}
+
+.pioni-welcome-orbit {
+  animation: pioniWelcomeOrbit 6s ease-in-out infinite;
+}
+
+.pioni-welcome-pulse {
+  animation: pioniWelcomePulse 2.4s ease-in-out infinite;
+  transform-origin: 92px 78px;
+}
+
+.pioni-welcome-spark {
+  animation: pioniWelcomeSpark 2.8s ease-in-out infinite;
+  transform-origin: 388px 88px;
+}
+
+.pioni-welcome-bar {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: pioniWelcomeBar 2.8s ease-in-out infinite;
+}
+
+.pioni-welcome-bar:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.pioni-welcome-bar:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.pioni-welcome-bar:nth-child(4) {
+  animation-delay: 0.24s;
+}
+.pioni-welcome-bar:nth-child(5) {
+  animation-delay: 0.32s;
+}
+.pioni-welcome-bar:nth-child(6) {
+  animation-delay: 0.4s;
+}
+.pioni-welcome-bar:nth-child(7) {
+  animation-delay: 0.48s;
+}
+.pioni-welcome-bar:nth-child(8) {
+  animation-delay: 0.56s;
+}
+
+.pioni-welcome-line {
+  stroke-dasharray: 280;
+  stroke-dashoffset: 280;
+  animation: pioniWelcomeDraw 2.2s ease forwards 0.2s;
+}
+
+.pioni-welcome-tip {
+  animation: pioniWelcomePulse 2.4s ease-in-out infinite 0.6s;
+}
+
+@keyframes pioniWelcomeFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes pioniWelcomeChip {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(0, -8px);
+  }
+}
+
+@keyframes pioniWelcomeOrbit {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(0, 5px);
+  }
+}
+
+@keyframes pioniWelcomePulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.72;
+    transform: scale(0.92);
+  }
+}
+
+@keyframes pioniWelcomeSpark {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: rotate(18deg) scale(1.08);
+    opacity: 1;
+  }
+}
+
+@keyframes pioniWelcomeBar {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.86);
+  }
+}
+
+@keyframes pioniWelcomeDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pioni-welcome-enter,
+  .pioni-welcome-overlay,
+  .pioni-welcome-float,
+  .pioni-welcome-chip,
+  .pioni-welcome-orbit,
+  .pioni-welcome-pulse,
+  .pioni-welcome-spark,
+  .pioni-welcome-bar,
+  .pioni-welcome-line,
+  .pioni-welcome-tip {
+    animation: none !important;
+  }
+  .pioni-welcome-line {
+    stroke-dashoffset: 0;
+  }
+}

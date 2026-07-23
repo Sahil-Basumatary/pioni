@@ -7,7 +7,8 @@ export const DEFAULT_TOUR_STEPS: TourStep[] = [
     title: "Live chart & symbols",
     description:
       "Watch prices update in real time. Switch pairs anytime from the header.",
-    side: "bottom",
+    side: "left",
+    align: "start",
   },
   {
     id: "balance",
@@ -16,13 +17,14 @@ export const DEFAULT_TOUR_STEPS: TourStep[] = [
     description:
       "This is practice money — trade freely without risking anything real.",
     side: "bottom",
+    align: "end",
   },
   {
     id: "order-ticket",
     element: '[data-tour="order-ticket"]',
     title: "Place a paper order",
     description:
-      "Buy or sell here. It’s practice money — you can’t lose anything real.",
+      "Buy or sell here. It's practice money — you can't lose anything real.",
     side: "left",
   },
   {

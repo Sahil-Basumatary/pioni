@@ -13,6 +13,7 @@ import {
 } from "react";
 import { driver, type Driver, type DriveStep } from "driver.js";
 import { DEFAULT_TOUR_STEPS } from "./tourSteps";
+import { mountTourStepDemo, unmountTourStepDemo } from "./mountTourDemo";
 import type {
   StartTourOptions,
   TourEndReason,
@@ -41,6 +42,67 @@ function toDriveSteps(steps: TourStep[]): DriveStep[] {
       popoverClass: "pioni-tour-popover",
     },
   }));
+}
+
+function positionChartPopover(wrapper: HTMLElement, target: Element) {
+  const pad = 12;
+  const gap = 24;
+  const slot = document.querySelector('[data-tour-slot="chart-card"]');
+  const slotRect = slot?.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  const popoverRect = wrapper.getBoundingClientRect();
+  const maxTop = Math.max(pad, window.innerHeight - popoverRect.height - pad);
+  const chartLeft = targetRect.left;
+  // Keep the card fully left of the chart so it never covers what it explains.
+  const preferredLeft = slotRect && slotRect.width > 40
+    ? slotRect.left + 8
+    : chartLeft - popoverRect.width - gap;
+  const maxLeftForChart = chartLeft - popoverRect.width - gap;
+  const maxLeft = Math.max(pad, Math.min(maxLeftForChart, window.innerWidth - popoverRect.width - pad));
+  const top = Math.min(
+    Math.max(
+      (slotRect ?? targetRect).top +
+        ((slotRect ?? targetRect).height - popoverRect.height) / 2,
+      pad,
+    ),
+    maxTop,
+  );
+  const left = Math.min(Math.max(preferredLeft, pad), maxLeft);
+  wrapper.style.top = `${top}px`;
+  wrapper.style.left = `${left}px`;
+  wrapper.style.right = "auto";
+  wrapper.style.bottom = "auto";
+  [...wrapper.classList]
+    .filter((name) => name.startsWith("driver-popover-side-"))
+    .forEach((name) => wrapper.classList.remove(name));
+  wrapper.classList.add("driver-popover-side-left");
+  const arrow = wrapper.querySelector(
+    ".driver-popover-arrow",
+  ) as HTMLElement | null;
+  if (arrow) {
+    [...arrow.classList]
+      .filter((name) => name.startsWith("driver-popover-arrow-side-"))
+      .forEach((name) => arrow.classList.remove(name));
+    arrow.classList.add("driver-popover-arrow-side-left");
+    arrow.style.top = `${Math.round(popoverRect.height / 2)}px`;
+    arrow.style.left = "";
+    arrow.style.right = "";
+    arrow.style.transform = "translateY(-50%)";
+  }
+}
+
+function settleTourPopover(
+  activeDriver: Driver,
+  wrapper: HTMLElement,
+  step: TourStep | undefined,
+) {
+  activeDriver.refresh();
+  requestAnimationFrame(() => {
+    const target = activeDriver.getActiveElement();
+    if (step?.id === "chart" && target) {
+      positionChartPopover(wrapper, target);
+    }
+  });
 }
 
 function renderProgressDots(
@@ -77,6 +139,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const destroyDriver = useCallback(() => {
     const instance = driverRef.current;
     driverRef.current = null;
+    unmountTourStepDemo();
     if (instance?.isActive()) instance.destroy();
     else if (instance) instance.destroy();
   }, []);
@@ -137,18 +200,42 @@ export function TourProvider({ children }: { children: ReactNode }) {
         popoverClass: "pioni-tour-popover",
         showButtons: ["previous", "next", "close"],
         steps: toDriveSteps(nextSteps),
-        onHighlighted: (_el, _step, { index }) => {
+        onHighlighted: (_el, _step, { index, driver: activeDriver }) => {
           const idx = index ?? 0;
           activeIndexRef.current = idx;
           setActiveIndex(idx);
           setIsActive(true);
+          const popover = activeDriver.getState("popover");
+          if (popover?.wrapper) {
+            settleTourPopover(
+              activeDriver,
+              popover.wrapper,
+              stepsRef.current[idx],
+            );
+          }
         },
-        onPopoverRender: (popover, { index, config }) => {
+        onPopoverRender: (popover, { index, driver: activeDriver }) => {
+          const stepList = stepsRef.current;
           const current = (index ?? 0) + 1;
-          const stepTotal = config.steps?.length ?? total;
-          renderProgressDots(popover.progress, current, stepTotal);
-          if (!popover.footer.querySelector(".pioni-tour-skip")) {
-            const skip = document.createElement("button");
+          renderProgressDots(popover.progress, current, stepList.length);
+          const step = stepList[index ?? 0];
+          popover.wrapper.dataset.tourStep = step?.id ?? "";
+          if (step) {
+            let host = popover.wrapper.querySelector(
+              ".pioni-tour-demo",
+            ) as HTMLElement | null;
+            if (!host) {
+              host = document.createElement("div");
+              host.className = "pioni-tour-demo";
+              popover.wrapper.insertBefore(host, popover.title);
+            }
+            mountTourStepDemo(host, step.id);
+          }
+          let skip = popover.footer.querySelector(
+            ".pioni-tour-skip",
+          ) as HTMLButtonElement | null;
+          if (!skip) {
+            skip = document.createElement("button");
             skip.type = "button";
             skip.className = "pioni-tour-skip";
             skip.textContent = "Skip tour";
@@ -157,8 +244,11 @@ export function TourProvider({ children }: { children: ReactNode }) {
               event.stopPropagation();
               finish("skip");
             });
-            popover.footer.prepend(skip);
+            popover.footer.insertBefore(skip, popover.footer.firstChild);
           }
+          requestAnimationFrame(() => {
+            settleTourPopover(activeDriver, popover.wrapper, step);
+          });
         },
         onPrevClick: (_el, _step, { driver: d }) => {
           d.movePrevious();
