@@ -12,6 +12,7 @@ import {
 import { useMarketSearch } from "./MarketSearchContext";
 import MarketsTable from "./MarketsTable";
 import {
+  asFuturesRows,
   filterMarketRows,
   sortMarketRows,
   useMarketRows,
@@ -41,22 +42,27 @@ export default function MarketSearchPalette() {
   const sort: MarketSort =
     chip === "gainers" ? "gainers" : chip === "losers" ? "losers" : "volume";
 
+  const source = useMemo(
+    () => (tab === "futures" ? asFuturesRows(rows) : rows),
+    [tab, rows],
+  );
+
   const visible = useMemo(() => {
     const filtered = filterMarketRows(
-      rows,
+      source,
       query,
       tab === "favorites",
       favorites,
     );
     return sortMarketRows(filtered, sort);
-  }, [rows, query, tab, favorites, sort]);
+  }, [source, query, tab, favorites, sort]);
 
   if (!open) return null;
 
   function select(symbol: string) {
     dispatch(symbolSelected(symbol));
     closeSearch();
-    navigate("/trading");
+    navigate(tab === "futures" ? "/trade/futures" : "/trading");
   }
 
   return (
@@ -128,24 +134,19 @@ export default function MarketSearchPalette() {
           />
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto pb-3">
-          {tab === "futures" ? (
-            <p className="px-2 py-10 text-center text-sm text-[var(--text-muted)]">
-              Simulated futures markets come in a later milestone.
-            </p>
-          ) : (
-            <MarketsTable
-              rows={visible}
-              variant="palette"
-              favorites={favorites}
-              onToggleFavorite={toggleFav}
-              onSelect={select}
-              emptyMessage={
-                tab === "favorites"
-                  ? "Star markets to pin them here."
-                  : "No markets match your search."
-              }
-            />
-          )}
+          <MarketsTable
+            rows={visible}
+            variant="palette"
+            favorites={favorites}
+            onToggleFavorite={toggleFav}
+            onSelect={select}
+            showFunding={tab === "futures"}
+            emptyMessage={
+              tab === "favorites"
+                ? "Star markets to pin them here."
+                : "No markets match your search."
+            }
+          />
         </div>
       </div>
     </div>

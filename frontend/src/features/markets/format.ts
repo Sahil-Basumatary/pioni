@@ -25,6 +25,13 @@ export function formatVolume(n: number | null): string {
   return n.toFixed(0);
 }
 
+export function formatFundingRate(n: number | null): string {
+  if (n == null || !Number.isFinite(n)) return "—";
+  const abs = Math.abs(n).toFixed(2);
+  const sign = n > 0 ? "" : n < 0 ? "-" : "";
+  return `${sign}${abs}%/hr`;
+}
+
 export function sparklinePoints(
   changePct: number | null,
   seed: string,

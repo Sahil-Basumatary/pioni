@@ -5,6 +5,7 @@ import { StarIcon } from "../../components/shell/shellIcons";
 import type { MarketRow } from "./useMarketRows";
 import {
   formatChangePct,
+  formatFundingRate,
   formatMarketPrice,
   formatVolume,
   sparklinePath,
@@ -20,6 +21,7 @@ type MarketsTableProps = {
   onToggleFavorite: (symbol: string) => void;
   onSelect?: (symbol: string) => void;
   emptyMessage?: string;
+  showFunding?: boolean;
 };
 
 export default function MarketsTable({
@@ -29,6 +31,7 @@ export default function MarketsTable({
   onToggleFavorite,
   onSelect,
   emptyMessage = "No markets match.",
+  showFunding = false,
 }: MarketsTableProps) {
   if (!rows.length) {
     return (
@@ -61,6 +64,9 @@ export default function MarketsTable({
             {showTrend ? (
               <th className="hidden px-2 py-2 text-right lg:table-cell">24H Trend</th>
             ) : null}
+            {showFunding ? (
+              <th className="hidden px-2 py-2 text-right lg:table-cell">Funding / Basis</th>
+            ) : null}
             {showVolume ? (
               <th className="hidden px-2 py-2 text-right sm:table-cell">24H Volume</th>
             ) : null}
@@ -76,6 +82,7 @@ export default function MarketsTable({
               showRange={showRange}
               showTrend={showTrend}
               showVolume={showVolume}
+              showFunding={showFunding}
               favorited={favorites.includes(row.symbol)}
               onToggleFavorite={onToggleFavorite}
               onSelect={onSelect}
@@ -93,6 +100,7 @@ function MarketTableRow({
   showRange,
   showTrend,
   showVolume,
+  showFunding,
   favorited,
   onToggleFavorite,
   onSelect,
@@ -102,6 +110,7 @@ function MarketTableRow({
   showRange: boolean;
   showTrend: boolean;
   showVolume: boolean;
+  showFunding: boolean;
   favorited: boolean;
   onToggleFavorite: (symbol: string) => void;
   onSelect?: (symbol: string) => void;
@@ -112,14 +121,29 @@ function MarketTableRow({
       : row.changePct >= 0
         ? "text-emerald-600"
         : "text-rose-500";
+  const quote = row.quote ?? "USD";
+  const title = row.titleSuffix ? `${row.label} ${row.titleSuffix}` : row.label;
 
   const marketCell = (
     <div className="flex items-center gap-3">
       <AssetImg symbol={row.symbol} label={row.label} />
       <div className="min-w-0">
-        <div className="text-sm font-medium text-[var(--text-primary)]">
-          {row.label}
-          <span className="text-[var(--text-muted)]">/USD</span>
+        <div className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-[var(--text-primary)]">
+          <span>
+            {row.titleSuffix ? (
+              title
+            ) : (
+              <>
+                {row.label}
+                <span className="text-[var(--text-muted)]">/{quote}</span>
+              </>
+            )}
+          </span>
+          {row.leverage != null ? (
+            <span className="rounded bg-black/[0.08] px-1 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--text-primary)]">
+              {row.leverage}x
+            </span>
+          ) : null}
         </div>
         <div className="truncate text-xs text-[var(--text-muted)]">{row.name}</div>
       </div>
@@ -150,7 +174,7 @@ function MarketTableRow({
       ) : null}
       <td className="px-2 py-2.5 text-right text-sm font-medium tabular-nums text-[var(--text-primary)]">
         {formatMarketPrice(row.price)}
-        <span className="ml-1 text-xs font-normal text-[var(--text-muted)]">USD</span>
+        <span className="ml-1 text-xs font-normal text-[var(--text-muted)]">{quote}</span>
       </td>
       {showRange ? (
         <>
@@ -168,6 +192,11 @@ function MarketTableRow({
       {showTrend ? (
         <td className="hidden px-2 py-2.5 text-right lg:table-cell">
           <TrendSparkline symbol={row.symbol} changePct={row.changePct} />
+        </td>
+      ) : null}
+      {showFunding ? (
+        <td className="hidden px-2 py-2.5 text-right text-xs tabular-nums text-[var(--text-muted)] lg:table-cell">
+          {formatFundingRate(row.fundingRate ?? null)}
         </td>
       ) : null}
       {showVolume ? (

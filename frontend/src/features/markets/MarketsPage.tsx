@@ -14,22 +14,29 @@ import CategoryIndicesCard from "./CategoryIndicesCard";
 import CategoryHeatmapCard from "./CategoryHeatmapCard";
 import MarketsTable from "./MarketsTable";
 import {
+  asFuturesRows,
+  asMarginRows,
   filterMarketRows,
   sortMarketRows,
+  useForexRows,
   useMarketRows,
+  type MarketRow,
   type MarketSort,
 } from "./useMarketRows";
 import { formatVolume } from "./format";
 
 type MainTab = "favorites" | "crypto" | "futures" | "forex";
-type ProductTab = "spot" | "margin" | "futures" | "otc";
-type Chip = "hot" | "new" | "gainers" | "losers" | null;
+type CryptoProduct = "spot" | "margin" | "futures";
+type FuturesProduct = "futures" | "inverse";
+type Chip = "hot" | "fixed" | "new" | "gainers" | "losers" | "categories" | null;
 
 export default function MarketsPage() {
   const { favorites, toggleFav } = useMarketSearch();
   const { rows, isLoading } = useMarketRows();
+  const forexRows = useForexRows();
   const [mainTab, setMainTab] = useState<MainTab>("crypto");
-  const [product, setProduct] = useState<ProductTab>("spot");
+  const [cryptoProduct, setCryptoProduct] = useState<CryptoProduct>("spot");
+  const [futuresProduct, setFuturesProduct] = useState<FuturesProduct>("futures");
   const [chip, setChip] = useState<Chip>(null);
   const [query, setQuery] = useState("");
   const [showCategoryCharts, setShowCategoryCharts] = useState(true);
@@ -39,37 +46,76 @@ export default function MarketsPage() {
   const sort: MarketSort =
     chip === "gainers" ? "gainers" : chip === "losers" ? "losers" : "volume";
 
+  const sourceRows: MarketRow[] = useMemo(() => {
+    if (mainTab === "forex") return forexRows;
+    if (mainTab === "futures") {
+      return futuresProduct === "inverse" ? [] : asFuturesRows(rows);
+    }
+    if (mainTab === "crypto" && cryptoProduct === "margin") return asMarginRows(rows);
+    if (mainTab === "crypto" && cryptoProduct === "futures") return asFuturesRows(rows);
+    return rows;
+  }, [mainTab, cryptoProduct, futuresProduct, rows, forexRows]);
+
   const visible = useMemo(() => {
     const filtered = filterMarketRows(
-      rows,
+      sourceRows,
       query,
       mainTab === "favorites",
       favorites,
     );
     return sortMarketRows(filtered, sort);
-  }, [rows, query, mainTab, favorites, sort]);
+  }, [sourceRows, query, mainTab, favorites, sort]);
 
-  const totalVol = rows.reduce((sum, r) => sum + (r.volume ?? 0), 0);
+  const totalVol = useMemo(
+    () => sourceRows.reduce((sum, r) => sum + (r.volume ?? 0), 0),
+    [sourceRows],
+  );
+
   const showIndices =
-    showCategoryCharts && mainTab === "crypto" && product === "spot";
+    showCategoryCharts &&
+    mainTab === "crypto" &&
+    (cryptoProduct === "spot" || cryptoProduct === "margin");
+
+  const showFunding =
+    (mainTab === "crypto" && cryptoProduct === "futures") ||
+    (mainTab === "futures" && futuresProduct === "futures");
+
+  const isFuturesFilters =
+    (mainTab === "crypto" && cryptoProduct === "futures") || mainTab === "futures";
 
   function select(symbol: string) {
+    if (mainTab === "forex") return;
     dispatch(symbolSelected(symbol));
+    if (mainTab === "crypto" && cryptoProduct === "margin") {
+      navigate("/trade/margin");
+      return;
+    }
+    if (
+      (mainTab === "crypto" && cryptoProduct === "futures") ||
+      mainTab === "futures"
+    ) {
+      navigate("/trade/futures");
+      return;
+    }
     navigate("/trading");
   }
 
-  const spotTable =
-    mainTab === "futures" ||
-    mainTab === "forex" ||
-    product !== "spot" ? (
+  function setMain(next: MainTab) {
+    setMainTab(next);
+    setChip(null);
+    setQuery("");
+    if (next === "crypto") setCryptoProduct("spot");
+    if (next === "futures") setFuturesProduct("futures");
+  }
+
+  const tableBody =
+    mainTab === "futures" && futuresProduct === "inverse" ? (
       <p className="px-3 py-12 text-center text-sm text-[var(--text-muted)]">
-        {product !== "spot"
-          ? product === "otc"
-            ? "OTC markets live on the OTC desk."
-            : `Simulated ${product} markets come after Spot parity.`
-          : `${mainTab === "forex" ? "Forex" : "Futures"} markets are planned next.`}
+        Inverse futures come in a later milestone.
       </p>
-    ) : isLoading && !rows.some((r) => r.price != null) ? (
+    ) : isLoading &&
+      mainTab !== "forex" &&
+      !rows.some((r) => r.price != null) ? (
       <p className="px-3 py-12 text-center text-sm text-[var(--text-muted)]">
         Loading markets…
       </p>
@@ -80,6 +126,7 @@ export default function MarketsPage() {
         favorites={favorites}
         onToggleFavorite={toggleFav}
         onSelect={select}
+        showFunding={showFunding}
         emptyMessage={
           mainTab === "favorites"
             ? "Star markets to pin them here."
@@ -95,23 +142,23 @@ export default function MarketsPage() {
           <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <MainTabBtn
               active={mainTab === "favorites"}
-              onClick={() => setMainTab("favorites")}
+              onClick={() => setMain("favorites")}
               icon={<StarIcon className="h-3.5 w-3.5" />}
               label="Favorites"
             />
             <MainTabBtn
               active={mainTab === "crypto"}
-              onClick={() => setMainTab("crypto")}
+              onClick={() => setMain("crypto")}
               label="Crypto"
             />
             <MainTabBtn
               active={mainTab === "futures"}
-              onClick={() => setMainTab("futures")}
+              onClick={() => setMain("futures")}
               label="Futures"
             />
             <MainTabBtn
               active={mainTab === "forex"}
-              onClick={() => setMainTab("forex")}
+              onClick={() => setMain("forex")}
               label="Forex"
             />
           </div>
@@ -145,30 +192,43 @@ export default function MarketsPage() {
             Categories charts
           </label>
         </div>
-        <div className="px-3 py-2">
-          <div className="flex gap-1 overflow-x-auto rounded-full bg-black/[0.06] p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <ProductChip
-              active={product === "spot"}
-              onClick={() => setProduct("spot")}
-              label="Spot"
-            />
-            <ProductChip
-              active={product === "margin"}
-              onClick={() => setProduct("margin")}
-              label="Margin"
-            />
-            <ProductChip
-              active={product === "futures"}
-              onClick={() => setProduct("futures")}
-              label="Futures"
-            />
-            <ProductChip
-              active={product === "otc"}
-              onClick={() => setProduct("otc")}
-              label="OTC"
-            />
+        {mainTab === "crypto" ? (
+          <div className="px-3 py-2">
+            <div className="flex gap-1 overflow-x-auto rounded-full bg-black/[0.06] p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <ProductChip
+                active={cryptoProduct === "spot"}
+                onClick={() => setCryptoProduct("spot")}
+                label="Spot"
+              />
+              <ProductChip
+                active={cryptoProduct === "margin"}
+                onClick={() => setCryptoProduct("margin")}
+                label="Margin"
+              />
+              <ProductChip
+                active={cryptoProduct === "futures"}
+                onClick={() => setCryptoProduct("futures")}
+                label="Futures"
+              />
+            </div>
           </div>
-        </div>
+        ) : null}
+        {mainTab === "futures" ? (
+          <div className="px-3 py-2">
+            <div className="flex gap-1 overflow-x-auto rounded-full bg-black/[0.06] p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <ProductChip
+                active={futuresProduct === "futures"}
+                onClick={() => setFuturesProduct("futures")}
+                label="Futures"
+              />
+              <ProductChip
+                active={futuresProduct === "inverse"}
+                onClick={() => setFuturesProduct("inverse")}
+                label="Inverse Futures"
+              />
+            </div>
+          </div>
+        ) : null}
         {showIndices ? (
           <>
             <CategoryIndicesCard rows={rows} />
@@ -187,12 +247,20 @@ export default function MarketsPage() {
             />
           </label>
           <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <FilterChip
-              label="Hot"
-              icon={<FireIcon className="h-3.5 w-3.5" />}
-              active={chip === "hot"}
-              onClick={() => setChip(chip === "hot" ? null : "hot")}
-            />
+            {isFuturesFilters ? (
+              <FilterChip
+                label="Fixed"
+                active={chip === "fixed"}
+                onClick={() => setChip(chip === "fixed" ? null : "fixed")}
+              />
+            ) : (
+              <FilterChip
+                label="Hot"
+                icon={<FireIcon className="h-3.5 w-3.5" />}
+                active={chip === "hot"}
+                onClick={() => setChip(chip === "hot" ? null : "hot")}
+              />
+            )}
             <FilterChip
               label="New"
               icon={<RocketIcon className="h-3.5 w-3.5" />}
@@ -211,9 +279,16 @@ export default function MarketsPage() {
               active={chip === "losers"}
               onClick={() => setChip(chip === "losers" ? null : "losers")}
             />
+            {isFuturesFilters ? (
+              <FilterChip
+                label="Categories"
+                active={chip === "categories"}
+                onClick={() => setChip(chip === "categories" ? null : "categories")}
+              />
+            ) : null}
           </div>
         </div>
-        <div className="px-2 pb-3">{spotTable}</div>
+        <div className="px-2 pb-3">{tableBody}</div>
       </section>
     </div>
   );
