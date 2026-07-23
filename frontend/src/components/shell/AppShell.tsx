@@ -11,6 +11,8 @@ import ToastHost from "../../features/toasts/ToastHost";
 import OrderStatusSocketProvider from "../../features/toasts/OrderStatusSocketProvider";
 import { TourProvider } from "../../features/onboarding/TourProvider";
 import WelcomeCard from "../../features/onboarding/WelcomeCard";
+import { ChecklistProvider } from "../../features/onboarding/ChecklistContext";
+import GettingStartedChecklist from "../../features/onboarding/GettingStartedChecklist";
 import { useCompactShell } from "../../hooks/useCompactShell";
 import GetAppBanner from "./GetAppBanner";
 import ProductNav from "./ProductNav";
@@ -37,6 +39,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         <ConvertProvider>
           <OrderStatusSocketProvider>
             <TourProvider>
+              <ChecklistProvider>
               <div
                 className="flex h-dvh w-full flex-col overflow-hidden"
                 style={{ background: "var(--bg)", color: "var(--text-primary)" }}
@@ -60,8 +63,10 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 <MarketSearchPalette />
                 <ConvertDialog />
                 <WelcomeCard />
+                <GettingStartedChecklist />
                 <ToastHost />
               </div>
+              </ChecklistProvider>
             </TourProvider>
           </OrderStatusSocketProvider>
         </ConvertProvider>

@@ -6,12 +6,15 @@ import { useConvert } from "../../features/convert/ConvertContext";
 import {
   BellIcon,
   BookIcon,
+  ChecklistIcon,
   CloseIcon,
   DotsIcon,
   QuestionMarkCircleIcon,
   StarIcon,
   UserIcon,
 } from "./shellIcons";
+import { useChecklistUi } from "../../features/onboarding/ChecklistContext";
+import { useGetMyOnboardingQuery } from "../../features/onboarding/onboardingApi";
 
 type RailTab = "notifications" | "favorites" | "apps" | null;
 
@@ -21,8 +24,18 @@ export default function RightRail() {
   const clerk = useClerk();
   const navigate = useNavigate();
   const { openConvert } = useConvert();
+  const { open: checklistOpen, toggle: toggleChecklist, setOpen: setChecklistOpen } =
+    useChecklistUi();
+  const { data: onboarding, isLoading: onboardingLoading } =
+    useGetMyOnboardingQuery(undefined, {
+      skip: !isSignedIn,
+    });
+  const showChecklist = Boolean(
+    isSignedIn && onboarding && !onboarding.checklist_completed_at && !onboardingLoading,
+  );
 
   function toggle(next: RailTab) {
+    setChecklistOpen(false);
     setTab((current) => (current === next ? null : next));
   }
 
@@ -99,6 +112,18 @@ export default function RightRail() {
         >
           <StarIcon className="h-6 w-6" />
         </RailIconButton>
+        {showChecklist ? (
+          <RailIconButton
+            label="Getting started"
+            active={checklistOpen}
+            onClick={() => {
+              setTab(null);
+              toggleChecklist();
+            }}
+          >
+            <ChecklistIcon className="h-6 w-6" />
+          </RailIconButton>
+        ) : null}
         <div className="mt-auto flex flex-col items-center gap-2">
           <RailIconButton
             label="Help"

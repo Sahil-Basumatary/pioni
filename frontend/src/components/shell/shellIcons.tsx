@@ -697,6 +697,21 @@ export function CheckCircleIcon({ className }: IconProps) {
   );
 }
 
+export function ChecklistIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path
+        d="M8.09961 4.09961H15.9004V5.2998H8.09961V4.09961ZM5.09961 6.09961H18.9004V19.9004H5.09961V6.09961ZM6.2998 7.2998V18.7002H17.7002V7.2998H6.2998Z"
+        className="fill-current"
+      />
+      <path
+        d="M8.07617 10.0762L9.5 11.5L12.9238 8.07617L13.7715 8.92383L9.5 13.1953L7.22852 10.9238L8.07617 10.0762ZM8.07617 15.0762L9.5 16.5L12.9238 13.0762L13.7715 13.9238L9.5 18.1953L7.22852 15.9238L8.07617 15.0762Z"
+        className="fill-current"
+      />
+    </svg>
+  );
+}
+
 export function AlertCircleIcon({ className }: IconProps) {
   return (
     <svg {...base} className={className}>
