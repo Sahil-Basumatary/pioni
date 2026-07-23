@@ -108,6 +108,7 @@ export default function ProductSwitcher() {
       <button
         ref={btnRef}
         type="button"
+        data-tour="sentiment-nav"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}

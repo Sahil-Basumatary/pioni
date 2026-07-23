@@ -219,7 +219,7 @@ const CandlestickChart = forwardRef<
   }, [symbol, interval]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div data-tour="chart" className="flex h-full min-h-0 flex-col">
       <div className="flex shrink-0 items-center gap-1 px-1 pb-2">
         {INTERVALS.map((iv) => (
           <button

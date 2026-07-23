@@ -16,6 +16,7 @@ export default function ProductNav() {
             <NavLink
               key={item.id}
               to={item.to}
+              data-tour={item.id === "sentiment" ? "sentiment-nav" : undefined}
               className={({ isActive }) =>
                 `shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   isActive

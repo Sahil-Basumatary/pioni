@@ -47,7 +47,10 @@ export default function TradingBottomPanel({
   tab: BottomTab;
 }) {
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--card-bg)]">
+    <div
+      data-tour="positions"
+      className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--card-bg)]"
+    >
       <div className="min-h-0 flex-1 overflow-auto">
         {tab === "balances" ? (
           <BalancesTab />

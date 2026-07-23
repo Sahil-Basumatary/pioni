@@ -368,7 +368,10 @@ function PairHeader({
 
   if (compact) {
     return (
-      <div className="mx-2 mb-1 flex h-12 flex-row items-center gap-2">
+      <div
+        data-tour="pair-header"
+        className="mx-2 mb-1 flex h-12 flex-row items-center gap-2"
+      >
         <div className="flex shrink-0 items-center gap-1">
           {pairButton}
           {alertFav}
@@ -383,7 +386,10 @@ function PairHeader({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 shadow-[var(--shadow-card)]">
+    <div
+      data-tour="pair-header"
+      className="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 shadow-[var(--shadow-card)]"
+    >
       <button
         type="button"
         onClick={openSearch}

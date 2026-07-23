@@ -349,7 +349,10 @@ export default function OrderTicket({
   }
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-col gap-1.5 overflow-x-hidden overflow-y-auto bg-[var(--card-bg)] p-2.5">
+    <div
+      data-tour="order-ticket"
+      className="flex h-full min-h-0 min-w-0 flex-col gap-1.5 overflow-x-hidden overflow-y-auto bg-[var(--card-bg)] p-2.5"
+    >
       {isMargin && !statusDeclared && (
         <div className="flex flex-col gap-3 rounded-2xl bg-[rgba(104,107,130,0.04)] p-3">
           <p className="text-sm font-medium leading-5 text-[var(--text-primary)]">

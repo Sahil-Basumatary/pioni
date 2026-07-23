@@ -26,7 +26,10 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
             <ProductSwitcher />
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <div className="inline-flex items-center rounded-lg bg-black/[0.06] px-2.5 py-1.5 text-sm font-medium tabular-nums text-[var(--text-primary)]">
+            <div
+              data-tour="balance"
+              className="inline-flex items-center rounded-lg bg-black/[0.06] px-2.5 py-1.5 text-sm font-medium tabular-nums text-[var(--text-primary)]"
+            >
               <BalanceChip />
               <SignedOut>
                 <span aria-hidden="true">-</span>
@@ -84,7 +87,9 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
             <ConvertIcon className="h-4 w-4" />
             Convert
           </button>
-          <BalanceChip />
+          <span data-tour="balance">
+            <BalanceChip />
+          </span>
           <SignedIn>
             <UserButton afterSignOutUrl="/home" />
           </SignedIn>
