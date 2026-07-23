@@ -83,7 +83,7 @@ export default function MarketsTable({
               showTrend={showTrend}
               showVolume={showVolume}
               showFunding={showFunding}
-              favorited={favorites.includes(row.symbol)}
+              favorited={favorites.includes(row.tradeSymbol ?? row.symbol)}
               onToggleFavorite={onToggleFavorite}
               onSelect={onSelect}
             />
@@ -125,7 +125,11 @@ function MarketTableRow({
 
   const marketCell = (
     <div className="flex items-center gap-3">
-      <AssetImg symbol={row.symbol} label={row.label} />
+      <AssetImg
+        symbol={row.tradeSymbol ?? row.symbol}
+        label={row.label}
+        settleOverlay={row.settleOverlay}
+      />
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-[var(--text-primary)]">
           <span>
@@ -217,7 +221,7 @@ function MarketTableRow({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            onToggleFavorite(row.symbol);
+            onToggleFavorite(row.tradeSymbol ?? row.symbol);
           }}
         >
           <StarIcon className="h-4 w-4" />
@@ -245,16 +249,21 @@ function TrendSparkline({
   );
 }
 
-function AssetImg({ symbol, label }: { symbol: string; label: string }) {
+function AssetImg({
+  symbol,
+  label,
+  settleOverlay,
+}: {
+  symbol: string;
+  label: string;
+  settleOverlay?: "usd" | "base";
+}) {
   const [failed, setFailed] = useState(false);
-  if (failed) {
-    return (
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--bg)] text-[10px] font-semibold text-[var(--text-muted)]">
-        {label.slice(0, 1)}
-      </span>
-    );
-  }
-  return (
+  const icon = failed ? (
+    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--bg)] text-[10px] font-semibold text-[var(--text-muted)]">
+      {label.slice(0, 1)}
+    </span>
+  ) : (
     <img
       src={assetIconUrl(symbol)}
       alt=""
@@ -263,5 +272,29 @@ function AssetImg({ symbol, label }: { symbol: string; label: string }) {
       className="h-6 w-6 shrink-0 rounded-full object-scale-down"
       onError={() => setFailed(true)}
     />
+  );
+  if (!settleOverlay) return icon;
+  return (
+    <span
+      className="relative inline-flex h-6 w-6 shrink-0 overflow-visible"
+      aria-label={settleOverlay === "usd" ? "USD settled" : `${label} settled`}
+    >
+      {icon}
+      {settleOverlay === "usd" ? (
+        <span
+          aria-hidden="true"
+          className="absolute -bottom-1 -end-1 flex h-3 w-3 items-center justify-center rounded-full bg-[var(--card-bg)] text-[9px] font-bold leading-none text-[var(--text-muted)] ring-1 ring-[rgba(104,107,130,0.24)]"
+        >
+          $
+        </span>
+      ) : (
+        <img
+          src={assetIconUrl(symbol)}
+          alt=""
+          aria-label={`${label} settle`}
+          className="absolute -bottom-1 -end-1 h-3 w-3 rounded-full object-scale-down ring-1 ring-[var(--card-bg)]"
+        />
+      )}
+    </span>
   );
 }

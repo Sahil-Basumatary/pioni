@@ -7,6 +7,9 @@ import {
   type MarketMeta,
 } from "./catalog";
 
+export type SettleOverlay = "usd" | "base";
+export type ContractKind = "perp" | "fixed";
+
 export type MarketRow = MarketMeta & {
   price: number | null;
   changePct: number | null;
@@ -17,7 +20,16 @@ export type MarketRow = MarketMeta & {
   leverage?: number | null;
   fundingRate?: number | null;
   titleSuffix?: string;
+  settleOverlay?: SettleOverlay;
+  contractKind?: ContractKind;
+  tradeSymbol?: string;
 };
+
+const FIXED_EXPIRIES = [
+  { code: "250731", label: "31Jul26" },
+  { code: "250925", label: "25Sep26" },
+  { code: "251225", label: "25Dec26" },
+] as const;
 
 function toRow(meta: MarketMeta, prices: PriceMap | undefined): MarketRow {
   const tick = prices?.[meta.symbol];
@@ -36,6 +48,10 @@ function paperFunding(symbol: string): number {
   let h = 0;
   for (let i = 0; i < symbol.length; i += 1) h = (h * 31 + symbol.charCodeAt(i)) >>> 0;
   return ((h % 41) - 20) / 100;
+}
+
+function inverseLeverage(label: string): number {
+  return label === "BTC" || label === "ETH" ? 50 : 25;
 }
 
 function forexPaperRow(meta: ForexMeta): MarketRow {
@@ -89,17 +105,60 @@ export function asFuturesRows(rows: MarketRow[]): MarketRow[] {
     titleSuffix: "Perp",
     leverage: row.futuresLeverage ?? 50,
     fundingRate: paperFunding(row.symbol),
+    settleOverlay: "usd" as const,
+    contractKind: "perp" as const,
+    tradeSymbol: row.symbol,
   }));
 }
 
-/** Coin-margined inverse perps — Pro Markets → Futures → Inverse Futures. */
 export function asInverseFuturesRows(rows: MarketRow[]): MarketRow[] {
   return rows.map((row) => ({
     ...row,
     titleSuffix: "Inv Perp",
-    leverage: row.label === "BTC" || row.label === "ETH" ? 50 : 25,
+    leverage: inverseLeverage(row.label),
     fundingRate: paperFunding(`inv-${row.symbol}`),
+    settleOverlay: "base" as const,
+    contractKind: "perp" as const,
+    tradeSymbol: row.symbol,
   }));
+}
+
+export function asFixedFuturesRows(rows: MarketRow[]): MarketRow[] {
+  return rows.flatMap((row) =>
+    FIXED_EXPIRIES.map((exp) => ({
+      ...row,
+      symbol: `${row.symbol}:FF:${exp.code}`,
+      titleSuffix: `Future ${exp.label}`,
+      leverage: Math.min(row.futuresLeverage ?? 50, 50),
+      fundingRate: 0,
+      settleOverlay: "usd" as const,
+      contractKind: "fixed" as const,
+      tradeSymbol: row.symbol,
+      volume: row.volume != null ? row.volume * 0.08 : null,
+      changePct: null,
+      high: null,
+      low: null,
+    })),
+  );
+}
+
+export function asFixedInverseFuturesRows(rows: MarketRow[]): MarketRow[] {
+  return rows.flatMap((row) =>
+    FIXED_EXPIRIES.map((exp) => ({
+      ...row,
+      symbol: `${row.symbol}:FI:${exp.code}`,
+      titleSuffix: `Future Inv ${exp.label}`,
+      leverage: inverseLeverage(row.label),
+      fundingRate: 0,
+      settleOverlay: "base" as const,
+      contractKind: "fixed" as const,
+      tradeSymbol: row.symbol,
+      volume: row.volume != null ? row.volume * 0.05 : null,
+      changePct: null,
+      high: null,
+      low: null,
+    })),
+  );
 }
 
 export type MarketSort =
@@ -136,7 +195,10 @@ export function filterMarketRows(
 ): MarketRow[] {
   const q = query.trim().toLowerCase();
   return rows.filter((row) => {
-    if (favoritesOnly && !favorites.includes(row.symbol)) return false;
+    const favKey = row.tradeSymbol ?? row.symbol;
+    if (favoritesOnly && !favorites.includes(favKey) && !favorites.includes(row.symbol)) {
+      return false;
+    }
     if (!q) return true;
     const pair = `${row.label}/${row.quote ?? "USD"}`.toLowerCase();
     return (

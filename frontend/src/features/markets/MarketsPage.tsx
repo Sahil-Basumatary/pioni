@@ -14,6 +14,8 @@ import CategoryIndicesCard from "./CategoryIndicesCard";
 import CategoryHeatmapCard from "./CategoryHeatmapCard";
 import MarketsTable from "./MarketsTable";
 import {
+  asFixedFuturesRows,
+  asFixedInverseFuturesRows,
   asFuturesRows,
   asInverseFuturesRows,
   asMarginRows,
@@ -50,14 +52,23 @@ export default function MarketsPage() {
   const sourceRows: MarketRow[] = useMemo(() => {
     if (mainTab === "forex") return forexRows;
     if (mainTab === "futures") {
-      return futuresProduct === "inverse"
-        ? asInverseFuturesRows(rows)
-        : asFuturesRows(rows);
+      if (futuresProduct === "inverse") {
+        const perps = asInverseFuturesRows(rows);
+        const fixed = asFixedInverseFuturesRows(rows);
+        return chip === "fixed" ? fixed : [...perps, ...fixed];
+      }
+      const perps = asFuturesRows(rows);
+      const fixed = asFixedFuturesRows(rows);
+      return chip === "fixed" ? fixed : perps;
     }
     if (mainTab === "crypto" && cryptoProduct === "margin") return asMarginRows(rows);
-    if (mainTab === "crypto" && cryptoProduct === "futures") return asFuturesRows(rows);
+    if (mainTab === "crypto" && cryptoProduct === "futures") {
+      const perps = asFuturesRows(rows);
+      const fixed = asFixedFuturesRows(rows);
+      return chip === "fixed" ? fixed : perps;
+    }
     return rows;
-  }, [mainTab, cryptoProduct, futuresProduct, rows, forexRows]);
+  }, [mainTab, cryptoProduct, futuresProduct, rows, forexRows, chip]);
 
   const visible = useMemo(() => {
     const filtered = filterMarketRows(
@@ -88,7 +99,9 @@ export default function MarketsPage() {
 
   function select(symbol: string) {
     if (mainTab === "forex") return;
-    dispatch(symbolSelected(symbol));
+    const row = sourceRows.find((r) => r.symbol === symbol);
+    const tradeSymbol = row?.tradeSymbol ?? symbol;
+    dispatch(symbolSelected(tradeSymbol));
     if (mainTab === "crypto" && cryptoProduct === "margin") {
       navigate("/trade/margin");
       return;

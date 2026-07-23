@@ -10,6 +10,16 @@ export const SYMBOLS = [
   { symbol: "XRPUSDT", label: "XRP" },
   { symbol: "ADAUSDT", label: "ADA" },
   { symbol: "DOGEUSDT", label: "DOGE" },
+  { symbol: "LTCUSDT", label: "LTC" },
+  { symbol: "LINKUSDT", label: "LINK" },
+  { symbol: "AVAXUSDT", label: "AVAX" },
+  { symbol: "DOTUSDT", label: "DOT" },
+  { symbol: "APTUSDT", label: "APT" },
+  { symbol: "ATOMUSDT", label: "ATOM" },
+  { symbol: "BCHUSDT", label: "BCH" },
+  { symbol: "POLUSDT", label: "POL" },
+  { symbol: "XLMUSDT", label: "XLM" },
+  { symbol: "ARBUSDT", label: "ARB" },
 ] as const;
 
 export type TradingSymbol = (typeof SYMBOLS)[number]["symbol"];

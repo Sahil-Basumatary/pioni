@@ -1,13 +1,15 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
+load_dotenv(Path(__file__).resolve().parents[3] / ".env")
 
 BINANCE_WS_BASE = "wss://stream.binance.com:9443"
 
 
 def redis_url() -> str | None:
-    return os.getenv("REDIS_URL")
+    return os.getenv("REDIS_URL", "redis://localhost:6379")
 
 
 def redis_max_connections() -> int:
@@ -15,7 +17,12 @@ def redis_max_connections() -> int:
 
 
 def trading_symbols() -> list[str]:
-    raw = os.getenv("TRADING_SYMBOLS", "BTCUSDT,ETHUSDT,SOLUSDT")
+    raw = os.getenv(
+        "TRADING_SYMBOLS",
+        "BTCUSDT,ETHUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,"
+        "LTCUSDT,LINKUSDT,AVAXUSDT,DOTUSDT,APTUSDT,ATOMUSDT,"
+        "BCHUSDT,POLUSDT,XLMUSDT,ARBUSDT",
+    )
     return [s.strip().upper() for s in raw.split(",") if s.strip()]
 
 
