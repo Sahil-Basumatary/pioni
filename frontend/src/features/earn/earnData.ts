@@ -23,12 +23,12 @@ export const EARN_SUMMARY = {
   estAnnualUsd: 0.005,
   lifetimeUsd: 0.01,
   last30dUsd: 0,
-  nextPayoutLabel: "in 3 hours",
+  nextPayoutLabel: "in 2 days",
 } as const;
 
 export const FOR_YOU = {
   title: "Earn with Staking",
-  apy: 0.04,
+  apy: 0.05,
   assetName: "Bitcoin",
   availableLabel: "0.00091 BTC available",
 } as const;
@@ -38,47 +38,26 @@ export const READY_ASSETS: EarnAsset[] = [
     id: "btc",
     symbol: "BTC",
     name: "Bitcoin",
-    apy: 0.04,
+    apy: 0.05,
     available: 0.00091,
-    availableUsd: 57.88,
+    availableUsd: 60.49,
     icon: "/icons/assets/btc.webp",
   },
-  {
-    id: "eth",
-    symbol: "ETH",
-    name: "Ethereum",
-    apy: 2.15,
-    available: 0.12,
-    availableUsd: 312.4,
-    icon: "/icons/assets/eth.webp",
-  },
-  {
-    id: "sol",
-    symbol: "SOL",
-    name: "Solana",
-    apy: 5.8,
-    available: 4.25,
-    availableUsd: 612.75,
-    icon: "/icons/assets/sol.webp",
-  },
-  {
-    id: "ada",
-    symbol: "ADA",
-    name: "Cardano",
-    apy: 2.9,
-    available: 420,
-    availableUsd: 184.8,
-    icon: "/icons/assets/ada.webp",
-  },
-  {
-    id: "xrp",
-    symbol: "XRP",
-    name: "XRP",
-    apy: 1.2,
-    available: 250,
-    availableUsd: 137.5,
-    icon: "/icons/assets/xrp.webp",
-  },
+];
+
+export type BuyEarnAsset = {
+  id: string;
+  name: string;
+  apy: number;
+  priceUsd: number;
+};
+
+export const BUY_ASSETS: BuyEarnAsset[] = [
+  { id: "dym", name: "Dymension", apy: 24.3, priceUsd: 0.01 },
+  { id: "atom", name: "Cosmos", apy: 19.94, priceUsd: 1.46 },
+  { id: "scrt", name: "Secret Network", apy: 18.89, priceUsd: 0.04 },
+  { id: "flow", name: "Flow", apy: 18.57, priceUsd: 0.02 },
+  { id: "ksm", name: "Kusama", apy: 17.12, priceUsd: 3.24 },
 ];
 
 export const EARN_PAYOUTS: EarnPayout[] = [
