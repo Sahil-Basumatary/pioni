@@ -134,7 +134,7 @@ export default function TotalValueCard({
             </span>
           </div>
         </div>
-        <div className="flex flex-row gap-4 px-4 py-2">
+        <div className="flex w-full flex-row justify-between gap-2 px-2 py-2 sm:justify-start sm:gap-4 sm:px-4">
           <ActionLink to="/deposit" label="Deposit" icon={<DepositIcon className="h-4 w-4" />} />
           <ActionLink to="/deposit" label="Withdraw" icon={<WithdrawIcon className="h-4 w-4" />} />
           <ActionButton

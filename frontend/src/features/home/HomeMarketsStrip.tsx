@@ -46,8 +46,11 @@ export default function HomeMarketsStrip() {
 
   return (
     <section className="overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-[var(--shadow-card)]">
-      <div className="flex flex-grow justify-between gap-3 px-4 pt-4">
-        <div className="flex flex-wrap gap-1" role="tablist">
+      <div className="flex flex-grow justify-between gap-3 px-3 pt-3 sm:px-4 sm:pt-4">
+        <div
+          className="flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="tablist"
+        >
           {TABS.map(({ id, Icon }) => (
             <button
               key={id}
@@ -55,7 +58,7 @@ export default function HomeMarketsStrip() {
               role="tab"
               aria-selected={tab === id}
               onClick={() => setTab(id)}
-              className={`rail-icon inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium ${
+              className={`rail-icon inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium ${
                 tab === id
                   ? "bg-black/[0.08] text-[var(--text-primary)]"
                   : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"

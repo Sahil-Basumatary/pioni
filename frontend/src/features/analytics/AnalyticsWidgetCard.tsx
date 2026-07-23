@@ -25,7 +25,10 @@ export default function AnalyticsWidgetCard({
   const overflow = ANALYTICS_OVERFLOW_INTERVALS[0];
 
   return (
-    <section className="flex h-[400px] flex-col rounded-2xl bg-[var(--card-bg)] p-4 shadow-[var(--shadow-card)]">
+    <section
+      className="flex h-[400px] flex-col rounded-2xl bg-[var(--card-bg)] p-4"
+      style={{ boxShadow: "0px 2px 6px rgba(0,0,0,0.07)" }}
+    >
       <div className="mb-3 flex items-center justify-between gap-2">
         <h2 className="text-sm font-medium text-[rgb(16,17,20)]">{title}</h2>
         {showInterval && (
@@ -44,9 +47,9 @@ export default function AnalyticsWidgetCard({
                   role="tab"
                   aria-selected={active}
                   onClick={() => onIntervalChange(item)}
-                  className={`rail-icon box-border h-7 min-w-[36px] rounded-[10px] px-2 text-xs font-medium ${
+                  className={`box-border h-7 min-w-[36px] rounded-[10px] px-2 text-xs font-medium ${
                     active
-                      ? "bg-white text-[var(--text-primary)] shadow-[var(--shadow-soft)]"
+                      ? "!bg-white text-[var(--text-primary)] shadow-[0_1px_3px_rgba(0,0,0,0.12)]"
                       : "bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                   }`}
                 >

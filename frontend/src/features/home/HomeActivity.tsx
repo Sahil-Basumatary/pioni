@@ -20,10 +20,12 @@ export default function HomeActivity() {
     { skip: !isSignedIn },
   );
 
-  const items: PaperActivityItem[] =
+  const liveItems: PaperActivityItem[] | null =
     isSignedIn && data && data.length > 0
       ? data.map((trade) => ({ kind: "fill" as const, id: trade.id, trade }))
-      : PAPER_HOME_ACTIVITY;
+      : null;
+  const items = liveItems ?? PAPER_HOME_ACTIVITY;
+  const showLiveError = Boolean(isSignedIn && isError && !isLoading);
 
   return (
     <section className="flex h-full min-h-[280px] flex-col overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-4 shadow-[var(--shadow-card)]">
@@ -40,20 +42,23 @@ export default function HomeActivity() {
         </button>
       </div>
       <div className="flex min-h-0 flex-1 flex-col">
+        {showLiveError && (
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-lg bg-black/[0.04] px-2.5 py-2">
+            <p className="text-xs text-[var(--text-muted)]">
+              Live activity unavailable — showing paper preview.
+            </p>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="shrink-0 rounded-md bg-[var(--accent)] px-2 py-1 text-[11px] font-medium text-white"
+            >
+              Retry
+            </button>
+          </div>
+        )}
         <div className="min-h-0 flex-1 overflow-y-auto">
           {isSignedIn && isLoading ? (
             <p className="px-2 py-8 text-center text-sm text-[var(--text-muted)]">Loading…</p>
-          ) : isSignedIn && isError ? (
-            <div className="flex flex-col items-center gap-2 px-2 py-8">
-              <p className="text-sm text-[var(--text-muted)]">Couldn’t load activity.</p>
-              <button
-                type="button"
-                onClick={() => refetch()}
-                className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-medium text-white"
-              >
-                Retry
-              </button>
-            </div>
           ) : (
             <ul className="flex list-none flex-col -mx-2">
               {items.map((item) =>

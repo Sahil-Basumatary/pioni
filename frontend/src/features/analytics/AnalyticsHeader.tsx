@@ -54,7 +54,7 @@ function formatChangeAbs(raw: string | null | undefined): string {
   if (raw == null) return "—";
   const num = Number(raw);
   if (!Number.isFinite(num)) return "—";
-  return `${formatPrice(Math.abs(num))}USD`;
+  return `${formatPrice(Math.abs(num))} USD`;
 }
 
 function formatChangePct(pct: number | null): string {
@@ -105,6 +105,7 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
   const favorited = favorites.includes(symbol.toUpperCase());
   const [snapshot, setSnapshot] = useState<TickerSnapshot | null>(null);
   const [imgFailed, setImgFailed] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     setSnapshot(null);
@@ -135,10 +136,17 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
       : null;
   const bid = book?.best_bid != null ? Number(book.best_bid) : null;
   const ask = book?.best_ask != null ? Number(book.best_ask) : null;
-  const indexPrice =
+  const bookMid =
     bid != null && ask != null && Number.isFinite(bid) && Number.isFinite(ask)
       ? (bid + ask) / 2
-      : currentPrice;
+      : null;
+  const snapshotPrice = snapshot ? Number(snapshot.price) : null;
+  const indexPrice =
+    currentPrice ??
+    (snapshotPrice != null && Number.isFinite(snapshotPrice)
+      ? snapshotPrice
+      : null) ??
+    bookMid;
   const changePct = snapshot?.change_pct_24h ?? null;
   const changeAbs = snapshot?.change_24h ?? null;
   const volumeBase = snapshot?.volume_24h ?? null;
@@ -148,43 +156,45 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
       : null;
 
   return (
-    <div className="my-2 flex min-h-10 w-full items-center justify-between gap-1 px-2">
+    <div className="my-2 flex min-h-8 w-full items-center justify-between gap-1 px-2">
       <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={openSearch}
-          className="rail-icon flex h-10 items-center gap-2 rounded-full border border-[var(--card-border)] bg-[var(--card-bg)] px-2.5 hover:bg-black/[0.03]"
+          className="flex min-h-8 items-center gap-3 rounded-full border border-[var(--card-border)] bg-[var(--card-bg)] py-0.5 pl-2 pr-2 hover:bg-black/[0.03]"
         >
           <SearchIcon className="h-3.5 w-3.5 shrink-0 text-[var(--text-muted)]" />
-          <span className="relative inline-flex h-5 w-5 shrink-0 overflow-hidden rounded-full bg-[var(--bg)]">
-            {!imgFailed ? (
-              <img
-                src={assetIconUrl(symbol)}
-                alt=""
-                className="absolute inset-0 size-full object-scale-down"
-                onError={() => setImgFailed(true)}
-              />
-            ) : (
-              <span className="flex size-full items-center justify-center text-[9px] font-semibold text-[var(--text-muted)]">
-                {asset.slice(0, 1)}
+          <span className="flex items-center gap-2">
+            <span className="relative inline-flex h-5 w-5 shrink-0 overflow-hidden rounded-full bg-[var(--bg)]">
+              {!imgFailed ? (
+                <img
+                  src={assetIconUrl(symbol)}
+                  alt=""
+                  className="absolute inset-0 size-full object-scale-down"
+                  onError={() => setImgFailed(true)}
+                />
+              ) : (
+                <span className="flex size-full items-center justify-center text-[9px] font-semibold text-[var(--text-muted)]">
+                  {asset.slice(0, 1)}
+                </span>
+              )}
+            </span>
+            <span className="flex flex-col justify-center text-left leading-none">
+              <span className="flex items-center gap-1.5 text-[13px] font-semibold leading-none text-[var(--text-primary)]">
+                <span>
+                  {asset}
+                  <span className="text-[var(--text-muted)]">/USD</span>
+                </span>
+                <span className="rounded bg-black/[0.08] px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums text-[var(--text-primary)]">
+                  10x
+                </span>
               </span>
-            )}
-          </span>
-          <span className="flex flex-col justify-center text-left leading-none">
-            <span className="flex items-center gap-1.5 text-[13px] font-semibold leading-none text-[var(--text-primary)]">
-              <span>
-                {asset}
-                <span className="text-[var(--text-muted)]">/USD</span>
-              </span>
-              <span className="rounded bg-black/[0.08] px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums text-[var(--text-primary)]">
-                10x
+              <span className="mt-0.5 text-[11px] leading-none text-[var(--text-muted)]">
+                {meta?.name ?? asset}
               </span>
             </span>
-            <span className="mt-0.5 text-[11px] leading-none text-[var(--text-muted)]">
-              {meta?.name ?? asset}
-            </span>
           </span>
-          <kbd className="ml-1 rounded-md border border-[var(--card-border)] bg-[var(--bg)] px-1.5 py-0.5 text-[10px] font-medium leading-none text-[var(--text-muted)]">
+          <kbd className="rounded-md border border-[var(--card-border)] bg-[var(--bg)] px-1.5 py-0.5 text-[10px] font-medium leading-none text-[var(--text-muted)]">
             ⌘K
           </kbd>
         </button>
@@ -211,11 +221,12 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
         </button>
       </div>
       <div className="flex min-w-0 grow items-center overflow-hidden">
+        {!collapsed && (
         <div className="flex flex-row items-center gap-6">
           <Metric
             label="INDEX PRICE"
             value={
-              indexPrice != null ? `${formatPrice(indexPrice)}USD` : "—"
+              indexPrice != null ? `${formatPrice(indexPrice)} USD` : "—"
             }
           />
           <Metric
@@ -252,11 +263,10 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
             value={
               <>
                 <span className="block">
-                  {formatCompact(volumeBase)}
-                  {asset}
+                  {formatCompact(volumeBase)} {asset}
                 </span>
                 <span className="block text-[var(--text-muted)]">
-                  {formatCompact(quoteVol)}USD
+                  {formatCompact(quoteVol)} USD
                 </span>
               </>
             }
@@ -264,7 +274,7 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
           <Link
             to="/terms"
             title="Paper trading — no exchange fees"
-            className="flex h-10 flex-col justify-center gap-0.5 whitespace-nowrap outline-none hover:opacity-80"
+            className="flex h-8 flex-col justify-center gap-0.5 whitespace-nowrap outline-none hover:opacity-80"
           >
             <span className="text-[10px] font-semibold uppercase leading-none tracking-wide text-[rgb(104,107,130)]">
               FEES
@@ -276,11 +286,12 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
             </span>
           </Link>
         </div>
+        )}
       </div>
       <div className="flex shrink-0 items-center justify-end gap-1">
         <Link
           to="/deposit"
-          className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-[rgba(104,107,130,0.08)] px-3 text-sm font-medium text-[var(--text-primary)] hover:bg-[rgba(104,107,130,0.12)]"
+          className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-[rgba(104,107,130,0.08)] px-3 text-sm font-medium text-[var(--text-primary)] hover:bg-[rgba(104,107,130,0.12)]"
         >
           <DepositIcon className="h-4 w-4" />
           Deposit
@@ -288,15 +299,17 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
         <button
           type="button"
           onClick={() => openConvert()}
-          className="rail-icon inline-flex h-10 items-center gap-1.5 rounded-lg bg-[rgba(104,107,130,0.08)] px-3 text-sm font-medium text-[var(--text-primary)] hover:bg-[rgba(104,107,130,0.12)]"
+          className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-[rgba(104,107,130,0.08)] px-3 text-sm font-medium text-[var(--text-primary)] hover:bg-[rgba(104,107,130,0.12)]"
         >
           <ConvertIcon className="h-4 w-4" />
           Convert
         </button>
         <button
           type="button"
-          aria-label="Collapse"
-          className="rail-icon inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[rgba(104,107,130,0.08)] text-[var(--text-primary)] hover:bg-[rgba(104,107,130,0.12)]"
+          aria-label={collapsed ? "Expand" : "Collapse"}
+          aria-expanded={!collapsed}
+          onClick={() => setCollapsed((v) => !v)}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[rgba(104,107,130,0.08)] text-[var(--text-primary)] hover:bg-[rgba(104,107,130,0.12)]"
         >
           <MinusSmallIcon className="h-4 w-4" />
         </button>
@@ -313,7 +326,7 @@ function Metric({
   value: ReactNode;
 }) {
   return (
-    <div className="flex h-10 flex-col justify-center gap-0.5 whitespace-nowrap">
+    <div className="flex h-8 flex-col justify-center gap-0.5 whitespace-nowrap">
       <span className="text-[10px] font-semibold uppercase leading-none tracking-wide text-[rgb(104,107,130)]">
         {label}
       </span>

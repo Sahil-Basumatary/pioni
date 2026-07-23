@@ -6,9 +6,12 @@ import {
   LineSeries,
   ColorType,
   CrosshairMode,
+  LineStyle,
+  TickMarkType,
   type IChartApi,
   type ISeriesApi,
   type Time,
+  type UTCTimestamp,
 } from "lightweight-charts";
 import type { SeriesPoint } from "./analyticsSeries";
 
@@ -28,6 +31,28 @@ type Props = {
   error?: string | null;
   priceFormat?: { type: "price" | "volume" | "percent"; precision?: number };
 };
+
+function formatTickMark(time: UTCTimestamp, tickMarkType: TickMarkType): string {
+  const d = new Date(time * 1000);
+  if (tickMarkType === TickMarkType.Year) {
+    return String(d.getUTCFullYear());
+  }
+  if (tickMarkType === TickMarkType.Month) {
+    return d.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" });
+  }
+  if (
+    tickMarkType === TickMarkType.DayOfMonth ||
+    tickMarkType === TickMarkType.Time ||
+    tickMarkType === TickMarkType.TimeWithSeconds
+  ) {
+    const weekday = d.toLocaleDateString("en-US", {
+      weekday: "short",
+      timeZone: "UTC",
+    });
+    return `${weekday} ${d.getUTCDate()}`;
+  }
+  return "";
+}
 
 export default function AnalyticsMetricChart({
   data,
@@ -78,27 +103,35 @@ export default function AnalyticsMetricChart({
         borderVisible: false,
         timeVisible: true,
         secondsVisible: false,
+        tickMarkFormatter: (time: Time, tickMarkType: TickMarkType) =>
+          formatTickMark(time as UTCTimestamp, tickMarkType),
+      },
+      localization: {
+        locale: "en-US",
       },
       handleScroll: { vertTouchDrag: false },
     });
     chartRef.current = chart;
 
+    const common = {
+      priceLineVisible: true,
+      lastValueVisible: true,
+      priceLineColor: LINE,
+      priceLineWidth: 1 as const,
+      priceLineStyle: LineStyle.Dotted,
+      priceFormat: format,
+    };
+
     if (kind === "histogram") {
       seriesRef.current = chart.addSeries(HistogramSeries, {
         color: HIST,
-        priceLineVisible: true,
-        lastValueVisible: true,
-        priceLineColor: LINE,
-        priceFormat: format,
+        ...common,
       });
     } else if (kind === "line") {
       seriesRef.current = chart.addSeries(LineSeries, {
         color: LINE,
         lineWidth: 2,
-        priceLineVisible: true,
-        lastValueVisible: true,
-        priceLineColor: LINE,
-        priceFormat: format,
+        ...common,
       });
     } else {
       seriesRef.current = chart.addSeries(AreaSeries, {
@@ -106,10 +139,7 @@ export default function AnalyticsMetricChart({
         topColor: TOP,
         bottomColor: BOTTOM,
         lineWidth: 2,
-        priceLineVisible: true,
-        lastValueVisible: true,
-        priceLineColor: LINE,
-        priceFormat: format,
+        ...common,
       });
     }
 
@@ -126,7 +156,6 @@ export default function AnalyticsMetricChart({
       chartRef.current = null;
       seriesRef.current = null;
     };
-    // formatKey captures priceFormat fields without remounting on new object identity
   }, [kind, formatKey]);
 
   useEffect(() => {
