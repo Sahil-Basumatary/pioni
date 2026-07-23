@@ -60,3 +60,34 @@ class DailyPnlPointResponse(BaseModel):
     total_value: Decimal
     daily_pnl: Decimal
     cumulative_pnl: Decimal
+
+
+class OnboardingResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    user_id: uuid.UUID
+    welcome_seen: bool
+    tour_completed: bool
+    tour_skipped: bool
+    checklist_tour: bool
+    checklist_first_trade: bool
+    checklist_view_position: bool
+    checklist_sentiment: bool
+    checklist_limit_order: bool
+    tour_completed_at: datetime | None = None
+    tour_skipped_at: datetime | None = None
+    checklist_completed_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class OnboardingPatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    welcome_seen: bool | None = None
+    tour_completed: bool | None = None
+    tour_skipped: bool | None = None
+    checklist_tour: bool | None = None
+    checklist_first_trade: bool | None = None
+    checklist_view_position: bool | None = None
+    checklist_sentiment: bool | None = None
+    checklist_limit_order: bool | None = None

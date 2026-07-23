@@ -109,6 +109,47 @@ async def my_portfolio(ctx: AuthContext = Depends(require_auth)) -> dict:
     return await fetch_my_portfolio(ctx)
 
 
+async def fetch_my_onboarding(ctx: AuthContext) -> dict:
+    client = await _get_client()
+    try:
+        resp = await client.get("/me/onboarding", headers=_identity_headers(ctx))
+    except httpx.RequestError as e:
+        logger.error("portfolio service unreachable", extra={"error": str(e)})
+        raise _unavailable() from None
+    if resp.status_code >= 400:
+        raise HTTPException(status_code=resp.status_code, detail=resp.json())
+    return resp.json()
+
+
+async def patch_my_onboarding_upstream(ctx: AuthContext, body: dict) -> dict:
+    client = await _get_client()
+    try:
+        resp = await client.patch(
+            "/me/onboarding",
+            headers=_identity_headers(ctx),
+            json=body,
+        )
+    except httpx.RequestError as e:
+        logger.error("portfolio service unreachable", extra={"error": str(e)})
+        raise _unavailable() from None
+    if resp.status_code >= 400:
+        raise HTTPException(status_code=resp.status_code, detail=resp.json())
+    return resp.json()
+
+
+@me_router.get("/onboarding")
+async def my_onboarding(ctx: AuthContext = Depends(require_auth)) -> dict:
+    return await fetch_my_onboarding(ctx)
+
+
+@me_router.patch("/onboarding")
+async def patch_my_onboarding(
+    body: dict,
+    ctx: AuthContext = Depends(require_auth),
+) -> dict:
+    return await patch_my_onboarding_upstream(ctx, body)
+
+
 async def _proxy_portfolio_get(path: str, params: dict | None = None):
     # The portfolio service exposes these by portfolio_id in the path and trusts the private
     # network, so no identity headers are needed once the gateway has resolved ownership.

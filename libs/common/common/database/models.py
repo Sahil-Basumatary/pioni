@@ -57,6 +57,48 @@ class User(UUIDMixin, TimestampMixin, Base):
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     portfolios: Mapped[list[Portfolio]] = relationship(back_populates="user")
+    onboarding: Mapped[UserOnboarding | None] = relationship(
+        back_populates="user", uselist=False,
+    )
+
+
+class UserOnboarding(UUIDMixin, TimestampMixin, Base):
+    __tablename__ = "user_onboarding"
+    __table_args__ = (
+        UniqueConstraint("user_id", name="uq_user_onboarding_user_id"),
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    welcome_seen: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    tour_completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    tour_skipped: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    checklist_tour: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    checklist_first_trade: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False,
+    )
+    checklist_view_position: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False,
+    )
+    checklist_sentiment: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False,
+    )
+    checklist_limit_order: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False,
+    )
+    tour_completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
+    tour_skipped_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
+    checklist_completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
+    user: Mapped[User] = relationship(back_populates="onboarding")
 
 
 class Portfolio(UUIDMixin, TimestampMixin, Base):

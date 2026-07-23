@@ -13,11 +13,14 @@ from common import (
     Trade as TradeORM,
 )
 from portfolio.charts import SnapshotValue, build_daily_pnl_chart
+from portfolio.onboarding import apply_onboarding_patch, get_or_create_onboarding
 from portfolio.price_cache import PriceCache
 from portfolio.provisioning import Identity, get_or_create_portfolio
 from portfolio.repository import PortfolioRepository
 from portfolio.schemas import (
     DailyPnlPointResponse,
+    OnboardingPatch,
+    OnboardingResponse,
     PortfolioResponse,
     PortfolioSummaryResponse,
     PositionResponse,
@@ -68,6 +71,31 @@ async def get_my_portfolio(
 ) -> PortfolioResponse:
     portfolio = await get_or_create_portfolio(session, identity, starting_balance())
     return PortfolioResponse.model_validate(portfolio)
+
+
+@router.get("/me/onboarding", response_model=OnboardingResponse)
+async def get_my_onboarding(
+    identity: Identity = Depends(current_identity),
+    session: AsyncSession = Depends(get_db),
+) -> OnboardingResponse:
+    row = await get_or_create_onboarding(session, identity)
+    return OnboardingResponse.model_validate(row)
+
+
+@router.patch("/me/onboarding", response_model=OnboardingResponse)
+async def patch_my_onboarding(
+    body: OnboardingPatch,
+    identity: Identity = Depends(current_identity),
+    session: AsyncSession = Depends(get_db),
+) -> OnboardingResponse:
+    row = await get_or_create_onboarding(session, identity)
+    patch = body.model_dump(exclude_unset=True)
+    if not patch:
+        return OnboardingResponse.model_validate(row)
+    apply_onboarding_patch(row, patch)
+    await session.flush()
+    await session.refresh(row)
+    return OnboardingResponse.model_validate(row)
 
 
 def _not_found(portfolio_id: uuid.UUID) -> HTTPException:

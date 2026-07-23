@@ -6,6 +6,7 @@ import toastReducer from "../features/toasts/toastSlice";
 import { marketApi } from "../features/market/marketApi";
 import { portfolioApi } from "../features/portfolio/portfolioApi";
 import { ordersApi } from "../features/orders/ordersApi";
+import { onboardingApi } from "../features/onboarding/onboardingApi";
 
 const rootReducer = combineReducers({
   instrument: instrumentReducer,
@@ -14,6 +15,7 @@ const rootReducer = combineReducers({
   [marketApi.reducerPath]: marketApi.reducer,
   [portfolioApi.reducerPath]: portfolioApi.reducer,
   [ordersApi.reducerPath]: ordersApi.reducer,
+  [onboardingApi.reducerPath]: onboardingApi.reducer,
 });
 
 export function setupStore(preloadedState?: Partial<RootState>) {
@@ -24,6 +26,7 @@ export function setupStore(preloadedState?: Partial<RootState>) {
         marketApi.middleware,
         portfolioApi.middleware,
         ordersApi.middleware,
+        onboardingApi.middleware,
       ),
     preloadedState,
   });

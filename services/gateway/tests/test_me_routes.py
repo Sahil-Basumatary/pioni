@@ -195,3 +195,46 @@ def test_reset_my_portfolio_propagates_error(monkeypatch, client):
     _install_client(monkeypatch, fake)
     resp = client.post("/me/portfolio/reset")
     assert resp.status_code == 404
+
+
+class _FakeOnboardingClient:
+    def __init__(self, response):
+        self._response = response
+        self.calls: list = []
+
+    async def get(self, url, headers=None, params=None):
+        self.calls.append(("GET", url, headers, params))
+        return self._response
+
+    async def patch(self, url, headers=None, json=None):
+        self.calls.append(("PATCH", url, headers, json))
+        return self._response
+
+
+def test_my_onboarding_forwards_identity(monkeypatch, client):
+    fake = _FakeOnboardingClient(
+        _FakeResponse(200, {"welcome_seen": False, "tour_completed": False}),
+    )
+    _install_client(monkeypatch, fake)
+    resp = client.get("/me/onboarding")
+    assert resp.status_code == 200
+    assert resp.json()["welcome_seen"] is False
+    method, url, headers, _ = fake.calls[0]
+    assert method == "GET"
+    assert url == "/me/onboarding"
+    assert headers["X-Clerk-Id"] == "user_abc"
+
+
+def test_patch_my_onboarding_forwards_body(monkeypatch, client):
+    fake = _FakeOnboardingClient(
+        _FakeResponse(200, {"welcome_seen": True, "tour_skipped": True}),
+    )
+    _install_client(monkeypatch, fake)
+    resp = client.patch("/me/onboarding", json={"tour_skipped": True})
+    assert resp.status_code == 200
+    assert resp.json()["tour_skipped"] is True
+    method, url, headers, body = fake.calls[0]
+    assert method == "PATCH"
+    assert url == "/me/onboarding"
+    assert headers["X-Clerk-Id"] == "user_abc"
+    assert body == {"tour_skipped": True}
