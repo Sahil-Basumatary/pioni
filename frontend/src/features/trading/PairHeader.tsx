@@ -154,8 +154,11 @@ function PairHeader({
   const lastLabel = venue === "futures" ? "Mark price" : "Last price";
   const markOrLast =
     venue === "futures" ? (currentPrice ?? indexPrice) : currentPrice;
-  const lastValue =
-    markOrLast != null ? `${formatPrice(markOrLast)} USD` : "—";
+  const lastValue = markOrLast != null ? formatPrice(markOrLast) : "—";
+  const quoteVolume =
+    snapshot?.volume_24h != null && markOrLast != null
+      ? Number(snapshot.volume_24h) * markOrLast
+      : null;
   const priceFlashClass =
     flashDir === "up"
       ? "text-emerald-500"
@@ -194,14 +197,14 @@ function PairHeader({
               <span className="text-[var(--text-muted)]">/USD</span>
             )}
           </span>
-          {venue === "margin" && (
+          {(venue === "margin" || (compact && venue === "spot")) && (
             <span className="rounded bg-black/[0.08] px-1 py-0.5 text-[10px] font-semibold tabular-nums">
-              10x
+              {meta?.marginLeverage ?? 10}x
             </span>
           )}
           {venue === "futures" && (
             <span className="rounded bg-black/[0.08] px-1 py-0.5 text-[10px] font-semibold tabular-nums">
-              100x
+              {meta?.futuresLeverage ?? 100}x
             </span>
           )}
         </span>
@@ -240,6 +243,12 @@ function PairHeader({
     </>
   );
 
+  const changeTone =
+    changePct == null
+      ? "text-[var(--text-primary)]"
+      : changePct >= 0
+        ? "text-emerald-600"
+        : "text-rose-500";
   const metrics = (
     <>
       <div
@@ -259,6 +268,9 @@ function PairHeader({
           }`}
         >
           {lastValue}
+          {markOrLast != null ? (
+            <span className="ms-0.5 text-[var(--text-muted)]">USD</span>
+          ) : null}
         </span>
       </div>
       <Stat
@@ -278,16 +290,18 @@ function PairHeader({
         <span
           className={`whitespace-nowrap font-medium tabular-nums ${
             compact ? "text-[14px]" : "text-[13px]"
-          } ${
-            changePct == null
-              ? "text-[var(--text-primary)]"
-              : changePct >= 0
-                ? "text-emerald-600"
-                : "text-rose-500"
-          }`}
+          } ${changeTone}`}
         >
           {venue === "futures" ? (
             formatChangePct(changePct)
+          ) : compact ? (
+            <span className="inline-flex items-baseline gap-1">
+              <span>
+                {formatChangeAbs(changeAbs)}
+                <span className="ms-0.5">USD</span>
+              </span>
+              <span>({formatChangePct(changePct)})</span>
+            </span>
           ) : (
             <>
               {formatChangeAbs(changeAbs)}{" "}
@@ -306,28 +320,60 @@ function PairHeader({
             label="Next funding rate"
             value={`0.0000% @ ${nextFundingAtLabel()}`}
           />
-          <Stat
-            compact={compact}
-            label="24H Volume"
-            value={
-              snapshot?.volume_24h
-                ? `${formatVolume(snapshot.volume_24h)} ${asset}`
-                : "—"
-            }
-          />
+          {compact ? (
+            <VolumeStat
+              compact
+              base={
+                snapshot?.volume_24h
+                  ? formatVolume(snapshot.volume_24h)
+                  : null
+              }
+              baseUnit={asset}
+              quote={
+                quoteVolume != null && Number.isFinite(quoteVolume)
+                  ? formatVolume(String(quoteVolume))
+                  : null
+              }
+            />
+          ) : (
+            <Stat
+              label="24H Volume"
+              value={
+                snapshot?.volume_24h
+                  ? `${formatVolume(snapshot.volume_24h)} ${asset}`
+                  : "—"
+              }
+            />
+          )}
           <Stat compact={compact} label="Open interest" value="—" />
         </>
       ) : (
         <>
-          <Stat
-            compact={compact}
-            label="24H Volume"
-            value={
-              snapshot?.volume_24h
-                ? `${formatVolume(snapshot.volume_24h)} ${asset}`
-                : "—"
-            }
-          />
+          {compact ? (
+            <VolumeStat
+              compact
+              base={
+                snapshot?.volume_24h
+                  ? formatVolume(snapshot.volume_24h)
+                  : null
+              }
+              baseUnit={asset}
+              quote={
+                quoteVolume != null && Number.isFinite(quoteVolume)
+                  ? formatVolume(String(quoteVolume))
+                  : null
+              }
+            />
+          ) : (
+            <Stat
+              label="24H Volume"
+              value={
+                snapshot?.volume_24h
+                  ? `${formatVolume(snapshot.volume_24h)} ${asset}`
+                  : "—"
+              }
+            />
+          )}
           {!compact && (
             <>
               <Stat
@@ -378,7 +424,7 @@ function PairHeader({
         </div>
         <div className="relative flex min-w-0 grow items-center overflow-hidden">
           <div className="mx-2 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex flex-row items-center gap-5">{metrics}</div>
+            <div className="flex flex-row items-center gap-2">{metrics}</div>
           </div>
         </div>
       </div>
@@ -494,6 +540,56 @@ function Stat({
           <span className="ms-0.5 text-[var(--text-muted)]">{suffix}</span>
         ) : null}
       </span>
+    </div>
+  );
+}
+
+function VolumeStat({
+  base,
+  baseUnit,
+  quote,
+  compact = false,
+}: {
+  base: string | null;
+  baseUnit: string;
+  quote: string | null;
+  compact?: boolean;
+}) {
+  return (
+    <div
+      className={`flex shrink-0 flex-col whitespace-nowrap ${
+        compact ? "h-8 justify-between" : "gap-0.5"
+      }`}
+    >
+      <span className="text-[10px] uppercase tracking-wider whitespace-nowrap text-[var(--text-muted)]">
+        24H Volume
+      </span>
+      {base == null ? (
+        <span
+          className={`font-medium tabular-nums text-[var(--text-primary)] ${
+            compact ? "text-[14px]" : "text-[13px]"
+          }`}
+        >
+          —
+        </span>
+      ) : (
+        <span
+          className={`inline-flex gap-2 font-medium tabular-nums text-[var(--text-primary)] ${
+            compact ? "text-[14px]" : "text-[13px]"
+          }`}
+        >
+          <span>
+            {base}
+            <span className="ms-0.5 text-[var(--text-muted)]">{baseUnit}</span>
+          </span>
+          {quote != null ? (
+            <span>
+              {quote}
+              <span className="ms-0.5 text-[var(--text-muted)]">USD</span>
+            </span>
+          ) : null}
+        </span>
+      )}
     </div>
   );
 }

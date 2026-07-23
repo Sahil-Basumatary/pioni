@@ -26,7 +26,9 @@ import TradingBottomPanel, {
 import ContentWindow, {
   type ContentTab,
 } from "../features/trading/ContentWindow";
+import AlertsPanel from "../features/trading/AlertsPanel";
 import ComingSoonBody from "../features/trading/ComingSoonBody";
+import DepthChartPanel from "../features/trading/DepthChartPanel";
 import ResizeHandle from "../features/trading/ResizeHandle";
 import { useTradingLayout } from "../features/trading/useTradingLayout";
 import {
@@ -235,7 +237,7 @@ export default function TradingPage({
     switch (mobileTab) {
       case "marketchart":
         return (
-          <div className="flex h-full min-h-0 flex-1 flex-col p-2">
+          <div className="flex h-full min-h-0 flex-1 flex-col">
             <CandlestickChart
               ref={chartRef}
               symbol={symbol}
@@ -270,12 +272,9 @@ export default function TradingPage({
           </div>
         );
       case "alerts":
-        return (
-          <ComingSoonBody
-            title="Alerts"
-            description="Price and order alerts will live here — paper-only."
-          />
-        );
+        return <AlertsPanel />;
+      case "depth":
+        return <DepthChartPanel symbol={symbol} />;
       default:
         return (
           <ComingSoonBody
@@ -346,16 +345,15 @@ export default function TradingPage({
               maximized={maximized === "ticket"}
               onMaximizeToggle={() => toggleMaximize("ticket")}
             >
-              {stubTitle.ticket ? (
+              {stubTitle.ticket === "depth" ? (
+                <DepthChartPanel symbol={symbol} />
+              ) : stubTitle.ticket ? (
                 <ComingSoonBody
                   title={labelForStub(stubTitle.ticket)}
                   description="This widget will unlock in a later milestone."
                 />
               ) : ticketTab === "alerts" ? (
-                <ComingSoonBody
-                  title="Alerts"
-                  description="Price and order alerts will live here — paper-only."
-                />
+                <AlertsPanel />
               ) : (
                 <OrderTicket venue={venue} />
               )}
@@ -411,7 +409,9 @@ export default function TradingPage({
                     maximized={maximized === "book"}
                     onMaximizeToggle={() => toggleMaximize("book")}
                   >
-                    {stubTitle.book ? (
+                    {stubTitle.book === "depth" ? (
+                      <DepthChartPanel symbol={symbol} />
+                    ) : stubTitle.book ? (
                       <ComingSoonBody
                         title={labelForStub(stubTitle.book)}
                         description="This widget will unlock in a later milestone."
@@ -454,7 +454,9 @@ export default function TradingPage({
                     maximized={maximized === "chart"}
                     onMaximizeToggle={() => toggleMaximize("chart")}
                   >
-                    {stubTitle.chart ? (
+                    {stubTitle.chart === "depth" ? (
+                      <DepthChartPanel symbol={symbol} />
+                    ) : stubTitle.chart ? (
                       <ComingSoonBody
                         title={labelForStub(stubTitle.chart)}
                         description="This widget will unlock in a later milestone."

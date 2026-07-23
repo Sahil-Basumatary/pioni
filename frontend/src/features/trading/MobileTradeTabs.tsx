@@ -200,10 +200,10 @@ export function MobileTradeTabs({ tabs, activeId, onChange }: MobileTradeTabsPro
                 key={tab.id}
                 type="button"
                 onClick={() => onChange(tab.id)}
-                className={`shrink-0 whitespace-nowrap rounded-lg px-2 py-1.5 text-xs font-medium transition-colors bg-black/[0.08] ${
+                className={`shrink-0 whitespace-nowrap rounded-lg px-2 py-1.5 text-xs font-medium transition-colors bg-[rgba(104,107,130,0.08)] ${
                   active
                     ? "text-[var(--text-primary)]"
-                    : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                    : "text-[rgb(104,107,130)] hover:text-[var(--text-primary)]"
                 }`}
               >
                 {tab.label}
@@ -217,7 +217,7 @@ export function MobileTradeTabs({ tabs, activeId, onChange }: MobileTradeTabsPro
         aria-label="Options"
         aria-expanded={optionsOpen}
         onClick={() => setOptionsOpen((v) => !v)}
-        className="rail-icon mr-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-black/[0.08] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+        className="rail-icon mr-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[rgba(104,107,130,0.08)] text-[rgb(104,107,130)] hover:text-[var(--text-primary)]"
       >
         <SettingsSliderHorizontalIcon className="h-4 w-4" />
       </button>
@@ -228,7 +228,7 @@ export function MobileTradeTabs({ tabs, activeId, onChange }: MobileTradeTabsPro
 
 export function MobilePanelShell({ children }: { children: ReactNode }) {
   return (
-    <div className="mx-2 mb-2 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
+    <div className="mx-2 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-[var(--card-bg)]">
       {children}
     </div>
   );
