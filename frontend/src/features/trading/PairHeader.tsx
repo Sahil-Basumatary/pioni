@@ -242,29 +242,43 @@ function PairHeader({
 
   const metrics = (
     <>
-      <div className="flex shrink-0 flex-col gap-0.5">
-        <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
+      <div
+        className={`flex shrink-0 flex-col whitespace-nowrap ${
+          compact ? "h-8 justify-between" : "gap-0.5"
+        }`}
+      >
+        <span className="text-[10px] uppercase tracking-wider whitespace-nowrap text-[var(--text-muted)]">
           {lastLabel}
         </span>
         <span
           data-testid="live-price"
-          className={`text-[13px] font-semibold tabular-nums tracking-tight transition-colors duration-300 ${priceFlashClass} ${
-            compact ? "" : "text-xl"
+          className={`whitespace-nowrap tabular-nums tracking-tight transition-colors duration-300 ${priceFlashClass} ${
+            compact
+              ? "text-[14px] font-medium"
+              : "text-xl font-semibold"
           }`}
         >
           {lastValue}
         </span>
       </div>
       <Stat
+        compact={compact}
         label="Index price"
-        value={indexPrice != null ? `${formatPrice(indexPrice)} USD` : "—"}
+        value={indexPrice != null ? formatPrice(indexPrice) : "—"}
+        suffix={indexPrice != null ? "USD" : undefined}
       />
-      <div className="flex shrink-0 flex-col gap-0.5">
-        <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
+      <div
+        className={`flex shrink-0 flex-col whitespace-nowrap ${
+          compact ? "h-8 justify-between" : "gap-0.5"
+        }`}
+      >
+        <span className="text-[10px] uppercase tracking-wider whitespace-nowrap text-[var(--text-muted)]">
           24H Change
         </span>
         <span
-          className={`text-[13px] font-medium tabular-nums ${
+          className={`whitespace-nowrap font-medium tabular-nums ${
+            compact ? "text-[14px]" : "text-[13px]"
+          } ${
             changePct == null
               ? "text-[var(--text-primary)]"
               : changePct >= 0
@@ -286,12 +300,14 @@ function PairHeader({
       </div>
       {venue === "futures" ? (
         <>
-          <Stat label="Funding rate" value={FUTURES_PAPER_FUNDING} />
+          <Stat compact={compact} label="Funding rate" value={FUTURES_PAPER_FUNDING} />
           <Stat
+            compact={compact}
             label="Next funding rate"
             value={`0.0000% @ ${nextFundingAtLabel()}`}
           />
           <Stat
+            compact={compact}
             label="24H Volume"
             value={
               snapshot?.volume_24h
@@ -299,11 +315,12 @@ function PairHeader({
                 : "—"
             }
           />
-          <Stat label="Open interest" value="—" />
+          <Stat compact={compact} label="Open interest" value="—" />
         </>
       ) : (
         <>
           <Stat
+            compact={compact}
             label="24H Volume"
             value={
               snapshot?.volume_24h
@@ -328,12 +345,18 @@ function PairHeader({
       <Link
         to="/terms"
         title="Paper trading — no exchange fees"
-        className="flex shrink-0 flex-col gap-0.5 rounded-lg px-1 py-0.5 hover:bg-black/[0.04]"
+        className={`flex shrink-0 flex-col whitespace-nowrap rounded-lg px-1 py-0.5 hover:bg-black/[0.04] ${
+          compact ? "h-8 justify-between" : "gap-0.5"
+        }`}
       >
-        <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
+        <span className="text-[10px] uppercase tracking-wider whitespace-nowrap text-[var(--text-muted)]">
           Fees
         </span>
-        <span className="inline-flex items-center gap-1 text-[13px] font-medium tabular-nums text-[var(--text-primary)]">
+        <span
+          className={`inline-flex items-center gap-1 font-medium tabular-nums text-[var(--text-primary)] ${
+            compact ? "text-[14px]" : "text-[13px]"
+          }`}
+        >
           {venue === "futures" ? FUTURES_PAPER_MAKER_FEE : PAPER_MAKER_FEE}
           <span className="text-[var(--text-muted)]">/</span>
           {venue === "futures" ? FUTURES_PAPER_TAKER_FEE : PAPER_TAKER_FEE}
@@ -350,8 +373,10 @@ function PairHeader({
           {pairButton}
           {alertFav}
         </div>
-        <div className="flex min-w-0 grow items-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="flex items-center gap-3 py-2">{metrics}</div>
+        <div className="relative flex min-w-0 grow items-center overflow-hidden">
+          <div className="mx-2 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex flex-row items-center gap-5">{metrics}</div>
+          </div>
         </div>
       </div>
     );
@@ -429,14 +454,35 @@ function PairHeader({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  label,
+  value,
+  suffix,
+  compact = false,
+}: {
+  label: string;
+  value: string;
+  suffix?: string;
+  compact?: boolean;
+}) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
+    <div
+      className={`flex shrink-0 flex-col whitespace-nowrap ${
+        compact ? "h-8 justify-between" : "gap-0.5"
+      }`}
+    >
+      <span className="text-[10px] uppercase tracking-wider whitespace-nowrap text-[var(--text-muted)]">
         {label}
       </span>
-      <span className="text-[13px] font-medium tabular-nums text-[var(--text-primary)]">
+      <span
+        className={`whitespace-nowrap font-medium tabular-nums text-[var(--text-primary)] ${
+          compact ? "text-[14px]" : "text-[13px]"
+        }`}
+      >
         {value}
+        {suffix ? (
+          <span className="ms-0.5 text-[var(--text-muted)]">{suffix}</span>
+        ) : null}
       </span>
     </div>
   );
