@@ -122,7 +122,6 @@ function MarketTableRow({
         ? "text-emerald-600"
         : "text-rose-500";
   const quote = row.quote ?? "USD";
-  const title = row.titleSuffix ? `${row.label} ${row.titleSuffix}` : row.label;
 
   const marketCell = (
     <div className="flex items-center gap-3">
@@ -131,7 +130,10 @@ function MarketTableRow({
         <div className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-[var(--text-primary)]">
           <span>
             {row.titleSuffix ? (
-              title
+              <>
+                {row.label}{" "}
+                <span className="font-normal text-[var(--text-muted)]">{row.titleSuffix}</span>
+              </>
             ) : (
               <>
                 {row.label}

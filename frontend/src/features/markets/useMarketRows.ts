@@ -92,6 +92,16 @@ export function asFuturesRows(rows: MarketRow[]): MarketRow[] {
   }));
 }
 
+/** Coin-margined inverse perps — Pro Markets → Futures → Inverse Futures. */
+export function asInverseFuturesRows(rows: MarketRow[]): MarketRow[] {
+  return rows.map((row) => ({
+    ...row,
+    titleSuffix: "Inv Perp",
+    leverage: row.label === "BTC" || row.label === "ETH" ? 50 : 25,
+    fundingRate: paperFunding(`inv-${row.symbol}`),
+  }));
+}
+
 export type MarketSort =
   | "volume"
   | "change"

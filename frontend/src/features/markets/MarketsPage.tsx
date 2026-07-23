@@ -15,6 +15,7 @@ import CategoryHeatmapCard from "./CategoryHeatmapCard";
 import MarketsTable from "./MarketsTable";
 import {
   asFuturesRows,
+  asInverseFuturesRows,
   asMarginRows,
   filterMarketRows,
   sortMarketRows,
@@ -49,7 +50,9 @@ export default function MarketsPage() {
   const sourceRows: MarketRow[] = useMemo(() => {
     if (mainTab === "forex") return forexRows;
     if (mainTab === "futures") {
-      return futuresProduct === "inverse" ? [] : asFuturesRows(rows);
+      return futuresProduct === "inverse"
+        ? asInverseFuturesRows(rows)
+        : asFuturesRows(rows);
     }
     if (mainTab === "crypto" && cryptoProduct === "margin") return asMarginRows(rows);
     if (mainTab === "crypto" && cryptoProduct === "futures") return asFuturesRows(rows);
@@ -78,7 +81,7 @@ export default function MarketsPage() {
 
   const showFunding =
     (mainTab === "crypto" && cryptoProduct === "futures") ||
-    (mainTab === "futures" && futuresProduct === "futures");
+    mainTab === "futures";
 
   const isFuturesFilters =
     (mainTab === "crypto" && cryptoProduct === "futures") || mainTab === "futures";
@@ -109,13 +112,7 @@ export default function MarketsPage() {
   }
 
   const tableBody =
-    mainTab === "futures" && futuresProduct === "inverse" ? (
-      <p className="px-3 py-12 text-center text-sm text-[var(--text-muted)]">
-        Inverse futures come in a later milestone.
-      </p>
-    ) : isLoading &&
-      mainTab !== "forex" &&
-      !rows.some((r) => r.price != null) ? (
+    isLoading && mainTab !== "forex" && !rows.some((r) => r.price != null) ? (
       <p className="px-3 py-12 text-center text-sm text-[var(--text-muted)]">
         Loading markets…
       </p>
