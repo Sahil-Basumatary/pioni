@@ -1,7 +1,10 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
+# Prefer service-local .env, then repo root (make targets cd into services/*).
 load_dotenv()
+load_dotenv(Path(__file__).resolve().parents[3] / ".env")
 
 def is_mock_mode() -> bool:
     return os.getenv("MOCK", "true").lower() == "true"
@@ -26,7 +29,7 @@ def prewarm_enabled() -> bool:
     return os.getenv("PREWARM_ENABLED", "true").lower() == "true"
 
 def redis_url() -> str | None:
-    return os.getenv("REDIS_URL")
+    return os.getenv("REDIS_URL", "redis://localhost:6379")
 
 def redis_max_connections() -> int:
     return int(os.getenv("REDIS_MAX_CONNECTIONS", "10"))

@@ -41,7 +41,7 @@ install:
 	pip install -e libs/common
 
 dev-gateway:
-	cd services/gateway && uvicorn gateway.main:app --reload
+	cd services/gateway && SSL_CERT_FILE=$${SSL_CERT_FILE:-$$(python3 -c 'import certifi; print(certifi.where())')} uvicorn gateway.main:app --reload
 
 dev-gateway-perf:
 	@mkdir -p $${PROMETHEUS_MULTIPROC_DIR:-/tmp/pioni-gw-metrics}

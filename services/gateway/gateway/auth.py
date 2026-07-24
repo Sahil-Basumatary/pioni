@@ -1,6 +1,8 @@
 from __future__ import annotations
 import logging
+import ssl
 from dataclasses import dataclass
+import certifi
 import jwt
 from jwt import PyJWKClient
 from jwt.exceptions import InvalidTokenError, PyJWKClientError
@@ -25,6 +27,11 @@ class AuthContext:
     portfolio_id: str | None = None
 
 
+def _jwks_ssl_context() -> ssl.SSLContext:
+    # macOS system Python often lacks CA roots; certifi is the durable fix.
+    return ssl.create_default_context(cafile=certifi.where())
+
+
 def _get_jwks_client() -> PyJWKClient | None:
     global _jwks_client
     if _jwks_client is not None:
@@ -32,7 +39,11 @@ def _get_jwks_client() -> PyJWKClient | None:
     url = clerk_jwks_url()
     if not url:
         return None
-    _jwks_client = PyJWKClient(url, cache_keys=True)
+    _jwks_client = PyJWKClient(
+        url,
+        cache_keys=True,
+        ssl_context=_jwks_ssl_context(),
+    )
     return _jwks_client
 
 
