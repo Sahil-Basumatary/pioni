@@ -65,9 +65,11 @@ function PairIcons({ base, quote }: { base: string; quote: string }) {
 export default function OtcPairPicker({
   pair,
   onSelect,
+  fullWidth = false,
 }: {
   pair: OtcPortalPair;
   onSelect: (next: OtcPortalPair) => void;
+  fullWidth?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -97,22 +99,28 @@ export default function OtcPairPicker({
   }, [open]);
 
   return (
-    <div className="relative" ref={rootRef}>
+    <div className={`relative ${fullWidth ? "w-full" : ""}`} ref={rootRef}>
       <button
         type="button"
         aria-label="Market"
         aria-expanded={open}
         aria-haspopup="listbox"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex h-8 items-center gap-2 rounded-xl bg-[rgba(104,107,130,0.08)] px-2 text-xs font-medium"
+        className={`inline-flex h-8 items-center gap-2 rounded-xl bg-[rgba(104,107,130,0.08)] px-2 text-xs font-medium ${
+          fullWidth ? "h-10 w-full justify-between px-3 text-sm" : ""
+        }`}
       >
-        <OtcAssetIcon asset={pair.base} size={20} />
-        <span>{pair.label}</span>
+        <span className="inline-flex items-center gap-2">
+          <OtcAssetIcon asset={pair.base} size={20} />
+          <span>{pair.label}</span>
+        </span>
         <ChevronDownSmallIcon className="size-3.5 text-[var(--text-muted)]" />
       </button>
       {open && (
         <div
-          className="absolute right-0 z-30 mt-1 flex w-[200px] flex-col overflow-hidden rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
+          className={`absolute z-30 mt-1 flex flex-col overflow-hidden rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-[0_4px_16px_rgba(0,0,0,0.12)] ${
+            fullWidth ? "left-0 right-0 w-full" : "right-0 w-[200px]"
+          }`}
           role="presentation"
         >
           <div className="flex items-center gap-2 border-b border-[var(--card-border)] px-2 py-1.5">

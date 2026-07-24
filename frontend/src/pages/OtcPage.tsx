@@ -75,7 +75,7 @@ export default function OtcPage() {
         className="overflow-hidden rounded-2xl bg-[var(--card-bg)] px-6 py-10 md:px-10"
         style={{ boxShadow: "0px 2px 6px rgba(0,0,0,0.07)" }}
       >
-        <div className="flex items-center gap-12 lg:gap-20">
+        <div className="flex flex-col items-stretch gap-8 lg:flex-row lg:items-center lg:gap-20">
           <div className="flex min-w-0 flex-1 flex-col gap-4">
             <p className="text-xs font-medium uppercase tracking-wide text-[var(--text-muted)]">
               Pioni OTC
@@ -121,7 +121,7 @@ export default function OtcPage() {
               </button>
             </div>
           </div>
-          <div className="relative hidden w-72 shrink-0 self-center lg:block">
+          <div className="relative mx-auto w-56 shrink-0 self-center sm:w-64 lg:mx-0 lg:block lg:w-72">
             <div
               className="pointer-events-none absolute inset-0 scale-150 rounded-full opacity-50 blur-2xl"
               style={{
@@ -134,12 +134,12 @@ export default function OtcPage() {
               src="/illustrations/otc-hero.png?v=2"
               alt=""
               aria-hidden
-              className="pointer-events-none absolute inset-0 w-72 scale-[1.85] object-contain opacity-35 blur-[22px]"
+              className="pointer-events-none absolute inset-0 w-full scale-[1.85] object-contain opacity-35 blur-[22px]"
             />
             <img
               src="/illustrations/otc-hero.png?v=2"
               alt="Pioni OTC illustration"
-              className="relative w-72 object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.12)]"
+              className="relative w-full object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.12)]"
             />
           </div>
         </div>

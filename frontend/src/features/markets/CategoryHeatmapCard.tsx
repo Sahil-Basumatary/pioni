@@ -7,6 +7,7 @@ import {
   heatFill,
   layoutTreemap,
   type HeatMetric,
+  type HeatRect,
 } from "./categoryHeatmap";
 import { formatChangePct } from "./format";
 
@@ -17,19 +18,36 @@ type CategoryHeatmapCardProps = {
 const BASE_H = 322;
 const MAX_H = 480;
 
+/** Pro progressive labels: icon → +name → +value → +chg. Single-line ellipsis only. */
+function labelParts(cell: HeatRect): {
+  showDot: boolean;
+  showName: boolean;
+  showValue: boolean;
+  showChange: boolean;
+} {
+  const { w, h } = cell;
+  // Match live Pro foreignObject thresholds (icon 20 + name 16 + value/chg 10, pad 4, gap 2).
+  const showDot = w >= 36 && h >= 28;
+  const showName = w >= 48 && h >= 44;
+  const showValue = w >= 56 && h >= 56;
+  const showChange = w >= 56 && h >= 72 && cell.changePct != null;
+  return { showDot, showName, showValue, showChange };
+}
+
 export default function CategoryHeatmapCard({ rows }: CategoryHeatmapCardProps) {
   const [metric, setMetric] = useState<HeatMetric>("volume");
   const [scaled, setScaled] = useState(true);
   const [maximized, setMaximized] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(349);
+  const [width, setWidth] = useState(0);
 
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => setWidth(Math.max(240, el.clientWidth)));
+    const measure = () => setWidth(el.getBoundingClientRect().width);
+    const ro = new ResizeObserver(measure);
     ro.observe(el);
-    setWidth(Math.max(240, el.clientWidth));
+    measure();
     return () => ro.disconnect();
   }, []);
 
@@ -41,9 +59,9 @@ export default function CategoryHeatmapCard({ rows }: CategoryHeatmapCardProps) 
   );
 
   return (
-    <div className="w-full border-l border-[rgba(104,107,130,0.12)]">
+    <div className="w-full border-b border-[var(--card-border)]">
       <div className="flex items-center justify-between gap-2 p-3">
-        <span className="text-sm font-medium text-[rgb(104,107,130)]">
+        <span className="text-sm font-medium leading-none text-[rgb(104,107,130)]">
           Category indices heatmap
         </span>
         <div className="flex shrink-0 items-center gap-2">
@@ -105,11 +123,10 @@ export default function CategoryHeatmapCard({ rows }: CategoryHeatmapCardProps) 
         </div>
       </div>
       <div
-        ref={wrapRef}
         className="relative w-full px-3 pb-3"
         style={{ height: height + 12, minHeight: height + 12 }}
       >
-        <div className="relative h-full w-full overflow-hidden">
+        <div ref={wrapRef} className="relative h-full w-full overflow-hidden">
           <svg
             width={width}
             height={height}
@@ -130,20 +147,18 @@ export default function CategoryHeatmapCard({ rows }: CategoryHeatmapCardProps) 
             ))}
           </svg>
           {cells.map((cell) => {
-            if (cell.w < 32 || cell.h < 28) return null;
-            const showDot = cell.w >= 48 && cell.h >= 56;
-            const showValue = cell.w >= 56 && cell.h >= 52;
-            const showChange = cell.w >= 56 && cell.h >= 68 && cell.changePct != null;
+            const { showDot, showName, showValue, showChange } = labelParts(cell);
+            if (!showDot && !showName) return null;
             const changeColor =
               cell.changePct == null
                 ? "rgba(104,107,130,0.8)"
                 : cell.changePct >= 0
                   ? "rgb(8, 132, 79)"
-                  : "rgb(200, 40, 70)";
+                  : "rgb(209, 29, 69)";
             return (
               <div
                 key={`${cell.id}-label`}
-                className="pointer-events-none absolute flex flex-col items-center justify-center gap-0.5 overflow-hidden p-1"
+                className="pointer-events-none absolute box-border flex flex-col items-center justify-center gap-0.5 overflow-hidden p-1"
                 style={{
                   left: cell.x,
                   top: cell.y,
@@ -153,25 +168,31 @@ export default function CategoryHeatmapCard({ rows }: CategoryHeatmapCardProps) 
               >
                 {showDot ? (
                   <span
-                    className="mb-0.5 h-5 w-5 shrink-0 rounded-full"
+                    className="h-5 w-5 shrink-0 rounded-full"
                     style={{ backgroundColor: cell.color }}
                     aria-hidden
                   />
                 ) : null}
-                <div
-                  className="w-full truncate text-center text-xs font-medium leading-4 text-[rgb(16,17,20)]"
-                >
-                  {cell.label}
-                </div>
+                {showName ? (
+                  <div
+                    className="w-full shrink-0 select-none overflow-hidden text-ellipsis whitespace-nowrap text-center text-xs font-medium leading-4 text-[rgb(16,17,20)]"
+                    style={{ height: 16 }}
+                  >
+                    {cell.label}
+                  </div>
+                ) : null}
                 {showValue ? (
-                  <div className="w-full truncate text-center text-[10px] font-medium leading-[10px] text-[rgba(104,107,130,0.8)]">
+                  <div
+                    className="w-full shrink-0 select-none overflow-hidden text-ellipsis whitespace-nowrap text-center text-[10px] font-medium text-[rgba(104,107,130,0.8)]"
+                    style={{ height: 10, lineHeight: "10px" }}
+                  >
                     {formatHeatValue(cell.value)}
                   </div>
                 ) : null}
                 {showChange ? (
                   <div
-                    className="w-full truncate text-center text-[10px] font-medium leading-[10px]"
-                    style={{ color: changeColor }}
+                    className="w-full shrink-0 select-none overflow-hidden text-ellipsis whitespace-nowrap text-center text-[10px] font-medium"
+                    style={{ height: 10, lineHeight: "10px", color: changeColor }}
                   >
                     {formatChangePct(cell.changePct)}
                   </div>

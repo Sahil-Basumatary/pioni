@@ -8,6 +8,8 @@ import { assetIconUrl, baseAsset } from "../../components/shell/activityFormat";
 import { useGetOrderBookQuery } from "../orders/ordersApi";
 import type { TickerSnapshot } from "../../types/market";
 import type { TradingVenue } from "./tradingVenue";
+import InfoTip from "../onboarding/InfoTip";
+import type { GlossaryTermId } from "../onboarding/glossary";
 
 const DEFAULT_GATEWAY_URL = "http://localhost:8000";
 const SNAPSHOT_REFRESH_MS = 15_000;
@@ -256,9 +258,12 @@ function PairHeader({
           compact ? "h-8 justify-between" : "gap-0.5"
         }`}
       >
-        <span className="text-[10px] uppercase tracking-wider whitespace-nowrap text-[var(--text-muted)]">
-          {lastLabel}
-        </span>
+        <InfoTip
+          term="last_price"
+          label={lastLabel}
+          className="text-[10px] uppercase tracking-wider"
+          placement="bottom"
+        />
         <span
           data-testid="live-price"
           className={`whitespace-nowrap tabular-nums tracking-tight transition-colors duration-300 ${priceFlashClass} ${
@@ -276,6 +281,7 @@ function PairHeader({
       <Stat
         compact={compact}
         label="Index price"
+        tip="index_price"
         value={indexPrice != null ? formatPrice(indexPrice) : "—"}
         suffix={indexPrice != null ? "USD" : undefined}
       />
@@ -284,9 +290,12 @@ function PairHeader({
           compact ? "h-8 justify-between" : "gap-0.5"
         }`}
       >
-        <span className="text-[10px] uppercase tracking-wider whitespace-nowrap text-[var(--text-muted)]">
-          24H Change
-        </span>
+        <InfoTip
+          term="change_24h"
+          label="24H Change"
+          className="text-[10px] uppercase tracking-wider"
+          placement="bottom"
+        />
         <span
           className={`whitespace-nowrap font-medium tabular-nums ${
             compact ? "text-[14px]" : "text-[13px]"
@@ -314,10 +323,11 @@ function PairHeader({
       </div>
       {venue === "futures" ? (
         <>
-          <Stat compact={compact} label="Funding rate" value={FUTURES_PAPER_FUNDING} />
+          <Stat compact={compact} label="Funding rate" tip="funding_rate" value={FUTURES_PAPER_FUNDING} />
           <Stat
             compact={compact}
             label="Next funding rate"
+            tip="funding_rate"
             value={`0.0000% @ ${nextFundingAtLabel()}`}
           />
           {compact ? (
@@ -338,6 +348,7 @@ function PairHeader({
           ) : (
             <Stat
               label="24H Volume"
+              tip="volume_24h"
               value={
                 snapshot?.volume_24h
                   ? `${formatVolume(snapshot.volume_24h)} ${asset}`
@@ -367,6 +378,7 @@ function PairHeader({
           ) : (
             <Stat
               label="24H Volume"
+              tip="volume_24h"
               value={
                 snapshot?.volume_24h
                   ? `${formatVolume(snapshot.volume_24h)} ${asset}`
@@ -378,28 +390,33 @@ function PairHeader({
             <>
               <Stat
                 label="24H High"
+                tip="high_24h"
                 value={snapshot?.high_24h ? formatPrice(snapshot.high_24h) : "—"}
               />
               <Stat
                 label="24H Low"
+                tip="low_24h"
                 value={snapshot?.low_24h ? formatPrice(snapshot.low_24h) : "—"}
               />
             </>
           )}
         </>
       )}
-      <Link
-        to="/terms"
-        title="Paper trading — no exchange fees"
-        className={`flex shrink-0 flex-col whitespace-nowrap rounded-lg px-1 py-0.5 hover:bg-black/[0.04] ${
+      <div
+        className={`flex shrink-0 flex-col whitespace-nowrap ${
           compact ? "h-8 justify-between" : "gap-0.5"
         }`}
       >
-        <span className="text-[10px] uppercase tracking-wider whitespace-nowrap text-[var(--text-muted)]">
-          Fees
-        </span>
-        <span
-          className={`inline-flex items-center gap-1 font-medium tabular-nums text-[var(--text-primary)] ${
+        <InfoTip
+          term="fees"
+          label="Fees"
+          className="text-[10px] uppercase tracking-wider"
+          placement="bottom"
+        />
+        <Link
+          to="/terms"
+          title="Paper trading — no exchange fees"
+          className={`inline-flex items-center gap-1 rounded-lg px-1 font-medium tabular-nums text-[var(--text-primary)] hover:bg-black/[0.04] ${
             compact ? "text-[14px]" : "text-[13px]"
           }`}
         >
@@ -407,8 +424,8 @@ function PairHeader({
           <span className="text-[var(--text-muted)]">/</span>
           {venue === "futures" ? FUTURES_PAPER_TAKER_FEE : PAPER_TAKER_FEE}
           <ChevronRightTiny />
-        </span>
-      </Link>
+        </Link>
+      </div>
     </>
   );
 
@@ -515,11 +532,13 @@ function Stat({
   value,
   suffix,
   compact = false,
+  tip,
 }: {
   label: string;
   value: string;
   suffix?: string;
   compact?: boolean;
+  tip?: GlossaryTermId;
 }) {
   return (
     <div
@@ -527,9 +546,18 @@ function Stat({
         compact ? "h-8 justify-between" : "gap-0.5"
       }`}
     >
-      <span className="text-[10px] uppercase tracking-wider whitespace-nowrap text-[var(--text-muted)]">
-        {label}
-      </span>
+      {tip ? (
+        <InfoTip
+          term={tip}
+          label={label}
+          className="text-[10px] uppercase tracking-wider"
+          placement="bottom"
+        />
+      ) : (
+        <span className="text-[10px] uppercase tracking-wider whitespace-nowrap text-[var(--text-muted)]">
+          {label}
+        </span>
+      )}
       <span
         className={`whitespace-nowrap font-medium tabular-nums text-[var(--text-primary)] ${
           compact ? "text-[14px]" : "text-[13px]"
@@ -562,7 +590,12 @@ function VolumeStat({
       }`}
     >
       <span className="text-[10px] uppercase tracking-wider whitespace-nowrap text-[var(--text-muted)]">
-        24H Volume
+        <InfoTip
+          term="volume_24h"
+          label="24H Volume"
+          className="text-[10px] uppercase tracking-wider"
+          placement="bottom"
+        />
       </span>
       {base == null ? (
         <span

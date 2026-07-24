@@ -16,6 +16,7 @@ import {
 import { baseAsset } from "../../components/shell/activityFormat";
 import { ArrowTopRightIcon } from "../../components/shell/shellIcons";
 import { formatUsd } from "../../utils/formatters";
+import InfoTip from "../onboarding/InfoTip";
 
 const OPEN_STATUSES = new Set(["OPEN", "PARTIALLY_FILLED", "NEW", "PENDING"]);
 const CLOSED_STATUSES = new Set([
@@ -207,9 +208,15 @@ function PositionsTab() {
         <tr className="text-[11px] text-[var(--text-muted)]">
           <th className="px-3 py-1.5 font-medium">Market</th>
           <th className="px-3 py-1.5 font-medium">Size</th>
-          <th className="px-3 py-1.5 font-medium">Entry</th>
-          <th className="px-3 py-1.5 font-medium">Mark</th>
-          <th className="px-3 py-1.5 font-medium">Unrealized P&L</th>
+          <th className="px-3 py-1.5 font-medium">
+            <InfoTip term="entry_price" className="text-[11px]" />
+          </th>
+          <th className="px-3 py-1.5 font-medium">
+            <InfoTip term="mark_price" className="text-[11px]" />
+          </th>
+          <th className="px-3 py-1.5 font-medium">
+            <InfoTip term="unrealized_pnl" className="text-[11px]" />
+          </th>
         </tr>
       </thead>
       <tbody>

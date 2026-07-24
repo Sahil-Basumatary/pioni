@@ -634,6 +634,7 @@ export default function OrderTicket({
         <div className="flex flex-col gap-0.5">
           <Field
             label="Limit price USD"
+            tip="limit_order"
             value={limitPrice}
             onChange={(v) => {
               setLimitPrice(v);
@@ -676,6 +677,7 @@ export default function OrderTicket({
         <div className="flex gap-1">
           <Field
             label={`Quantity ${asset}`}
+            tip="market_order"
             value={quantity}
             onChange={(v) => syncFromQuantity(v, effectivePrice)}
             placeholder="0.00"
@@ -784,11 +786,11 @@ export default function OrderTicket({
           <InfoTip term="post_only" label="Post only" />
         </div>
         {(isMargin || isFutures) && (
-          <label
+          <div
             className={`inline-flex items-center gap-2 text-xs ${
               reduceOnlyLocked
-                ? "cursor-not-allowed text-[var(--text-muted)]"
-                : "cursor-pointer text-[var(--text-primary)]"
+                ? "text-[var(--text-muted)]"
+                : "text-[var(--text-primary)]"
             }`}
           >
             <TicketCheck
@@ -797,8 +799,8 @@ export default function OrderTicket({
               onChange={setReduceOnly}
               label="Reduce only"
             />
-            Reduce only
-          </label>
+            <InfoTip term="reduce_only" label="Reduce only" />
+          </div>
         )}
       </div>
       {tpSl && !tpSlDisabled && (
@@ -864,10 +866,18 @@ export default function OrderTicket({
                   tip="required_margin"
                 />
                 {isMargin && (
-                  <DetailRow label="Margin health" value={marginHealth} />
+                  <DetailRow
+                    label="Margin health"
+                    value={marginHealth}
+                    tip="margin_health"
+                  />
                 )}
                 {isFutures && (
-                  <DetailRow label="Est. liquidation" value="—" />
+                  <DetailRow
+                    label="Est. liquidation"
+                    value="—"
+                    tip="liquidation"
+                  />
                 )}
               </>
             )}
@@ -890,6 +900,7 @@ export default function OrderTicket({
             {isFutures ? (
               <DetailRow
                 label="Est. trading fee"
+                tip="trading_fee"
                 value={
                   notional != null
                     ? `${(notional * 0.0002).toLocaleString("en-US", {
@@ -903,6 +914,7 @@ export default function OrderTicket({
               <>
                 <DetailRow
                   label="Est. trading fee"
+                  tip="trading_fee"
                   value={`${estFeeUsd.toFixed(10).replace(/\.?0+$/, "") || "0"} ${asset}`}
                 />
                 <div className="flex items-center justify-between text-xs">
@@ -945,6 +957,7 @@ function Field({
   placeholder,
   radius,
   prefix,
+  tip,
 }: {
   label: string;
   value: string;
@@ -952,13 +965,24 @@ function Field({
   placeholder: string;
   radius: string;
   prefix?: string;
+  tip?: GlossaryTermId;
 }) {
   return (
     <label
-      className={`relative flex h-10 min-w-0 flex-1 flex-col justify-end overflow-hidden bg-[rgba(104,107,130,0.08)] px-3 hover:bg-[rgba(104,107,130,0.12)] focus-within:outline focus-within:outline-2 focus-within:outline-[var(--text-primary)] ${radius}`}
+      className={`relative flex h-10 min-w-0 flex-1 flex-col justify-end bg-[rgba(104,107,130,0.08)] px-3 hover:bg-[rgba(104,107,130,0.12)] focus-within:outline focus-within:outline-2 focus-within:outline-[var(--text-primary)] ${
+        tip ? "overflow-visible" : "overflow-hidden"
+      } ${radius}`}
     >
-      <span className="pointer-events-none absolute left-3 top-1 text-xs font-normal text-[rgb(104,107,130)]">
-        {label}
+      <span
+        className={`absolute left-3 top-1 z-[1] text-xs font-normal text-[rgb(104,107,130)] ${
+          tip ? "" : "pointer-events-none"
+        }`}
+      >
+        {tip ? (
+          <InfoTip term={tip} label={label} className="text-xs font-normal" />
+        ) : (
+          label
+        )}
       </span>
       <span className="flex min-w-0 items-baseline gap-0.5 pb-1 pt-4">
         {prefix ? (

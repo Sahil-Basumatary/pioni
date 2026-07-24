@@ -74,14 +74,16 @@ export default function CategoryIndicesCard({ rows }: CategoryIndicesCardProps) 
   return (
     <div className="border-b border-[var(--card-border)]">
       <div className="m-3 flex items-center gap-2">
-        <span className="text-sm font-medium text-[var(--text-muted)]">Category indices</span>
-        <div className="relative" ref={helpRef}>
+        <span className="text-sm font-medium leading-none text-[var(--text-muted)]">
+          Category indices
+        </span>
+        <div className="relative flex items-center" ref={helpRef}>
           <button
             type="button"
             aria-label="About category indices"
             aria-expanded={helpOpen}
             onClick={() => setHelpOpen((v) => !v)}
-            className="rail-icon flex h-6 w-6 items-center justify-center rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            className="rail-icon flex h-5 w-5 items-center justify-center rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           >
             <QuestionMarkCircleIcon className="h-4 w-4" />
           </button>

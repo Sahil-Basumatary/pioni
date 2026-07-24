@@ -8,6 +8,7 @@ import {
   withCumulativeDepth,
   type DepthLevel,
 } from "./orderBookMath";
+import InfoTip from "../onboarding/InfoTip";
 
 function formatPx(raw: string | number): string {
   const n = Number(raw);
@@ -81,6 +82,7 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--card-bg)]">
       <div className="flex shrink-0 items-center gap-1 border-b border-[var(--card-border)] px-2 py-1">
+        <InfoTip term="order_book" label="Book" className="me-1 text-[11px]" />
         <button
           type="button"
           aria-label="Decrease grouping"
@@ -171,14 +173,20 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
                 <BookRow key={`a-${level.price}`} level={level} side="ask" />
               ))}
             </div>
-            <div className="my-0.5 flex shrink-0 items-center px-2 py-1.5">
-              <span className="text-[11px] text-[var(--text-muted)]">
+            <div className="my-0.5 flex shrink-0 items-center gap-1.5 px-2 py-1.5">
+              <InfoTip term="spread" className="text-[11px]" />
+              <span className="text-[11px] tabular-nums text-[var(--text-muted)]">
                 {spread != null
-                  ? `Spread: ${formatPx(spread)}${
+                  ? `${formatPx(spread)}${
                       spreadPct != null ? ` (${spreadPct.toFixed(4)}%)` : ""
                     }`
-                  : "Spread: —"}
+                  : "—"}
               </span>
+              <InfoTip
+                term="book_grouping"
+                label="Grouping"
+                className="ms-auto text-[11px]"
+              />
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
               {bids.map((level) => (
