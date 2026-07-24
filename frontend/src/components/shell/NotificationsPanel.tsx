@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { useGetMyTradesQuery } from "../../features/portfolio/portfolioApi";
 import { ActivityFillRow } from "../../features/home/ActivityFillRow";
+import TeachingEmpty from "../../features/onboarding/TeachingEmpty";
 import { CloseIcon, TablePinIcon, BellIcon } from "./shellIcons";
 
 type InboxTab = "inbox" | "alerts";
@@ -57,17 +58,19 @@ export default function NotificationsPanel({ onClose }: { onClose: () => void })
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
         {tab === "alerts" ? (
-          <EmptyState
-            title="No alerts yet"
-            body="Price and order alerts will show up here once you create them."
-          />
+          <TeachingEmpty id="notifications_alerts" size="panel" />
         ) : !isSignedIn ? (
-          <EmptyState
-            title="You are all caught up!"
-            body="Sign in from the top bar to see your paper fills and alerts here."
-          />
+          <div className="flex flex-col items-center justify-center gap-3 px-8 py-20 text-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-black/[0.04] text-[var(--text-muted)]">
+              <BellIcon className="h-8 w-8" />
+            </span>
+            <TeachingEmpty id="notifications_inbox" size="panel" />
+          </div>
         ) : isLoading ? (
-          <EmptyState title="Loading…" body="Fetching your recent fills." />
+          <div className="flex flex-col items-center justify-center gap-3 px-8 py-20 text-center">
+            <p className="text-base font-medium text-[var(--text-primary)]">Loading…</p>
+            <p className="text-sm text-[var(--text-muted)]">Fetching your recent fills.</p>
+          </div>
         ) : isError ? (
           <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
             <p className="text-sm text-[var(--text-muted)]">Couldn’t load inbox.</p>
@@ -80,10 +83,12 @@ export default function NotificationsPanel({ onClose }: { onClose: () => void })
             </button>
           </div>
         ) : !data?.length ? (
-          <EmptyState
-            title="You are all caught up!"
-            body="Your updates and alerts will show up here"
-          />
+          <div className="flex flex-col items-center justify-center gap-3 px-8 py-12 text-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-black/[0.04] text-[var(--text-muted)]">
+              <BellIcon className="h-8 w-8" />
+            </span>
+            <TeachingEmpty id="notifications_inbox" size="panel" />
+          </div>
         ) : (
           <ul className="flex list-none flex-col">
             {data.map((trade) => (
@@ -123,17 +128,5 @@ function TabChip({
     >
       {label}
     </button>
-  );
-}
-
-function EmptyState({ title, body }: { title: string; body: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-3 px-8 py-20 text-center">
-      <span className="flex h-16 w-16 items-center justify-center rounded-full bg-black/[0.04] text-[var(--text-muted)]">
-        <BellIcon className="h-8 w-8" />
-      </span>
-      <p className="text-base font-medium text-[var(--text-primary)]">{title}</p>
-      <p className="text-sm text-[var(--text-muted)]">{body}</p>
-    </div>
   );
 }

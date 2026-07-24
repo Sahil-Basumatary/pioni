@@ -3,6 +3,7 @@ import { useAuth } from "@clerk/clerk-react";
 import { ArrowTopRightIcon, ChevronDownSmallIcon } from "../components/shell/shellIcons";
 import { useGetMyTradesQuery, type PortfolioTrade } from "../features/portfolio/portfolioApi";
 import { ActivityFillRow } from "../features/home/ActivityFillRow";
+import TeachingEmpty from "../features/onboarding/TeachingEmpty";
 import { useToast } from "../features/toasts/useToast";
 import {
   LEDGER_COLUMNS,
@@ -166,10 +167,7 @@ export default function HistoryPage() {
             live={data}
           />
         ) : (
-          <EmptyState
-            title="No recent activity."
-            detail="Start trading with leverage"
-          />
+          <TeachingEmpty id="history_activity" size="panel" />
         )}
       </section>
     </div>
@@ -191,7 +189,7 @@ function LedgerTable({
     return true;
   });
   if (!rows.length) {
-    return <EmptyState title="No recent activity." detail="" />;
+    return <TeachingEmpty id="history_ledger" size="panel" />;
   }
   return (
     <div className="overflow-x-auto">
@@ -233,7 +231,7 @@ function LedgerTable({
 
 function OrdersTable() {
   if (!PAPER_ORDERS.length) {
-    return <EmptyState title="No recent activity." detail="" />;
+    return <TeachingEmpty id="history_orders" size="panel" />;
   }
   return (
     <div className="overflow-x-auto">
@@ -310,10 +308,11 @@ function TradesPanel({
         </ul>
       );
     }
+    return <TeachingEmpty id="history_trades" size="panel" />;
   }
 
   if (!PAPER_TRADES.length) {
-    return <EmptyState title="No recent activity." detail="" />;
+    return <TeachingEmpty id="history_trades" size="panel" />;
   }
 
   return (
@@ -355,13 +354,3 @@ function TradesPanel({
   );
 }
 
-function EmptyState({ title, detail }: { title: string; detail: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-1 px-4 py-16 text-center">
-      <p className="text-sm text-[var(--text-muted)]">{title}</p>
-      {detail ? (
-        <p className="text-sm font-medium text-[var(--text-primary)]">{detail}</p>
-      ) : null}
-    </div>
-  );
-}

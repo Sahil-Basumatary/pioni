@@ -14,9 +14,9 @@ import {
   type PortfolioTrade,
 } from "../portfolio/portfolioApi";
 import { baseAsset } from "../../components/shell/activityFormat";
-import { ArrowTopRightIcon } from "../../components/shell/shellIcons";
 import { formatUsd } from "../../utils/formatters";
 import InfoTip from "../onboarding/InfoTip";
+import TeachingEmpty from "../onboarding/TeachingEmpty";
 
 const OPEN_STATUSES = new Set(["OPEN", "PARTIALLY_FILLED", "NEW", "PENDING"]);
 const CLOSED_STATUSES = new Set([
@@ -30,15 +30,6 @@ const CLOSED_STATUSES = new Set([
 type BottomTab = "balances" | "positions" | "orders" | "closed" | "history";
 
 export type { BottomTab };
-
-function focusOrderTicket() {
-  const region = document.querySelector('[aria-label="Order form"]');
-  const input =
-    region?.querySelector<HTMLInputElement>('input[aria-label="Quantity BTC"]') ??
-    region?.querySelector<HTMLInputElement>("input");
-  region?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  input?.focus();
-}
 
 export default function TradingBottomPanel({
   symbol,
@@ -116,7 +107,7 @@ function BalancesTab() {
     skip: !isSignedIn,
   });
   if (!isSignedIn) {
-    return <EmptyTrading message="No balances yet." />;
+    return <TeachingEmpty id="balances" />;
   }
   if (isLoading) return <Empty copy="Loading balances…" />;
   if (isError || !data) {
@@ -185,7 +176,7 @@ function PositionsTab() {
     () => (data ?? []).filter((p) => Number(p.quantity) !== 0),
     [data],
   );
-  if (!isSignedIn) return <EmptyTrading message="No open positions." />;
+  if (!isSignedIn) return <TeachingEmpty id="positions" />;
   if (isLoading) return <Empty copy="Loading positions…" />;
   if (isError) {
     return (
@@ -201,7 +192,7 @@ function PositionsTab() {
       </div>
     );
   }
-  if (!open.length) return <EmptyTrading message="No open positions." />;
+  if (!open.length) return <TeachingEmpty id="positions" />;
   return (
     <table className="w-full min-w-[560px] border-collapse text-left text-xs">
       <thead>
@@ -277,10 +268,8 @@ function OrdersTab({
       : list.filter((o) => CLOSED_STATUSES.has(o.status.toUpperCase()));
   }, [data, mode]);
   if (!isSignedIn) {
-    return mode === "open" ? (
-      <EmptyTrading message="No open orders." />
-    ) : (
-      <Empty copy="No closed orders." />
+    return (
+      <TeachingEmpty id={mode === "open" ? "open_orders" : "closed_orders"} />
     );
   }
   if (isLoading) {
@@ -289,11 +278,7 @@ function OrdersTab({
   if (isError) {
     return (
       <div className="flex flex-col items-center gap-2 py-8">
-        {mode === "open" ? (
-          <EmptyTrading message="No open orders." />
-        ) : (
-          <Empty copy="No closed orders." />
-        )}
+        <Empty copy="Couldn’t load orders." />
         <p className="text-[11px] text-[var(--text-muted)]">
           Live orders unavailable right now.
         </p>
@@ -308,10 +293,8 @@ function OrdersTab({
     );
   }
   if (!rows.length) {
-    return mode === "open" ? (
-      <EmptyTrading message="No open orders." />
-    ) : (
-      <Empty copy="No closed orders." />
+    return (
+      <TeachingEmpty id={mode === "open" ? "open_orders" : "closed_orders"} />
     );
   }
   return (
@@ -377,7 +360,7 @@ function TradesTab({ symbol }: { symbol: string }) {
     { symbol, limit: 50 },
     { skip: !isSignedIn },
   );
-  if (!isSignedIn) return <EmptyTrading message="No trades." />;
+  if (!isSignedIn) return <TeachingEmpty id="trades" />;
   if (isLoading) return <Empty copy="Loading trades…" />;
   if (isError) {
     return (
@@ -394,7 +377,7 @@ function TradesTab({ symbol }: { symbol: string }) {
     );
   }
   const rows = data ?? [];
-  if (!rows.length) return <EmptyTrading message="No trades." />;
+  if (!rows.length) return <TeachingEmpty id="trades" />;
   return (
     <table className="w-full min-w-[640px] border-collapse text-left text-xs">
       <thead>
@@ -444,22 +427,6 @@ function TradeRow({ trade }: { trade: PortfolioTrade }) {
       </td>
       <td className="px-3 py-2 text-[var(--text-muted)]">{timeLabel}</td>
     </tr>
-  );
-}
-
-function EmptyTrading({ message }: { message: string }) {
-  return (
-    <p className="px-4 py-8 text-center text-xs text-[var(--text-muted)]">
-      {message}{" "}
-      <button
-        type="button"
-        onClick={focusOrderTicket}
-        className="rail-icon inline-flex items-center gap-0.5 bg-transparent p-0 font-medium text-[var(--text-primary)] hover:bg-transparent hover:underline"
-      >
-        Start trading
-        <ArrowTopRightIcon className="h-3.5 w-3.5" />
-      </button>
-    </p>
   );
 }
 

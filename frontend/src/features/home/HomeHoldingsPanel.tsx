@@ -7,6 +7,7 @@ import {
 import { useListOrdersQuery, type Order } from "../orders/ordersApi";
 import { useLiveMarketTrade } from "../market/liveMarketStore";
 import { assetIconUrl, baseAsset } from "../../components/shell/activityFormat";
+import TeachingEmpty from "../onboarding/TeachingEmpty";
 import { PAPER_BTC_MID, PAPER_HOME_CASH } from "./paperHomeDemo";
 
 type HoldingsTab = "balances" | "orders" | "positions";
@@ -216,9 +217,13 @@ function PositionsTable({
   loading: boolean;
   signedIn: boolean;
 }) {
-  if (!signedIn) return <Empty copy="Sign in to see open positions." />;
+  if (!signedIn) {
+    return <TeachingEmpty id="home_positions" size="panel" />;
+  }
   if (loading) return <Empty copy="Loading positions…" />;
-  if (!positions.length) return <Empty copy="No open positions yet." />;
+  if (!positions.length) {
+    return <TeachingEmpty id="home_positions" size="panel" />;
+  }
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[640px] border-collapse text-left">
@@ -258,7 +263,9 @@ function OrdersTable({ signedIn }: { signedIn: boolean }) {
     { limit: 50 },
     { skip: !signedIn },
   );
-  if (!signedIn) return <Empty copy="Sign in to see open orders." />;
+  if (!signedIn) {
+    return <TeachingEmpty id="home_orders" size="panel" />;
+  }
   if (isLoading) return <Empty copy="Loading orders…" />;
   if (isError) {
     return (
@@ -276,7 +283,7 @@ function OrdersTable({ signedIn }: { signedIn: boolean }) {
   }
   const rows = (data ?? []).filter((o) => OPEN_STATUSES.has(o.status.toUpperCase()));
   if (!rows.length) {
-    return <Empty copy="No open orders — place a paper trade from Trade." />;
+    return <TeachingEmpty id="home_orders" size="panel" />;
   }
   return (
     <div className="overflow-x-auto">
