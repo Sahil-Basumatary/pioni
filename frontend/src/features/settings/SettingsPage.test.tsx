@@ -57,7 +57,12 @@ vi.mock("../portfolio/portfolioApi", () => ({
 }));
 
 function OpenSettings({
-  section = "account" as "account" | "preferences" | "notifications",
+  section = "account" as
+    | "account"
+    | "preferences"
+    | "notifications"
+    | "limits"
+    | "paper",
 }) {
   const { openSettings } = useSettings();
   return (
@@ -227,5 +232,27 @@ describe("SettingsDialog", () => {
       screen.getByRole("switch", { name: /Show toast pop-ups/i }),
     ).toBeTruthy();
     expect(screen.queryByText("Coming soon")).toBeNull();
+  });
+
+  it("renders static paper funding limit cards", () => {
+    render(
+      <MemoryRouter>
+        <SettingsProvider>
+          <OpenSettings section="limits" />
+          <SettingsDialog />
+        </SettingsProvider>
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    expect(screen.getByRole("heading", { name: "Limits" })).toBeTruthy();
+    expect(
+      screen.getByText(/Funding limits do not apply/i),
+    ).toBeTruthy();
+    expect(screen.getByText("Fiat deposits")).toBeTruthy();
+    expect(screen.getByText("Fiat withdrawals")).toBeTruthy();
+    expect(screen.getByText("Crypto deposits")).toBeTruthy();
+    expect(screen.getByText("Crypto withdrawals")).toBeTruthy();
+    expect(screen.getAllByText("Unlimited").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText("Not applicable").length).toBeGreaterThanOrEqual(2);
   });
 });

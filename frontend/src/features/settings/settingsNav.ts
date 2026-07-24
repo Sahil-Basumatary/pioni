@@ -2,7 +2,8 @@ export type SettingsSectionId =
   | "account"
   | "preferences"
   | "paper"
-  | "notifications";
+  | "notifications"
+  | "limits";
 
 export type SettingsNavItem = {
   id: SettingsSectionId;
@@ -34,6 +35,12 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
     id: "paper",
     label: "Paper trading",
     description: "Manage your paper balances and onboarding",
+    group: "Trading",
+  },
+  {
+    id: "limits",
+    label: "Limits",
+    description: "View your paper deposit and withdrawal limits",
     group: "Trading",
   },
 ];

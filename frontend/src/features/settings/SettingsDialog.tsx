@@ -5,8 +5,11 @@ import { useAuth, useClerk, useUser } from "@clerk/clerk-react";
 import {
   BellIcon,
   CloseSmallIcon,
+  CoinsIcon,
+  DepositIcon,
   SettingsSliderHorizontalIcon,
   UserIcon,
+  WithdrawIcon,
 } from "../../components/shell/shellIcons";
 import { useResetPortfolioMutation } from "../portfolio/portfolioApi";
 import {
@@ -31,6 +34,7 @@ import {
   type NotificationPrefs,
   type NotifyMode,
 } from "./notificationPrefs";
+import { PAPER_LIMIT_CARDS } from "./paperLimits";
 import {
   NUMBER_FORMAT_OPTIONS,
   TIMEZONE_OPTIONS,
@@ -49,6 +53,10 @@ function navIcon(id: SettingsSectionId) {
       return SettingsSliderHorizontalIcon;
     case "notifications":
       return BellIcon;
+    case "limits":
+      return CoinsIcon;
+    case "paper":
+      return DepositIcon;
     default:
       return UserIcon;
   }
@@ -149,6 +157,7 @@ export default function SettingsDialog() {
             {section === "preferences" && <PreferencesSection />}
             {section === "paper" && <PaperSection />}
             {section === "notifications" && <NotificationsSection />}
+            {section === "limits" && <LimitsSection />}
           </div>
         </section>
       </div>
@@ -741,6 +750,66 @@ function NotificationsSection() {
       >
         Reset notification preferences
       </button>
+    </div>
+  );
+}
+
+function LimitsSection() {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="rounded-[10px] border border-[rgba(42,28,0,0.1)] bg-[#F9F8F7] p-4">
+        <p className="text-sm font-semibold text-[#2C2C2B]">Paper trading</p>
+        <p className="mt-1 text-sm text-[#787774]">
+          Funding limits do not apply. Balances, deposits, and withdrawals on this
+          account are simulated and are not real money.
+        </p>
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        {PAPER_LIMIT_CARDS.map((card) => {
+          const Icon = card.direction === "Deposit" ? DepositIcon : WithdrawIcon;
+          return (
+            <article
+              key={card.id}
+              className="flex flex-col rounded-[10px] border border-[rgba(42,28,0,0.1)] p-4"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-[#2C2C2B]">{card.title}</p>
+                  <p className="mt-0.5 text-xs text-[#A19E99]">
+                    {card.asset} · {card.period}
+                  </p>
+                </div>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black/[0.04] text-[#6B6B6B]">
+                  <Icon className="h-4 w-4" />
+                </span>
+              </div>
+              <dl className="mt-4 flex flex-col gap-2">
+                <div className="flex items-baseline justify-between gap-3">
+                  <dt className="text-sm text-[#787774]">Remaining</dt>
+                  <dd className="text-sm font-semibold text-[#2C2C2B]">{card.remaining}</dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-3">
+                  <dt className="text-sm text-[#787774]">Used</dt>
+                  <dd className="text-sm font-medium text-[#2C2C2B]">{card.used}</dd>
+                </div>
+              </dl>
+              <div
+                className="mt-3 h-1.5 overflow-hidden rounded-full bg-[rgba(28,19,1,0.08)]"
+                aria-hidden
+              >
+                <div
+                  className={`h-full rounded-full ${
+                    card.remaining === "Unlimited"
+                      ? "w-full bg-[var(--accent)]/35"
+                      : "w-0 bg-[rgba(28,19,1,0.18)]"
+                  }`}
+                />
+              </div>
+              <p className="mt-3 text-xs text-[#A19E99]">{card.note}</p>
+            </article>
+          );
+        })}
+      </div>
     </div>
   );
 }
