@@ -15,25 +15,25 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
   {
     id: "account",
     label: "Account",
-    description: "Manage your profile, login information, and paper identity.",
+    description: "Manage your profile, login information, and devices",
     group: "Account",
   },
   {
     id: "preferences",
     label: "Preferences",
-    description: "Choose how you want Pioni to look and behave.",
+    description: "Choose how you want Pioni to look and behave",
     group: "Account",
   },
   {
     id: "notifications",
     label: "Notifications",
-    description: "Fill alerts and inbox preferences.",
+    description: "Choose your notification preferences",
     group: "Account",
   },
   {
     id: "paper",
     label: "Paper trading",
-    description: "Reset balances and replay onboarding.",
+    description: "Manage your paper balances and onboarding",
     group: "Trading",
   },
 ];

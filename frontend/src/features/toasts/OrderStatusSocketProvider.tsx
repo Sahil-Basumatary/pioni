@@ -6,6 +6,7 @@ import { ordersApi } from "../orders/ordersApi";
 import { portfolioApi } from "../portfolio/portfolioApi";
 import { pushToast } from "./toastSlice";
 import { toastFromOrderUpdate, type OrderStatusUpdate } from "./orderToastCopy";
+import { shouldShowOrderToast } from "../settings/notificationPrefs";
 import {
   setWatchedStatus,
   watchedOrderIds,
@@ -79,7 +80,9 @@ export default function OrderStatusSocketProvider({
         for (const k of keep) seen.add(k);
       }
       setWatchedStatus(update.order_id, update.status);
-      dispatch(pushToast(toastFromOrderUpdate(update)));
+      if (shouldShowOrderToast(update.status)) {
+        dispatch(pushToast(toastFromOrderUpdate(update)));
+      }
       dispatch(
         portfolioApi.util.invalidateTags([
           "Portfolio",

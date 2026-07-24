@@ -3,12 +3,14 @@ import { useAuth } from "@clerk/clerk-react";
 import { useGetMyTradesQuery } from "../../features/portfolio/portfolioApi";
 import { ActivityFillRow } from "../../features/home/ActivityFillRow";
 import TeachingEmpty from "../../features/onboarding/TeachingEmpty";
+import { useSettings } from "../../features/settings/settingsContext";
 import { CloseIcon, TablePinIcon, BellIcon } from "./shellIcons";
 
 type InboxTab = "inbox" | "alerts";
 
 export default function NotificationsPanel({ onClose }: { onClose: () => void }) {
   const { isSignedIn } = useAuth();
+  const { openSettings } = useSettings();
   const [tab, setTab] = useState<InboxTab>("inbox");
   const { data, isLoading, isError, refetch } = useGetMyTradesQuery(
     { limit: 30 },
@@ -58,7 +60,19 @@ export default function NotificationsPanel({ onClose }: { onClose: () => void })
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
         {tab === "alerts" ? (
-          <TeachingEmpty id="notifications_alerts" size="panel" />
+          <div className="flex flex-col items-center gap-4 px-6 py-12 text-center">
+            <TeachingEmpty id="notifications_alerts" size="panel" />
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                openSettings("notifications");
+              }}
+              className="rounded-xl bg-[var(--accent)] px-3.5 py-2 text-sm font-medium text-white"
+            >
+              Open notification settings
+            </button>
+          </div>
         ) : !isSignedIn ? (
           <div className="flex flex-col items-center justify-center gap-3 px-8 py-20 text-center">
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-black/[0.04] text-[var(--text-muted)]">

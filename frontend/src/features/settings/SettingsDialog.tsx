@@ -24,6 +24,14 @@ import {
   type DisplayPrefs,
 } from "./displayPrefs";
 import {
+  DEFAULT_NOTIFICATION_PREFS,
+  NOTIFY_MODE_OPTIONS,
+  readNotificationPrefs,
+  writeNotificationPrefs,
+  type NotificationPrefs,
+  type NotifyMode,
+} from "./notificationPrefs";
+import {
   NUMBER_FORMAT_OPTIONS,
   TIMEZONE_OPTIONS,
   readRegionalPrefs,
@@ -199,7 +207,7 @@ function AccountSection() {
     return (
       <div className="flex flex-col items-start gap-3">
         <p className="text-sm text-[#787774]">
-          Sign in to manage your paper profile and account security.
+          Sign in to manage your profile and account security.
         </p>
         <button
           type="button"
@@ -257,7 +265,7 @@ function AccountSection() {
               </button>
             )}
             <p className="mt-1 text-xs text-[#787774]">
-              Paper trading only — simulated funds, not real money.
+              Paper trading only. Funds are simulated and are not real money.
             </p>
           </div>
         </div>
@@ -271,7 +279,7 @@ function AccountSection() {
             label="Public ID"
             value={publicId}
             mono
-            hint="Use this ID when you need to share with support so your account stays secure."
+            hint="Use this ID when you need to share with support so your account is always secure."
             action={
               <button
                 type="button"
@@ -285,7 +293,7 @@ function AccountSection() {
           <DetailRow
             label="Verification"
             value="Paper verified"
-            hint="Practice account — no real-money KYC. High simulated limits for learning."
+            hint="High simulated limits for learning. No real-money identity verification is required."
           />
         </div>
       </div>
@@ -295,7 +303,11 @@ function AccountSection() {
       <div className="border-t border-[rgba(42,28,0,0.07)] pt-6">
         <h3 className="text-base font-semibold text-[#2C2C2B]">Trading platform</h3>
         <div className="mt-4">
-          <DetailRow label="Default" value="Pioni" hint="Paper spot trading workspace." />
+          <DetailRow
+            label="Default"
+            value="Pioni"
+            hint="Your default paper trading workspace."
+          />
         </div>
       </div>
 
@@ -347,10 +359,10 @@ function PreferencesSection() {
             aria-label="Theme"
             value="light"
             options={THEME_OPTIONS}
-            onChange={() => toast("Pioni stays on the light monochrome theme")}
+            onChange={() => toast("Light is the only available theme")}
           />
           <p className="mt-2 text-xs text-[#A19E99]">
-            Light monochrome is fixed for brand fidelity.
+            Pioni uses a light monochrome theme.
           </p>
         </div>
       </section>
@@ -360,19 +372,19 @@ function PreferencesSection() {
         <div className="mt-2 flex flex-col">
           <ToggleRow
             title="Confirm before submitting orders"
-            body="Ask for a quick confirm on market and limit submits."
+            body="Ask for confirmation before market and limit orders are submitted."
             checked={prefs.confirmOrders}
             onChange={(checked) => update({ confirmOrders: checked })}
           />
           <ToggleRow
             title="Show jargon InfoTips"
-            body="Dashed underlines that explain spread, mark price, and more."
+            body="Add dashed underlines that explain trading terms like spread and mark price."
             checked={prefs.showInfoTips}
             onChange={(checked) => update({ showInfoTips: checked })}
           />
           <ToggleRow
             title="Play a sound on fills"
-            body="Soft chime when a paper order fills or partially fills."
+            body="A soft chime plays when a paper order fills or partially fills."
             checked={prefs.soundOnFill}
             onChange={(checked) => update({ soundOnFill: checked })}
           />
@@ -391,13 +403,13 @@ function PreferencesSection() {
               aria-label="Language"
               value="en-US"
               options={[{ value: "en-US", label: "English (US)" }]}
-              onChange={() => toast("English (US) is the current language")}
+              onChange={() => toast("English (US) is selected")}
             />
           </div>
           <div>
             <p className="text-sm font-semibold text-[#2C2C2B]">Currency</p>
             <p className="mt-0.5 text-sm text-[#787774]">
-              Paper balances are denominated in USD
+              Paper balances are denominated in USD.
             </p>
             <p className="mt-2 text-sm font-medium text-[#2C2C2B]">USD</p>
           </div>
@@ -419,7 +431,7 @@ function PreferencesSection() {
           <div>
             <p className="text-sm font-semibold text-[#2C2C2B]">Time zone</p>
             <p className="mt-0.5 text-sm text-[#787774]">
-              Reminders and timestamps use this zone
+              Choose your time zone
             </p>
             <SettingsSelect
               aria-label="Time zone"
@@ -430,6 +442,9 @@ function PreferencesSection() {
               }))}
               onChange={(timezone) => saveRegional({ timezone })}
             />
+            <p className="mt-2 text-xs text-[#A19E99]">
+              Reminders, notifications, and timestamps use this time zone.
+            </p>
           </div>
         </div>
       </section>
@@ -439,7 +454,7 @@ function PreferencesSection() {
         <div className="mt-4">
           <p className="text-sm font-semibold text-[#2C2C2B]">Open on start</p>
           <p className="mt-0.5 text-sm text-[#787774]">
-            Choose what opens when you land on Pioni
+            Choose what opens when you start Pioni
           </p>
           <SettingsSelect
             aria-label="Open on start"
@@ -484,7 +499,7 @@ function PaperSection() {
     return (
       <div className="flex flex-col items-start gap-3">
         <p className="text-sm text-[#787774]">
-          Sign in to reset paper balances or replay the tour.
+          Sign in to reset paper balances or replay the product tour.
         </p>
         <button
           type="button"
@@ -544,7 +559,7 @@ function PaperSection() {
     <div className="flex flex-col gap-4">
       <ActionCard
         title="Replay product tour"
-        body="Walk through chart, ticket, book, and positions again."
+        body="Walk through the chart, order ticket, book, and positions again."
         actionLabel={busy ? "Starting…" : "Start tour"}
         disabled={busy}
         onClick={() => void replayTour()}
@@ -553,8 +568,8 @@ function PaperSection() {
         title="Reset getting-started checklist"
         body={
           onboarding?.checklist_completed_at
-            ? "Checklist is complete — reopen it to practice again."
-            : "Clears tour / first-trade / sentiment checklist ticks."
+            ? "Your checklist is complete. Reset it to practice the steps again."
+            : "Clear checklist progress for the tour, first trade, and sentiment steps."
         }
         actionLabel="Reset checklist"
         disabled={busy}
@@ -581,7 +596,7 @@ function PaperSection() {
       <div className="rounded-[10px] border border-rose-200 bg-rose-50/50 p-4">
         <p className="text-sm font-medium text-[#2C2C2B]">Reset paper account</p>
         <p className="mt-1 text-sm text-[#787774]">
-          Restores starting cash and clears paper positions, orders, and fills.
+          Restore starting cash and clear paper positions, orders, and fills.
         </p>
         {!confirmReset ? (
           <button
@@ -618,12 +633,114 @@ function PaperSection() {
 }
 
 function NotificationsSection() {
+  const toast = useToast();
+  const { setSection } = useSettings();
+  const [prefs, setPrefs] = useState<NotificationPrefs>(() =>
+    readNotificationPrefs(),
+  );
+
+  function update(next: Partial<NotificationPrefs>) {
+    const merged = { ...prefs, ...next };
+    setPrefs(merged);
+    writeNotificationPrefs(merged);
+    toast("Notification preferences saved");
+  }
+
   return (
-    <div className="rounded-[10px] border border-dashed border-[rgba(42,28,0,0.12)] px-4 py-8 text-center">
-      <p className="text-sm font-medium text-[#2C2C2B]">Coming soon</p>
-      <p className="mt-1 text-sm text-[#787774]">
-        Fill toasts already land in the right-rail inbox. Per-channel prefs land next.
-      </p>
+    <div className="flex flex-col gap-8">
+      <section>
+        <h3 className="text-base font-semibold text-[#2C2C2B]">Preference</h3>
+        <div className="mt-4">
+          <p className="text-sm font-semibold text-[#2C2C2B]">Trading toasts</p>
+          <p className="mt-0.5 text-sm text-[#787774]">
+            Choose which order updates appear as pop-up toasts
+          </p>
+          <SettingsSelect
+            aria-label="Trading toasts"
+            value={prefs.mode}
+            options={NOTIFY_MODE_OPTIONS}
+            onChange={(mode: NotifyMode) => update({ mode })}
+          />
+        </div>
+        <div className="mt-2">
+          <ToggleRow
+            title="Show toast pop-ups"
+            body="When off, trading updates still refresh balances and the inbox. Toast cards will not appear."
+            checked={prefs.toastPopups}
+            onChange={(toastPopups) => update({ toastPopups })}
+          />
+        </div>
+      </section>
+
+      {prefs.mode === "custom" ? (
+        <section className="border-t border-[rgba(42,28,0,0.07)] pt-6">
+          <h3 className="text-base font-semibold text-[#2C2C2B]">Customization</h3>
+          <p className="mt-1 text-sm text-[#787774]">
+            Customize which order events trigger a toast
+          </p>
+          <div className="mt-2 flex flex-col">
+            <ToggleRow
+              title="Fills"
+              body="Notify when an order is fully filled."
+              checked={prefs.fills}
+              onChange={(fills) => update({ fills })}
+            />
+            <ToggleRow
+              title="Partial fills"
+              body="Notify when an order is partially filled."
+              checked={prefs.partialFills}
+              onChange={(partialFills) => update({ partialFills })}
+            />
+            <ToggleRow
+              title="Cancellations"
+              body="Notify when an order is canceled."
+              checked={prefs.cancellations}
+              onChange={(cancellations) => update({ cancellations })}
+            />
+            <ToggleRow
+              title="Rejections"
+              body="Notify when an order is rejected."
+              checked={prefs.rejections}
+              onChange={(rejections) => update({ rejections })}
+            />
+            <ToggleRow
+              title="Placements"
+              body="Notify on new and open order status updates."
+              checked={prefs.placements}
+              onChange={(placements) => update({ placements })}
+            />
+          </div>
+        </section>
+      ) : null}
+
+      <section className="border-t border-[rgba(42,28,0,0.07)] pt-6">
+        <h3 className="text-base font-semibold text-[#2C2C2B]">Inbox</h3>
+        <p className="mt-1 text-sm text-[#787774]">
+          Recent fills stay in the right-rail inbox. Price alerts are coming later.
+        </p>
+        <p className="mt-3 text-sm text-[#787774]">
+          Fill sound is managed in Preferences under Trading.
+        </p>
+        <button
+          type="button"
+          onClick={() => setSection("preferences")}
+          className="mt-3 inline-flex h-7 items-center rounded-[6px] border border-[rgba(28,19,1,0.11)] px-2 text-sm font-medium text-[#2C2C2B] hover:bg-[rgba(42,28,0,0.045)]"
+        >
+          Open Preferences
+        </button>
+      </section>
+
+      <button
+        type="button"
+        onClick={() => {
+          setPrefs(DEFAULT_NOTIFICATION_PREFS);
+          writeNotificationPrefs(DEFAULT_NOTIFICATION_PREFS);
+          toast("Notification preferences reset");
+        }}
+        className="self-start rounded-[6px] px-3 py-1.5 text-sm text-[#787774] hover:bg-[rgba(42,28,0,0.045)] hover:text-[#2C2C2B]"
+      >
+        Reset notification preferences
+      </button>
     </div>
   );
 }

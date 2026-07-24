@@ -57,7 +57,7 @@ vi.mock("../portfolio/portfolioApi", () => ({
 }));
 
 function OpenSettings({
-  section = "account" as "account" | "preferences",
+  section = "account" as "account" | "preferences" | "notifications",
 }) {
   const { openSettings } = useSettings();
   return (
@@ -155,6 +155,22 @@ describe("SettingsDialog", () => {
     expect(screen.queryByRole("button", { name: "Close account" })).toBeNull();
   });
 
+  it("requires typing the sudo delete command before account deletion", () => {
+    renderDialog();
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete my account" }));
+    expect(screen.getByRole("dialog", { name: "Delete my account" })).toBeTruthy();
+    expect(screen.getByText('sudo delete "sahil.test"')).toBeTruthy();
+    const buttons = screen.getAllByRole("button", { name: "Delete my account" });
+    const confirmSubmit = buttons.find((btn) => btn.getAttribute("type") === "submit");
+    expect(confirmSubmit).toBeTruthy();
+    expect((confirmSubmit as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText("Delete confirmation command"), {
+      target: { value: 'sudo delete "sahil.test"' },
+    });
+    expect((confirmSubmit as HTMLButtonElement).disabled).toBe(false);
+  });
+
   it("keeps timezone and number format only under preferences", () => {
     render(
       <MemoryRouter>
@@ -192,5 +208,24 @@ describe("SettingsDialog", () => {
       screen.getByRole("switch", { name: /Confirm before submitting orders/i }),
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Open on start" })).toBeTruthy();
+  });
+
+  it("renders notification preference controls", () => {
+    render(
+      <MemoryRouter>
+        <SettingsProvider>
+          <OpenSettings section="notifications" />
+          <SettingsDialog />
+        </SettingsProvider>
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    expect(screen.getByRole("heading", { name: "Notifications" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Preference" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Trading toasts" })).toBeTruthy();
+    expect(
+      screen.getByRole("switch", { name: /Show toast pop-ups/i }),
+    ).toBeTruthy();
+    expect(screen.queryByText("Coming soon")).toBeNull();
   });
 });

@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import {
   useClerk,
   useReverification,
@@ -6,6 +7,7 @@ import {
   useUser,
 } from "@clerk/clerk-react";
 import { useToast } from "../toasts/useToast";
+import { deleteAccountCommand } from "./deleteAccountCommand";
 import { useSettings } from "./settingsContext";
 
 type Panel = null | "email" | "password" | "totp" | "passkeys" | "delete";
@@ -111,6 +113,7 @@ export default function AccountSecurity() {
   const [newPassword, setNewPassword] = useState("");
   const [totp, setTotp] = useState<TotpSetup | null>(null);
   const [totpCode, setTotpCode] = useState("");
+  const [deleteConfirmInput, setDeleteConfirmInput] = useState("");
 
   const updatePassword = useReverification(
     (params: { currentPassword: string; newPassword: string }) =>
@@ -159,6 +162,12 @@ export default function AccountSecurity() {
     setNewPassword("");
     setTotp(null);
     setTotpCode("");
+    setDeleteConfirmInput("");
+  }
+
+  function closeDeleteConfirm() {
+    setPanel(null);
+    setDeleteConfirmInput("");
   }
 
   async function onAddEmail(e: FormEvent) {
@@ -292,10 +301,27 @@ export default function AccountSecurity() {
     }
   }
 
-  async function onDeleteAccount() {
+  async function onDeleteAccount(e?: FormEvent) {
+    e?.preventDefault();
+    if (!user) return;
+    const username =
+      user.username?.trim() ||
+      user.primaryEmailAddress?.emailAddress ||
+      user.emailAddresses[0]?.emailAddress ||
+      "";
+    if (!username) {
+      toast("Couldn’t resolve username for delete confirmation");
+      return;
+    }
+    const expected = deleteAccountCommand(username);
+    if (deleteConfirmInput !== expected) {
+      toast("Type the delete command exactly to continue");
+      return;
+    }
     setBusy(true);
     try {
       await deleteUser();
+      closeDeleteConfirm();
       closeSettings();
       toast("Account deleted");
       await clerk.signOut({ redirectUrl: "/home" });
@@ -339,8 +365,19 @@ export default function AccountSecurity() {
 
   const totpBody = user.totpEnabled
     ? "You have two-step verification enabled"
-    : "Add an authenticator app for an extra sign-in step";
+    : "Add an authenticator app for an extra layer of security";
   const passkeyCount = user.passkeys?.length ?? 0;
+  const deleteUsername =
+    user.username?.trim() ||
+    user.primaryEmailAddress?.emailAddress ||
+    user.emailAddresses[0]?.emailAddress ||
+    "";
+  const expectedDeleteCommand = deleteUsername
+    ? deleteAccountCommand(deleteUsername)
+    : "";
+  const deleteCommandMatches =
+    Boolean(expectedDeleteCommand) &&
+    deleteConfirmInput === expectedDeleteCommand;
 
   return (
     <div className="flex flex-col gap-8 border-t border-[rgba(42,28,0,0.07)] pt-6">
@@ -570,24 +607,92 @@ export default function AccountSecurity() {
       <div className="border-t border-[rgba(42,28,0,0.07)] pt-6">
         <h3 className="text-base font-semibold text-[#2C2C2B]">Delete my account</h3>
         <p className="mt-1 text-sm text-[#787774]">
-          Permanently delete your account. You’ll no longer be able to access this
-          paper profile.
+          Permanently delete your account and remove access to this paper profile.
         </p>
-        {panel === "delete" ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            <SettingsBtn danger disabled={busy} onClick={() => void onDeleteAccount()}>
-              {busy ? "Deleting…" : "Confirm delete"}
-            </SettingsBtn>
-            <SettingsBtn onClick={() => setPanel(null)}>Cancel</SettingsBtn>
-          </div>
-        ) : (
-          <div className="mt-3">
-            <SettingsBtn danger onClick={() => openPanel("delete")}>
-              Delete my account
-            </SettingsBtn>
-          </div>
-        )}
+        <div className="mt-3">
+          <SettingsBtn
+            danger
+            onClick={() => {
+              setDeleteConfirmInput("");
+              setPanel("delete");
+            }}
+          >
+            Delete my account
+          </SettingsBtn>
+        </div>
       </div>
+
+      {panel === "delete"
+        ? createPortal(
+            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+              <button
+                type="button"
+                aria-label="Dismiss delete confirmation"
+                className="absolute inset-0 bg-[rgba(15,15,15,0.6)]"
+                onClick={closeDeleteConfirm}
+              />
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="delete-account-title"
+                className="relative z-[1] w-full max-w-[420px] rounded-[12px] bg-white p-6 shadow-[0_24px_48px_rgba(25,25,25,0.24),0_4px_12px_rgba(25,25,25,0.14),0_0_0_1px_rgba(42,28,0,0.07)]"
+              >
+                <h3
+                  id="delete-account-title"
+                  className="text-base font-semibold text-[#2C2C2B]"
+                >
+                  Delete my account
+                </h3>
+                <p className="mt-1 text-sm text-[#787774]">
+                  This cannot be undone. Type the command below exactly to confirm.
+                </p>
+                {expectedDeleteCommand ? (
+                  <code className="mt-3 block break-all rounded-[8px] bg-black/[0.04] px-3 py-2 font-mono text-xs text-[#2C2C2B]">
+                    {expectedDeleteCommand}
+                  </code>
+                ) : (
+                  <p className="mt-3 text-sm text-[#E56458]">
+                    No username is available for this account.
+                  </p>
+                )}
+                <form
+                  onSubmit={(e) => void onDeleteAccount(e)}
+                  className="mt-4 flex flex-col gap-3"
+                >
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-sm font-semibold text-[#2C2C2B]">
+                      Confirmation command
+                    </span>
+                    <input
+                      type="text"
+                      autoFocus
+                      autoComplete="off"
+                      spellCheck={false}
+                      value={deleteConfirmInput}
+                      onChange={(e) => setDeleteConfirmInput(e.target.value)}
+                      placeholder={
+                        expectedDeleteCommand || 'sudo delete "username"'
+                      }
+                      aria-label="Delete confirmation command"
+                      className="h-9 w-full rounded-[6px] border border-[rgba(42,28,0,0.12)] px-2.5 font-mono text-sm text-[#2C2C2B]"
+                    />
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    <SettingsBtn
+                      type="submit"
+                      danger
+                      disabled={busy || !deleteCommandMatches}
+                    >
+                      {busy ? "Deleting…" : "Delete my account"}
+                    </SettingsBtn>
+                    <SettingsBtn onClick={closeDeleteConfirm}>Cancel</SettingsBtn>
+                  </div>
+                </form>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
 
       <div className="border-t border-[rgba(42,28,0,0.07)] pt-6">
         <div className="flex items-start justify-between gap-4">
