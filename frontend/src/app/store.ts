@@ -7,6 +7,7 @@ import { marketApi } from "../features/market/marketApi";
 import { portfolioApi } from "../features/portfolio/portfolioApi";
 import { ordersApi } from "../features/orders/ordersApi";
 import { onboardingApi } from "../features/onboarding/onboardingApi";
+import { apiKeysApi } from "../features/settings/apiKeysApi";
 
 const rootReducer = combineReducers({
   instrument: instrumentReducer,
@@ -16,6 +17,7 @@ const rootReducer = combineReducers({
   [portfolioApi.reducerPath]: portfolioApi.reducer,
   [ordersApi.reducerPath]: ordersApi.reducer,
   [onboardingApi.reducerPath]: onboardingApi.reducer,
+  [apiKeysApi.reducerPath]: apiKeysApi.reducer,
 });
 
 export function setupStore(preloadedState?: Partial<RootState>) {
@@ -27,6 +29,7 @@ export function setupStore(preloadedState?: Partial<RootState>) {
         portfolioApi.middleware,
         ordersApi.middleware,
         onboardingApi.middleware,
+        apiKeysApi.middleware,
       ),
     preloadedState,
   });

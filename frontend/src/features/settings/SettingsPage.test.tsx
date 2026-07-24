@@ -56,13 +56,20 @@ vi.mock("../portfolio/portfolioApi", () => ({
   useResetPortfolioMutation: () => [vi.fn(), { isLoading: false }],
 }));
 
+vi.mock("./apiKeysApi", () => ({
+  useGetMyApiKeysQuery: () => ({ data: [], isLoading: false }),
+  useCreateMyApiKeyMutation: () => [vi.fn(), { isLoading: false }],
+  useRevokeMyApiKeyMutation: () => [vi.fn(), { isLoading: false }],
+}));
+
 function OpenSettings({
   section = "account" as
     | "account"
     | "preferences"
     | "notifications"
     | "limits"
-    | "paper",
+    | "paper"
+    | "connections",
 }) {
   const { openSettings } = useSettings();
   return (
@@ -254,5 +261,22 @@ describe("SettingsDialog", () => {
     expect(screen.getByText("Crypto withdrawals")).toBeTruthy();
     expect(screen.getAllByText("Unlimited").length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText("Not applicable").length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("renders connections and api keys section chrome", () => {
+    render(
+      <MemoryRouter>
+        <SettingsProvider>
+          <OpenSettings section="connections" />
+          <SettingsDialog />
+        </SettingsProvider>
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    expect(screen.getByRole("heading", { name: "Connections & API" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Connected apps" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "API keys" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Create API key" })).toBeTruthy();
+    expect(screen.getByText("No connected apps")).toBeTruthy();
   });
 });

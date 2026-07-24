@@ -60,6 +60,7 @@ class User(UUIDMixin, TimestampMixin, Base):
     onboarding: Mapped[UserOnboarding | None] = relationship(
         back_populates="user", uselist=False,
     )
+    api_keys: Mapped[list[PaperApiKey]] = relationship(back_populates="user")
 
 
 class UserOnboarding(UUIDMixin, TimestampMixin, Base):
@@ -99,6 +100,31 @@ class UserOnboarding(UUIDMixin, TimestampMixin, Base):
         DateTime(timezone=True), nullable=True,
     )
     user: Mapped[User] = relationship(back_populates="onboarding")
+
+
+class PaperApiKey(UUIDMixin, TimestampMixin, Base):
+    __tablename__ = "paper_api_keys"
+    __table_args__ = (
+        UniqueConstraint("key_hash", name="uq_paper_api_keys_key_hash"),
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    key_prefix: Mapped[str] = mapped_column(String(24), nullable=False)
+    key_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    can_query: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    can_trade: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
+    last_used_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
+    user: Mapped[User] = relationship(back_populates="api_keys")
 
 
 class Portfolio(UUIDMixin, TimestampMixin, Base):

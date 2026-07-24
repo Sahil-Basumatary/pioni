@@ -91,3 +91,25 @@ class OnboardingPatch(BaseModel):
     checklist_view_position: bool | None = None
     checklist_sentiment: bool | None = None
     checklist_limit_order: bool | None = None
+
+
+class ApiKeyResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    name: str
+    key_prefix: str
+    can_query: bool
+    can_trade: bool
+    created_at: datetime
+    last_used_at: datetime | None = None
+
+
+class ApiKeyCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str
+    can_query: bool = True
+    can_trade: bool = True
+
+
+class ApiKeyCreatedResponse(ApiKeyResponse):
+    api_key: str

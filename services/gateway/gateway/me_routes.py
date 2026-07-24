@@ -150,6 +150,64 @@ async def patch_my_onboarding(
     return await patch_my_onboarding_upstream(ctx, body)
 
 
+async def fetch_my_api_keys(ctx: AuthContext) -> list:
+    client = await _get_client()
+    try:
+        resp = await client.get("/me/api-keys", headers=_identity_headers(ctx))
+    except httpx.RequestError as e:
+        logger.error("portfolio service unreachable", extra={"error": str(e)})
+        raise _unavailable() from None
+    if resp.status_code >= 400:
+        raise HTTPException(status_code=resp.status_code, detail=resp.json())
+    return resp.json()
+
+
+async def create_my_api_key_upstream(ctx: AuthContext, body: dict) -> dict:
+    client = await _get_client()
+    try:
+        resp = await client.post(
+            "/me/api-keys",
+            headers=_identity_headers(ctx),
+            json=body,
+        )
+    except httpx.RequestError as e:
+        logger.error("portfolio service unreachable", extra={"error": str(e)})
+        raise _unavailable() from None
+    if resp.status_code >= 400:
+        raise HTTPException(status_code=resp.status_code, detail=resp.json())
+    return resp.json()
+
+
+async def revoke_my_api_key_upstream(ctx: AuthContext, key_id: str) -> dict:
+    client = await _get_client()
+    try:
+        resp = await client.delete(
+            f"/me/api-keys/{key_id}",
+            headers=_identity_headers(ctx),
+        )
+    except httpx.RequestError as e:
+        logger.error("portfolio service unreachable", extra={"error": str(e)})
+        raise _unavailable() from None
+    if resp.status_code >= 400:
+        raise HTTPException(status_code=resp.status_code, detail=resp.json())
+    return resp.json()
+
+
+@me_router.get("/api-keys")
+async def my_api_keys(ctx: AuthContext = Depends(require_auth)):
+    return await fetch_my_api_keys(ctx)
+
+
+@me_router.post("/api-keys", status_code=201)
+async def create_my_api_key(body: dict, ctx: AuthContext = Depends(require_auth)):
+    return await create_my_api_key_upstream(ctx, body)
+
+
+@me_router.delete("/api-keys/{key_id}")
+async def revoke_my_api_key(key_id: str, ctx: AuthContext = Depends(require_auth)):
+    return await revoke_my_api_key_upstream(ctx, key_id)
+
+
 async def _proxy_portfolio_get(path: str, params: dict | None = None):
     # The portfolio service exposes these by portfolio_id in the path and trusts the private
     # network, so no identity headers are needed once the gateway has resolved ownership.

@@ -12,12 +12,16 @@ from common import (
     Position as PositionORM,
     Trade as TradeORM,
 )
+from portfolio.api_keys import create_api_key, list_active_api_keys, revoke_api_key
 from portfolio.charts import SnapshotValue, build_daily_pnl_chart
 from portfolio.onboarding import apply_onboarding_patch, get_or_create_onboarding
 from portfolio.price_cache import PriceCache
 from portfolio.provisioning import Identity, get_or_create_portfolio
 from portfolio.repository import PortfolioRepository
 from portfolio.schemas import (
+    ApiKeyCreate,
+    ApiKeyCreatedResponse,
+    ApiKeyResponse,
     DailyPnlPointResponse,
     OnboardingPatch,
     OnboardingResponse,
@@ -96,6 +100,72 @@ async def patch_my_onboarding(
     await session.flush()
     await session.refresh(row)
     return OnboardingResponse.model_validate(row)
+
+
+@router.get("/me/api-keys", response_model=list[ApiKeyResponse])
+async def get_my_api_keys(
+    identity: Identity = Depends(current_identity),
+    session: AsyncSession = Depends(get_db),
+) -> list[ApiKeyResponse]:
+    rows = await list_active_api_keys(session, identity)
+    return [ApiKeyResponse.model_validate(row) for row in rows]
+
+
+@router.post("/me/api-keys", response_model=ApiKeyCreatedResponse, status_code=201)
+async def post_my_api_key(
+    body: ApiKeyCreate,
+    identity: Identity = Depends(current_identity),
+    session: AsyncSession = Depends(get_db),
+) -> ApiKeyCreatedResponse:
+    try:
+        row, raw = await create_api_key(
+            session,
+            identity,
+            name=body.name,
+            can_query=body.can_query,
+            can_trade=body.can_trade,
+        )
+    except ValueError as err:
+        code = str(err)
+        if code == "MAX_KEYS":
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "MAX_KEYS",
+                    "message": "You can have at most 10 active paper API keys",
+                },
+            ) from None
+        if code == "NAME_REQUIRED":
+            raise HTTPException(
+                status_code=400,
+                detail={"error": "NAME_REQUIRED", "message": "Name is required"},
+            ) from None
+        if code == "SCOPE_REQUIRED":
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "SCOPE_REQUIRED",
+                    "message": "Choose at least one permission",
+                },
+            ) from None
+        raise
+    base = ApiKeyResponse.model_validate(row)
+    return ApiKeyCreatedResponse(**base.model_dump(), api_key=raw)
+
+
+@router.delete("/me/api-keys/{key_id}", response_model=ApiKeyResponse)
+async def delete_my_api_key(
+    key_id: uuid.UUID,
+    identity: Identity = Depends(current_identity),
+    session: AsyncSession = Depends(get_db),
+) -> ApiKeyResponse:
+    row = await revoke_api_key(session, identity, key_id)
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "NOT_FOUND", "message": "API key not found"},
+        )
+    return ApiKeyResponse.model_validate(row)
 
 
 def _not_found(portfolio_id: uuid.UUID) -> HTTPException:

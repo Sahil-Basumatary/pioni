@@ -8,6 +8,7 @@ import {
   CoinsIcon,
   DepositIcon,
   SettingsSliderHorizontalIcon,
+  Transfer2Icon,
   UserIcon,
   WithdrawIcon,
 } from "../../components/shell/shellIcons";
@@ -43,6 +44,7 @@ import {
   type RegionalPrefs,
 } from "./regionalPrefs";
 import AccountSecurity from "./AccountSecurity";
+import ConnectionsSection from "./ConnectionsSection";
 import SettingsSelect from "./SettingsSelect";
 import { useSettings } from "./settingsContext";
 import { SETTINGS_NAV, type SettingsSectionId } from "./settingsNav";
@@ -57,6 +59,8 @@ function navIcon(id: SettingsSectionId) {
       return CoinsIcon;
     case "paper":
       return DepositIcon;
+    case "connections":
+      return Transfer2Icon;
     default:
       return UserIcon;
   }
@@ -158,6 +162,7 @@ export default function SettingsDialog() {
             {section === "paper" && <PaperSection />}
             {section === "notifications" && <NotificationsSection />}
             {section === "limits" && <LimitsSection />}
+            {section === "connections" && <ConnectionsSection />}
           </div>
         </section>
       </div>
