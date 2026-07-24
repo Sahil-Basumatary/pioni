@@ -21,9 +21,10 @@ export interface OrderEvaluation {
 // user's price. Sell-side position sufficiency is enforced by the backend (the browser has no
 // authoritative holdings view yet), so it is intentionally not blocked here.
 export function evaluateOrder(input: OrderInput): OrderEvaluation {
-  const quantity = Number(input.quantity);
+  const quantity = Number(String(input.quantity).replace(/,/g, ""));
+  const limit = Number(String(input.limitPrice).replace(/,/g, ""));
   const effectivePrice =
-    input.orderType === "LIMIT" ? Number(input.limitPrice) : input.livePrice;
+    input.orderType === "LIMIT" ? limit : input.livePrice;
   const priceValid =
     effectivePrice != null && Number.isFinite(effectivePrice) && effectivePrice > 0;
   const quantityValid = Number.isFinite(quantity) && quantity > 0;

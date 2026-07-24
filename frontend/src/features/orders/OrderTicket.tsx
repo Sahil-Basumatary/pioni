@@ -15,15 +15,24 @@ import { ChevronDownSmallIcon } from "../../components/shell/shellIcons";
 import { useToast } from "../toasts/useToast";
 import { toastFromOrder } from "../toasts/orderToastCopy";
 import { watchOpenOrder } from "../toasts/orderWatch";
+import InfoTip from "../onboarding/InfoTip";
+import type { GlossaryTermId } from "../onboarding/glossary";
 
 function baseAsset(symbol: string): string {
   return symbol.replace(/USDT$|USD$|USDC$/i, "") || symbol;
 }
 
+function parseDecimal(raw: string): number {
+  const cleaned = String(raw).replace(/,/g, "").trim();
+  if (!cleaned) return NaN;
+  return Number(cleaned);
+}
+
 function formatLimitPrice(n: number): string {
   if (!Number.isFinite(n) || n <= 0) return "";
-  if (n >= 100) return n.toLocaleString("en-US", { maximumFractionDigits: 1 });
-  if (n >= 1) return n.toLocaleString("en-US", { maximumFractionDigits: 4 });
+  // Keep input values free of thousand separators so validation can Number() them.
+  if (n >= 100) return n.toFixed(1).replace(/\.0$/, "");
+  if (n >= 1) return String(Number(n.toFixed(4)));
   return String(n);
 }
 
@@ -167,7 +176,7 @@ export default function OrderTicket({
     : MARGIN_LEVERAGE_OPTIONS;
   const effectivePrice =
     orderType === "LIMIT"
-      ? Number(String(limitPrice).replace(/,/g, "")) || null
+      ? parseDecimal(limitPrice) || null
       : referencePrice;
   const needsFunds =
     isSignedIn &&
@@ -175,7 +184,7 @@ export default function OrderTicket({
     cashBalance != null &&
     cashBalance <= 0;
   const estFeeUsd = 0;
-  const qtyNum = Number(quantity);
+  const qtyNum = parseDecimal(quantity);
   const notional =
     effectivePrice != null &&
     Number.isFinite(qtyNum) &&
@@ -222,9 +231,13 @@ export default function OrderTicket({
   useEffect(() => {
     if (orderType !== "LIMIT") return;
     if (referencePrice == null || !Number.isFinite(referencePrice)) return;
-    setLimitPrice((prev) =>
-      prev.trim() ? prev : formatLimitPrice(referencePrice),
-    );
+    setLimitPrice((prev) => {
+      const trimmed = prev.trim();
+      if (!trimmed) return formatLimitPrice(referencePrice);
+      // Migrate old locale-formatted values (e.g. "65,146.3") so Number() works.
+      if (trimmed.includes(",")) return trimmed.replace(/,/g, "");
+      return prev;
+    });
   }, [referencePrice, orderType, symbol]);
 
   useEffect(() => {
@@ -269,7 +282,7 @@ export default function OrderTicket({
 
   function syncFromQuantity(nextQty: string, price: number | null) {
     setQuantity(nextQty);
-    const q = Number(nextQty);
+    const q = parseDecimal(nextQty);
     if (price != null && price > 0 && Number.isFinite(q) && q > 0) {
       setTotal(formatTotalInput(q * price));
     } else {
@@ -279,7 +292,7 @@ export default function OrderTicket({
 
   function syncFromTotal(nextTotal: string, price: number | null) {
     setTotal(nextTotal);
-    const t = Number(nextTotal);
+    const t = parseDecimal(nextTotal);
     if (price != null && price > 0 && Number.isFinite(t) && t > 0) {
       setQuantity(formatQtyInput(t / price));
     } else if (!nextTotal.trim()) {
@@ -624,8 +637,8 @@ export default function OrderTicket({
             value={limitPrice}
             onChange={(v) => {
               setLimitPrice(v);
-              const price = Number(v.replace(/,/g, ""));
-              const q = Number(quantity);
+              const price = parseDecimal(v);
+              const q = parseDecimal(quantity);
               if (Number.isFinite(price) && price > 0 && Number.isFinite(q) && q > 0) {
                 setTotal(formatTotalInput(q * price));
               }
@@ -640,7 +653,7 @@ export default function OrderTicket({
               onChange={(v) =>
                 syncFromQuantity(v, effectivePrice != null
                   ? effectivePrice
-                  : Number(limitPrice.replace(/,/g, "")) || null)
+                  : parseDecimal(limitPrice) || null)
               }
               placeholder="0.00"
               radius="rounded-bl-xl rounded-tr-sm"
@@ -651,7 +664,7 @@ export default function OrderTicket({
               onChange={(v) =>
                 syncFromTotal(v, effectivePrice != null
                   ? effectivePrice
-                  : Number(limitPrice.replace(/,/g, "")) || null)
+                  : parseDecimal(limitPrice) || null)
               }
               placeholder="0.00"
               prefix={total.trim() ? "≈" : undefined}
@@ -708,9 +721,7 @@ export default function OrderTicket({
         </div>
       </div>
       <div className="flex items-center justify-between gap-2 text-xs">
-        <span className="text-[rgb(104,107,130)] underline decoration-dashed underline-offset-4">
-          {availableLabel}
-        </span>
+        <InfoTip term="available_to_trade" label={availableLabel} />
         <span className="flex items-center gap-1 tabular-nums text-[var(--text-primary)]">
           <Link
             to="/deposit"
@@ -742,11 +753,11 @@ export default function OrderTicket({
         </span>
       </div>
       <div className="flex flex-wrap gap-3">
-        <label
+        <div
           className={`inline-flex items-center gap-2 text-xs ${
             tpSlDisabled
-              ? "cursor-not-allowed text-[var(--text-muted)]"
-              : "cursor-pointer text-[var(--text-primary)]"
+              ? "text-[var(--text-muted)]"
+              : "text-[var(--text-primary)]"
           }`}
         >
           <TicketCheck
@@ -755,13 +766,13 @@ export default function OrderTicket({
             onChange={setTpSl}
             label="TP/SL"
           />
-          TP/SL
-        </label>
-        <label
+          <InfoTip term="tp_sl" label="TP/SL" />
+        </div>
+        <div
           className={`inline-flex items-center gap-2 text-xs ${
             orderType === "LIMIT"
-              ? "cursor-pointer text-[var(--text-primary)]"
-              : "cursor-not-allowed text-[var(--text-muted)]"
+              ? "text-[var(--text-primary)]"
+              : "text-[var(--text-muted)]"
           }`}
         >
           <TicketCheck
@@ -770,8 +781,8 @@ export default function OrderTicket({
             onChange={setPostOnly}
             label="Post only"
           />
-          Post only
-        </label>
+          <InfoTip term="post_only" label="Post only" />
+        </div>
         {(isMargin || isFutures) && (
           <label
             className={`inline-flex items-center gap-2 text-xs ${
@@ -828,6 +839,9 @@ export default function OrderTicket({
           {isLoading ? "Placing…" : submitLabel}
         </button>
       )}
+      {isSignedIn && !evaluation.canSubmit && evaluation.reason ? (
+        <p className="text-xs text-[rgb(104,107,130)]">{evaluation.reason}</p>
+      ) : null}
       <div className="min-w-0">
         <button
           type="button"
@@ -847,7 +861,7 @@ export default function OrderTicket({
                 <DetailRow
                   label="Required margin"
                   value={requiredMarginDisplay}
-                  labelUnderline
+                  tip="required_margin"
                 />
                 {isMargin && (
                   <DetailRow label="Margin health" value={marginHealth} />
@@ -858,12 +872,7 @@ export default function OrderTicket({
               </>
             )}
             <div className="flex min-w-0 items-center justify-between gap-2 text-xs">
-              <button
-                type="button"
-                className="rail-icon shrink-0 text-[rgb(104,107,130)]"
-              >
-                Time in force
-              </button>
+              <InfoTip term="time_in_force" label="Time in force" />
               <select
                 value={tif}
                 onChange={(e) => setTif(e.target.value as TimeInForce)}
@@ -897,12 +906,7 @@ export default function OrderTicket({
                   value={`${estFeeUsd.toFixed(10).replace(/\.?0+$/, "") || "0"} ${asset}`}
                 />
                 <div className="flex items-center justify-between text-xs">
-                  <button
-                    type="button"
-                    className="rail-icon text-[rgb(104,107,130)] underline decoration-dashed underline-offset-2"
-                  >
-                    Your maker fee
-                  </button>
+                  <InfoTip term="maker_fee" label="Your maker fee" />
                   <span className="tabular-nums font-medium text-[rgb(72,75,94)]">
                     {PAPER_MAKER_FEE}
                   </span>
@@ -979,22 +983,28 @@ function DetailRow({
   label,
   value,
   labelUnderline = false,
+  tip,
 }: {
   label: string;
   value: string;
   labelUnderline?: boolean;
+  tip?: GlossaryTermId;
 }) {
   return (
     <div className="flex items-center justify-between gap-2 text-xs">
-      <span
-        className={`text-[rgb(104,107,130)] ${
-          labelUnderline
-            ? "underline decoration-dashed underline-offset-4"
-            : ""
-        }`}
-      >
-        {label}
-      </span>
+      {tip ? (
+        <InfoTip term={tip} label={label} />
+      ) : (
+        <span
+          className={`text-[rgb(104,107,130)] ${
+            labelUnderline
+              ? "underline decoration-dashed underline-offset-4"
+              : ""
+          }`}
+        >
+          {label}
+        </span>
+      )}
       <span className="tabular-nums font-medium text-[rgb(72,75,94)]">
         {value}
       </span>

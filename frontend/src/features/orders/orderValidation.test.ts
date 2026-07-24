@@ -52,6 +52,17 @@ describe("evaluateOrder", () => {
     expect(result.reason).toBe("Enter a limit price");
   });
 
+  it("accepts comma-formatted limit prices", () => {
+    const result = evaluateOrder({
+      ...base,
+      orderType: "LIMIT",
+      limitPrice: "65,060",
+      quantity: "0.01",
+    });
+    expect(result.canSubmit).toBe(true);
+    expect(result.effectivePrice).toBe(65060);
+  });
+
   it("waits for a live price on a market order when none is available", () => {
     const result = evaluateOrder({ ...base, livePrice: null });
     expect(result.canSubmit).toBe(false);
