@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AppShell from "./components/shell/AppShell";
 import ComingSoonPage from "./pages/ComingSoonPage";
+import { startPagePath } from "./features/settings/displayPrefs";
 import "./App.css";
 
 const SentimentPage = lazy(() => import("./pages/SentimentPage"));
@@ -17,6 +18,7 @@ const OtcPage = lazy(() => import("./pages/OtcPage"));
 const OtcPortalPage = lazy(() => import("./pages/OtcPortalPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 
 function RouteFallback() {
   return (
@@ -38,6 +40,10 @@ function RouteFallback() {
       <div className="card-premium flex-1 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]/80 p-4" />
     </div>
   );
+}
+
+function StartRedirect() {
+  return <Navigate to={startPagePath()} replace />;
 }
 
 function App() {
@@ -69,9 +75,11 @@ function App() {
             <Route path="/otc/portal" element={<OtcPortalPage />} />
             <Route path="/otc/dashboard" element={<OtcPortalPage />} />
             <Route path="/sentiment" element={<SentimentPage />} />
+            <Route path="/settings" element={<Navigate to="/settings/account" replace />} />
+            <Route path="/settings/:section" element={<SettingsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
-            <Route path="*" element={<Navigate to="/home" replace />} />
+            <Route path="*" element={<StartRedirect />} />
           </Routes>
         </Suspense>
       </AppShell>

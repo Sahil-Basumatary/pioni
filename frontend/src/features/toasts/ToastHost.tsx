@@ -7,6 +7,8 @@ import {
   CloseSmallIcon,
   InfoCircleIcon,
 } from "../../components/shell/shellIcons";
+import { readDisplayPrefs } from "../settings/displayPrefs";
+import { playFillChime } from "../settings/fillChime";
 import { dismissToast, type ToastItem, type ToastTone } from "./toastSlice";
 
 const TONE_STYLES: Record<
@@ -67,6 +69,12 @@ function ToastCard({ item }: { item: ToastItem }) {
     const hideAt = window.setTimeout(() => setExiting(true), item.durationMs);
     return () => window.clearTimeout(hideAt);
   }, [item.durationMs]);
+
+  useEffect(() => {
+    if (item.tone !== "positive") return;
+    if (!readDisplayPrefs().soundOnFill) return;
+    playFillChime();
+  }, [item.id, item.tone]);
 
   useEffect(() => {
     if (!exiting) return;

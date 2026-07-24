@@ -1,6 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { GLOSSARY, type GlossaryTermId } from "./glossary";
+import { readDisplayPrefs } from "../settings/displayPrefs";
 
 type Placement = "top" | "bottom";
 
@@ -61,6 +62,7 @@ export default function InfoTip({
   placement = "top",
 }: InfoTipProps) {
   const entry = GLOSSARY[term];
+  const tipsEnabled = readDisplayPrefs().showInfoTips;
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<TipCoords | null>(null);
   const rootRef = useRef<HTMLSpanElement>(null);
@@ -98,7 +100,7 @@ export default function InfoTip({
   useEffect(() => () => clearCloseTimer(), []);
 
   useLayoutEffect(() => {
-    if (!open) {
+    if (!open || !tipsEnabled) {
       setCoords(null);
       return;
     }
@@ -119,10 +121,10 @@ export default function InfoTip({
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
     };
-  }, [open, placement, title, entry.body]);
+  }, [open, placement, title, entry.body, tipsEnabled]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !tipsEnabled) return;
     function onPointerDown(event: MouseEvent) {
       const target = event.target as Node;
       if (rootRef.current?.contains(target) || tipRef.current?.contains(target)) {
@@ -139,7 +141,15 @@ export default function InfoTip({
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [open]);
+  }, [open, tipsEnabled]);
+
+  if (!tipsEnabled) {
+    return (
+      <span className={`max-w-full truncate text-[rgb(104,107,130)] ${className}`}>
+        {title}
+      </span>
+    );
+  }
 
   return (
     <span

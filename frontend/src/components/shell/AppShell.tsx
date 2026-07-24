@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { MarketSocketProvider } from "../../features/market/MarketSocketProvider";
 import {
@@ -7,10 +8,13 @@ import {
 import MarketSearchPalette from "../../features/markets/MarketSearchPalette";
 import { ConvertProvider } from "../../features/convert/ConvertContext";
 import ConvertDialog from "../../features/convert/ConvertDialog";
+import { SettingsProvider } from "../../features/settings/settingsContext";
+import SettingsDialog from "../../features/settings/SettingsDialog";
 import ToastHost from "../../features/toasts/ToastHost";
 import OrderStatusSocketProvider from "../../features/toasts/OrderStatusSocketProvider";
 import { TourProvider } from "../../features/onboarding/TourProvider";
 import WelcomeCard from "../../features/onboarding/WelcomeCard";
+import FirstTradeCelebration from "../../features/onboarding/FirstTradeCelebration";
 import { ChecklistProvider } from "../../features/onboarding/ChecklistContext";
 import GettingStartedChecklist from "../../features/onboarding/GettingStartedChecklist";
 import { useCompactShell } from "../../hooks/useCompactShell";
@@ -28,6 +32,25 @@ function isWorkspaceRoute(pathname: string): boolean {
   );
 }
 
+function LastPathTracker() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    if (
+      pathname.startsWith("/settings") ||
+      pathname === "/" ||
+      pathname.includes(".")
+    ) {
+      return;
+    }
+    try {
+      sessionStorage.setItem("pioni.lastPath", pathname);
+    } catch {
+      /* ignore */
+    }
+  }, [pathname]);
+  return null;
+}
+
 export default function AppShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const workspace = isWorkspaceRoute(pathname);
@@ -37,38 +60,43 @@ export default function AppShell({ children }: { children: ReactNode }) {
     <MarketSocketProvider>
       <MarketSearchProvider>
         <ConvertProvider>
-          <OrderStatusSocketProvider>
-            <TourProvider>
-              <ChecklistProvider>
-              <div
-                className="flex h-dvh w-full flex-col overflow-hidden"
-                style={{ background: "var(--bg)", color: "var(--text-primary)" }}
-              >
-                <div className="sticky top-0 z-50 shrink-0">
-                  {compact && <GetAppBanner />}
-                  <TopBar compact={compact} />
-                  {!compact && <ProductNav />}
+          <SettingsProvider>
+            <OrderStatusSocketProvider>
+              <TourProvider>
+                <ChecklistProvider>
+                <div
+                  className="flex h-dvh w-full flex-col overflow-hidden"
+                  style={{ background: "var(--bg)", color: "var(--text-primary)" }}
+                >
+                  <div className="sticky top-0 z-50 shrink-0">
+                    {compact && <GetAppBanner />}
+                    <TopBar compact={compact} />
+                    {!compact && <ProductNav />}
+                  </div>
+                  <div className="flex min-h-0 flex-1">
+                    <main
+                      className={`mx-auto flex min-h-0 w-full max-w-[1750px] flex-1 flex-col ${
+                        compact && workspace ? "px-0 py-0" : "px-2 py-2"
+                      } ${workspace ? "overflow-hidden" : "overflow-y-auto"}`}
+                    >
+                      {children}
+                    </main>
+                    {!compact && <RightRail />}
+                  </div>
+                  <StatusBar />
+                  <LastPathTracker />
+                  <MarketSearchPalette />
+                  <ConvertDialog />
+                  <SettingsDialog />
+                  <WelcomeCard />
+                  <FirstTradeCelebration />
+                  <GettingStartedChecklist />
+                  <ToastHost />
                 </div>
-                <div className="flex min-h-0 flex-1">
-                  <main
-                    className={`mx-auto flex min-h-0 w-full max-w-[1750px] flex-1 flex-col ${
-                      compact && workspace ? "px-0 py-0" : "px-2 py-2"
-                    } ${workspace ? "overflow-hidden" : "overflow-y-auto"}`}
-                  >
-                    {children}
-                  </main>
-                  {!compact && <RightRail />}
-                </div>
-                <StatusBar />
-                <MarketSearchPalette />
-                <ConvertDialog />
-                <WelcomeCard />
-                <GettingStartedChecklist />
-                <ToastHost />
-              </div>
-              </ChecklistProvider>
-            </TourProvider>
-          </OrderStatusSocketProvider>
+                </ChecklistProvider>
+              </TourProvider>
+            </OrderStatusSocketProvider>
+          </SettingsProvider>
         </ConvertProvider>
       </MarketSearchProvider>
     </MarketSocketProvider>

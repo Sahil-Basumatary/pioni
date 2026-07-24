@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useClerk, useAuth } from "@clerk/clerk-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import NotificationsPanel from "./NotificationsPanel";
 import { useConvert } from "../../features/convert/ConvertContext";
+import { useSettings } from "../../features/settings/settingsContext";
 import {
   BellIcon,
   BookIcon,
@@ -22,8 +23,8 @@ export default function RightRail() {
   const [tab, setTab] = useState<RailTab>(null);
   const { isSignedIn } = useAuth();
   const clerk = useClerk();
-  const navigate = useNavigate();
   const { openConvert } = useConvert();
+  const { openSettings } = useSettings();
   const { open: checklistOpen, toggle: toggleChecklist, setOpen: setChecklistOpen } =
     useChecklistUi();
   const { data: onboarding, isLoading: onboardingLoading } =
@@ -92,7 +93,8 @@ export default function RightRail() {
         <RailIconButton
           label="User settings"
           onClick={() => {
-            if (isSignedIn) clerk.openUserProfile();
+            setTab(null);
+            if (isSignedIn) openSettings("account");
             else clerk.openSignIn();
           }}
         >

@@ -17,6 +17,7 @@ import { toastFromOrder } from "../toasts/orderToastCopy";
 import { watchOpenOrder } from "../toasts/orderWatch";
 import InfoTip from "../onboarding/InfoTip";
 import type { GlossaryTermId } from "../onboarding/glossary";
+import { readDisplayPrefs } from "../settings/displayPrefs";
 
 function baseAsset(symbol: string): string {
   return symbol.replace(/USDT$|USD$|USDC$/i, "") || symbol;
@@ -321,6 +322,13 @@ export default function OrderTicket({
       return;
     }
     if (needsFunds) return;
+    const prefs = readDisplayPrefs();
+    if (prefs.confirmOrders) {
+      const ok = window.confirm(
+        `Submit ${side.toLowerCase()} ${orderType.toLowerCase()} order for ${quantity || "0"} ${asset}?`,
+      );
+      if (!ok) return;
+    }
     try {
       const order = await submitOrder({
         symbol,

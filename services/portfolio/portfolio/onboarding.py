@@ -72,6 +72,8 @@ def apply_onboarding_patch(row: UserOnboardingORM, patch: dict) -> UserOnboardin
         row.welcome_seen = True
     if patch.get("welcome_seen") is True:
         row.welcome_seen = True
+    if any(patch.get(flag) is False for flag in CHECKLIST_FLAGS):
+        row.checklist_completed_at = None
     if _all_checklist_done(row) and row.checklist_completed_at is None:
         row.checklist_completed_at = now
     return row

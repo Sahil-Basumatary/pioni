@@ -1,0 +1,189 @@
+import { MemoryRouter } from "react-router-dom";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import SettingsDialog from "./SettingsDialog";
+import { SettingsProvider, useSettings } from "./settingsContext";
+import { readDisplayPrefs, writeDisplayPrefs } from "./displayPrefs";
+import {
+  readRegionalPrefs,
+  writeRegionalPrefs,
+  timezoneLabel,
+} from "./regionalPrefs";
+import { isSettingsSection } from "./settingsNav";
+
+vi.mock("@clerk/clerk-react", () => ({
+  useAuth: () => ({ isSignedIn: true }),
+  useUser: () => ({
+    user: {
+      id: "user_abc123def456ghi789",
+      fullName: "Sahil Test",
+      username: "sahil.test",
+      passwordEnabled: true,
+      totpEnabled: false,
+      passkeys: [],
+      emailAddresses: [
+        { id: "em_1", emailAddress: "sahil@example.com" },
+      ],
+      primaryEmailAddress: { emailAddress: "sahil@example.com" },
+      primaryEmailAddressId: "em_1",
+      getSessions: async () => [],
+      reload: async () => undefined,
+      update: async () => undefined,
+    },
+  }),
+  useSession: () => ({ session: { id: "sess_1" } }),
+  useReverification: (fn: unknown) => fn,
+  useClerk: () => ({
+    openSignIn: vi.fn(),
+    signOut: vi.fn(),
+  }),
+}));
+
+vi.mock("../toasts/useToast", () => ({
+  useToast: () => vi.fn(),
+}));
+
+vi.mock("../onboarding/TourProvider", () => ({
+  useTour: () => ({ startTour: vi.fn() }),
+}));
+
+vi.mock("../onboarding/onboardingApi", () => ({
+  useGetMyOnboardingQuery: () => ({ data: undefined }),
+  usePatchMyOnboardingMutation: () => [vi.fn()],
+}));
+
+vi.mock("../portfolio/portfolioApi", () => ({
+  useResetPortfolioMutation: () => [vi.fn(), { isLoading: false }],
+}));
+
+function OpenSettings({
+  section = "account" as "account" | "preferences",
+}) {
+  const { openSettings } = useSettings();
+  return (
+    <button type="button" onClick={() => openSettings(section)}>
+      Open
+    </button>
+  );
+}
+
+function renderDialog() {
+  return render(
+    <MemoryRouter>
+      <SettingsProvider>
+        <OpenSettings />
+        <SettingsDialog />
+      </SettingsProvider>
+    </MemoryRouter>,
+  );
+}
+
+describe("settingsNav", () => {
+  it("accepts known sections only", () => {
+    expect(isSettingsSection("account")).toBe(true);
+    expect(isSettingsSection("nope")).toBe(false);
+  });
+});
+
+describe("displayPrefs", () => {
+  it("round-trips confirmOrders and startPage", () => {
+    writeDisplayPrefs({
+      confirmOrders: true,
+      showInfoTips: false,
+      soundOnFill: true,
+      startPage: "trading",
+    });
+    expect(readDisplayPrefs()).toEqual({
+      confirmOrders: true,
+      showInfoTips: false,
+      soundOnFill: true,
+      startPage: "trading",
+    });
+    writeDisplayPrefs({
+      confirmOrders: false,
+      showInfoTips: true,
+      soundOnFill: false,
+      startPage: "home",
+    });
+  });
+});
+
+describe("regionalPrefs", () => {
+  it("round-trips timezone and number format", () => {
+    writeRegionalPrefs({
+      timezone: "Asia/Kolkata",
+      currency: "USD",
+      language: "en-US",
+      numberFormat: "de-DE",
+    });
+    expect(readRegionalPrefs()).toEqual({
+      timezone: "Asia/Kolkata",
+      currency: "USD",
+      language: "en-US",
+      numberFormat: "de-DE",
+    });
+    expect(timezoneLabel("Asia/Kolkata")).toContain("Kolkata");
+  });
+});
+
+describe("SettingsDialog", () => {
+  it("opens settings modal with account details", () => {
+    renderDialog();
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    const dialog = screen.getByRole("dialog", { name: "Settings" });
+    expect(dialog).toBeTruthy();
+    expect(dialog.className).toContain("max-w-[1512px]");
+    expect(dialog.className).toContain("w-[90vw]");
+    expect(dialog.className).toContain("h-[calc(100%-100px)]");
+    expect(screen.getByRole("heading", { name: "Account" })).toBeTruthy();
+    expect(screen.getByText("Account details")).toBeTruthy();
+    expect(screen.getByText("Public ID")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Copy" })).toBeTruthy();
+    expect(screen.getByText("Account security")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Manage emails" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Change password" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Manage verification methods" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Manage passkeys" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Delete my account" })).toBeTruthy();
+    expect(screen.getByText("Devices")).toBeTruthy();
+    expect(screen.getByText("Regional settings")).toBeTruthy();
+    expect(screen.getByText("Trading platform")).toBeTruthy();
+    expect(screen.getByText("Paper verified")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Manage sign-in" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Close account" })).toBeNull();
+  });
+
+  it("opens a premium custom menu for timezone instead of a native select", () => {
+    renderDialog();
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "Edit" })[0]);
+    expect(screen.queryByRole("combobox")).toBeNull();
+    const trigger = screen.getByRole("button", { name: "Timezone" });
+    fireEvent.click(trigger);
+    expect(screen.getByRole("listbox", { name: "Timezone" })).toBeTruthy();
+    expect(screen.getByRole("option", { name: /Kolkata/ })).toBeTruthy();
+  });
+
+  it("renders preferences section groups", () => {
+    render(
+      <MemoryRouter>
+        <SettingsProvider>
+          <OpenSettings section="preferences" />
+          <SettingsDialog />
+        </SettingsProvider>
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    expect(screen.getByRole("heading", { name: "Preferences" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Appearance" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Trading" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Language & time" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Startup" })).toBeTruthy();
+    expect(
+      screen.getByRole("switch", { name: /Confirm before submitting orders/i }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Open on start" })).toBeTruthy();
+  });
+});
