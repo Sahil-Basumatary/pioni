@@ -18,7 +18,7 @@ export default function ProductNav() {
               to={item.to}
               data-tour={item.id === "sentiment" ? "sentiment-nav" : undefined}
               className={({ isActive }) =>
-                `shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                `shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   isActive
                     ? "bg-[var(--accent)] text-white"
                     : "text-[var(--text-muted)] hover:bg-[var(--bg)] hover:text-[var(--text-primary)]"

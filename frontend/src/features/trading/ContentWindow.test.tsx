@@ -51,4 +51,24 @@ describe("ContentWindow", () => {
     await user.click(screen.getByRole("menuitem", { name: /Depth chart/i }));
     expect(onMenuSelect).toHaveBeenCalledWith("depth");
   });
+
+  it("keeps tab labels as single unbroken words", () => {
+    render(
+      <ContentWindow
+        label="Order book"
+        tabs={[
+          { id: "orderbook", label: "Order book" },
+          { id: "markettrades", label: "Market trades" },
+        ]}
+        activeTabId="orderbook"
+        onTabChange={() => {}}
+        maximized={false}
+        onMaximizeToggle={() => {}}
+      >
+        <p>Book</p>
+      </ContentWindow>,
+    );
+    const tab = screen.getByRole("button", { name: "Order book" });
+    expect(tab.className).toMatch(/whitespace-nowrap/);
+  });
 });

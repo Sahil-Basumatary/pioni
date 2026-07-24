@@ -15,6 +15,7 @@ import {
   PlusSmallIcon,
   SettingsSliderHorizontalIcon,
 } from "../../components/shell/shellIcons";
+import { fitTabIds } from "./fitTabIds";
 
 export type ContentTab = {
   id: string;
@@ -48,6 +49,8 @@ type ContentWindowProps = {
 const iconBtn =
   "rail-icon flex h-6 w-6 shrink-0 items-center justify-center rounded text-[var(--text-muted)] hover:bg-black/[0.04] hover:text-[var(--text-secondary)]";
 
+const TAB_OVERFLOW_BTN_W = 36;
+
 export default function ContentWindow({
   label,
   tabs,
@@ -64,9 +67,16 @@ export default function ContentWindow({
   children,
   className = "",
 }: ContentWindowProps) {
-  const [menu, setMenu] = useState<"add" | "overflow" | "options" | null>(null);
+  const [menu, setMenu] = useState<"add" | "overflow" | "options" | "tabs" | null>(
+    null,
+  );
+  const [visibleIds, setVisibleIds] = useState<string[]>(() => tabs.map((t) => t.id));
+  const [hiddenIds, setHiddenIds] = useState<string[]>([]);
   const rootRef = useRef<HTMLElement>(null);
+  const stripRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLDivElement>(null);
   const overflowBtnRef = useRef<HTMLButtonElement>(null);
+  const tabOverflowBtnRef = useRef<HTMLButtonElement>(null);
   const addBtnRef = useRef<HTMLButtonElement>(null);
   const optionsBtnRef = useRef<HTMLButtonElement>(null);
   const menuPanelRef = useRef<HTMLDivElement>(null);
@@ -91,10 +101,46 @@ export default function ContentWindow({
     };
   }, [menu]);
 
+  useLayoutEffect(() => {
+    const strip = stripRef.current;
+    const measure = measureRef.current;
+    if (!strip || !measure) return;
+
+    function recompute() {
+      if (!strip || !measure) return;
+      const nodes = [...measure.querySelectorAll<HTMLElement>("[data-measure-tab]")];
+      const sized = tabs.map((tab) => {
+        const node = nodes.find((n) => n.dataset.measureTab === tab.id);
+        return { id: tab.id, width: node?.offsetWidth ?? 72 };
+      });
+      const fit = fitTabIds(
+        sized,
+        activeTabId,
+        strip.clientWidth,
+        TAB_OVERFLOW_BTN_W,
+      );
+      setVisibleIds(fit.visibleIds);
+      setHiddenIds(fit.hiddenIds);
+    }
+
+    recompute();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => recompute());
+    ro.observe(strip);
+    return () => ro.disconnect();
+  }, [tabs, activeTabId, overflowItems.length, addItems.length, Boolean(toolbar), Boolean(headerEnd)]);
+
   function pick(id: string) {
     onMenuSelect?.(id);
     setMenu(null);
   }
+
+  const visibleTabs = visibleIds
+    .map((id) => tabs.find((t) => t.id === id))
+    .filter((t): t is ContentTab => Boolean(t));
+  const hiddenTabs = hiddenIds
+    .map((id) => tabs.find((t) => t.id === id))
+    .filter((t): t is ContentTab => Boolean(t));
 
   return (
     <section
@@ -103,8 +149,8 @@ export default function ContentWindow({
       className={`relative flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] ${className}`}
     >
       <header className="flex h-8 shrink-0 items-center gap-0.5 border-b border-[var(--card-border)] px-1">
-        <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          {tabs.map((tab) => {
+        <div ref={stripRef} className="flex min-w-0 flex-1 items-center gap-0.5 overflow-hidden">
+          {visibleTabs.map((tab) => {
             const active = tab.id === activeTabId;
             return (
               <div
@@ -118,7 +164,7 @@ export default function ContentWindow({
                 <button
                   type="button"
                   onClick={() => onTabChange(tab.id)}
-                  className="rail-icon px-2 py-1 text-[12px] font-medium leading-none"
+                  className="rail-icon whitespace-nowrap px-2 py-1 text-[12px] font-medium leading-none"
                 >
                   {tab.label}
                 </button>
@@ -137,6 +183,37 @@ export default function ContentWindow({
               </div>
             );
           })}
+          {hiddenTabs.length > 0 && (
+            <button
+              ref={tabOverflowBtnRef}
+              type="button"
+              aria-label={`${hiddenTabs.length} more tabs`}
+              aria-expanded={menu === "tabs"}
+              aria-controls={menuId}
+              onClick={() => setMenu((m) => (m === "tabs" ? null : "tabs"))}
+              className="rail-icon flex h-6 shrink-0 items-center justify-center rounded px-1.5 text-[12px] font-medium leading-none text-[var(--text-muted)] hover:bg-black/[0.04] hover:text-[var(--text-secondary)]"
+            >
+              ···
+            </button>
+          )}
+        </div>
+        <div
+          ref={measureRef}
+          aria-hidden
+          className="pointer-events-none absolute -left-[9999px] top-0 flex h-8 items-center gap-0.5 opacity-0"
+        >
+          {tabs.map((tab) => (
+            <div
+              key={tab.id}
+              data-measure-tab={tab.id}
+              className="flex shrink-0 items-center rounded"
+            >
+              <span className="whitespace-nowrap px-2 py-1 text-[12px] font-medium leading-none">
+                {tab.label}
+              </span>
+              {tab.closable ? <span className="me-0.5 h-5 w-5" /> : null}
+            </div>
+          ))}
         </div>
         {overflowItems.length > 0 && (
           <button
@@ -146,7 +223,7 @@ export default function ContentWindow({
             aria-expanded={menu === "overflow"}
             aria-controls={menuId}
             onClick={() => setMenu((m) => (m === "overflow" ? null : "overflow"))}
-            className="rail-icon shrink-0 rounded px-1.5 py-1 text-[12px] font-medium leading-none text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+            className="rail-icon shrink-0 whitespace-nowrap rounded px-1.5 py-1 text-[12px] font-medium leading-none text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
           >
             +{overflowItems.length}
           </button>
@@ -195,6 +272,18 @@ export default function ContentWindow({
         </div>
       </header>
       <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
+      {menu === "tabs" && (
+        <MenuBox
+          id={menuId}
+          items={hiddenTabs.map((t) => ({ id: t.id, label: t.label, soon: false }))}
+          onSelect={(id) => {
+            onTabChange(id);
+            setMenu(null);
+          }}
+          anchorRef={tabOverflowBtnRef}
+          panelRef={menuPanelRef}
+        />
+      )}
       {menu === "overflow" && (
         <MenuBox
           id={menuId}
@@ -278,7 +367,7 @@ function MenuBox({
           onClick={() => onSelect(item.id)}
           className="flex w-full items-center justify-between px-3 py-2 text-left text-[12px] text-[var(--text-primary)] hover:bg-black/[0.04]"
         >
-          <span>{item.label}</span>
+          <span className="whitespace-nowrap">{item.label}</span>
           {item.soon !== false && (
             <span className="text-[10px] text-[var(--text-muted)]">Soon</span>
           )}
