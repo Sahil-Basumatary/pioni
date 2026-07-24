@@ -26,9 +26,7 @@ import {
 import {
   NUMBER_FORMAT_OPTIONS,
   TIMEZONE_OPTIONS,
-  numberFormatLabel,
   readRegionalPrefs,
-  timezoneLabel,
   writeRegionalPrefs,
   type RegionalPrefs,
 } from "./regionalPrefs";
@@ -163,10 +161,7 @@ function AccountSection() {
   const clerk = useClerk();
   const toast = useToast();
   const { closeSettings } = useSettings();
-  const [regional, setRegional] = useState<RegionalPrefs>(() => readRegionalPrefs());
-  const [editing, setEditing] = useState<
-    null | "timezone" | "numberFormat" | "name"
-  >(null);
+  const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const name =
     user?.fullName ||
@@ -175,14 +170,6 @@ function AccountSection() {
     "Paper trader";
   const username = user?.username || user?.id?.slice(0, 18) || "—";
   const publicId = user?.id ? formatPublicId(user.id) : "—";
-
-  function saveRegional(next: Partial<RegionalPrefs>) {
-    const merged = { ...regional, ...next };
-    setRegional(merged);
-    writeRegionalPrefs(merged);
-    setEditing(null);
-    toast("Regional settings saved");
-  }
 
   async function copyPublicId() {
     if (!user?.id) return;
@@ -201,7 +188,7 @@ function AccountSection() {
     const lastName = parts.slice(1).join(" ");
     try {
       await user.update({ firstName, lastName });
-      setEditing(null);
+      setEditingName(false);
       toast("Preferred name saved");
     } catch {
       toast("Couldn’t update name");
@@ -235,7 +222,7 @@ function AccountSection() {
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-medium text-[#787774]">Preferred name</p>
-            {editing === "name" ? (
+            {editingName ? (
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 <input
                   value={nameDraft}
@@ -251,7 +238,7 @@ function AccountSection() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setEditing(null)}
+                  onClick={() => setEditingName(false)}
                   className="h-7 rounded-[6px] px-2 text-sm font-medium text-[#787774]"
                 >
                   Cancel
@@ -262,7 +249,7 @@ function AccountSection() {
                 type="button"
                 onClick={() => {
                   setNameDraft(name);
-                  setEditing("name");
+                  setEditingName(true);
                 }}
                 className="mt-1 block w-full rounded-[6px] border border-transparent px-0 py-1 text-left text-sm font-medium text-[#2C2C2B] hover:border-[rgba(42,28,0,0.12)] hover:bg-white hover:px-2"
               >
@@ -304,48 +291,6 @@ function AccountSection() {
       </div>
 
       <AccountSecurity />
-
-      <div className="border-t border-[rgba(42,28,0,0.07)] pt-6">
-        <h3 className="text-base font-semibold text-[#2C2C2B]">Regional settings</h3>
-        <div className="mt-4 flex flex-col gap-4">
-          <EditableDetail
-            label="Timezone"
-            value={timezoneLabel(regional.timezone)}
-            editing={editing === "timezone"}
-            onEdit={() => setEditing("timezone")}
-            onCancel={() => setEditing(null)}
-          >
-            <SettingsSelect
-              aria-label="Timezone"
-              value={regional.timezone}
-              options={TIMEZONE_OPTIONS.map((o) => ({
-                value: o.value,
-                label: o.label,
-              }))}
-              onChange={(timezone) => saveRegional({ timezone })}
-            />
-          </EditableDetail>
-          <DetailRow label="Currency" value="USD" hint="Paper balances are denominated in USD." />
-          <DetailRow label="Language" value="English (US)" />
-          <EditableDetail
-            label="Number Format"
-            value={numberFormatLabel(regional.numberFormat)}
-            editing={editing === "numberFormat"}
-            onEdit={() => setEditing("numberFormat")}
-            onCancel={() => setEditing(null)}
-          >
-            <SettingsSelect
-              aria-label="Number Format"
-              value={regional.numberFormat}
-              options={NUMBER_FORMAT_OPTIONS.map((o) => ({
-                value: o.value,
-                label: o.label,
-              }))}
-              onChange={(numberFormat) => saveRegional({ numberFormat })}
-            />
-          </EditableDetail>
-        </div>
-      </div>
 
       <div className="border-t border-[rgba(42,28,0,0.07)] pt-6">
         <h3 className="text-base font-semibold text-[#2C2C2B]">Trading platform</h3>
@@ -448,6 +393,13 @@ function PreferencesSection() {
               options={[{ value: "en-US", label: "English (US)" }]}
               onChange={() => toast("English (US) is the current language")}
             />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[#2C2C2B]">Currency</p>
+            <p className="mt-0.5 text-sm text-[#787774]">
+              Paper balances are denominated in USD
+            </p>
+            <p className="mt-2 text-sm font-medium text-[#2C2C2B]">USD</p>
           </div>
           <div>
             <p className="text-sm font-semibold text-[#2C2C2B]">Number format</p>
@@ -701,43 +653,6 @@ function DetailRow({
         {hint ? <p className="mt-1 text-xs text-[#A19E99]">{hint}</p> : null}
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
-    </div>
-  );
-}
-
-function EditableDetail({
-  label,
-  value,
-  editing,
-  onEdit,
-  onCancel,
-  children,
-}: {
-  label: string;
-  value: string;
-  editing: boolean;
-  onEdit: () => void;
-  onCancel: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <div>
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-[#2C2C2B]">{label}</p>
-          {!editing ? (
-            <p className="mt-0.5 text-sm text-[#787774]">{value}</p>
-          ) : null}
-        </div>
-        <button
-          type="button"
-          onClick={editing ? onCancel : onEdit}
-          className="inline-flex h-7 shrink-0 items-center rounded-[6px] border border-[rgba(28,19,1,0.11)] bg-transparent px-2 text-sm font-medium text-[#2C2C2B] hover:bg-[rgba(42,28,0,0.045)]"
-        >
-          {editing ? "Cancel" : "Edit"}
-        </button>
-      </div>
-      {editing ? children : null}
     </div>
   );
 }

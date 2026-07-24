@@ -148,22 +148,29 @@ describe("SettingsDialog", () => {
     expect(screen.getByRole("button", { name: "Manage passkeys" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Delete my account" })).toBeTruthy();
     expect(screen.getByText("Devices")).toBeTruthy();
-    expect(screen.getByText("Regional settings")).toBeTruthy();
+    expect(screen.queryByText("Regional settings")).toBeNull();
     expect(screen.getByText("Trading platform")).toBeTruthy();
     expect(screen.getByText("Paper verified")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Manage sign-in" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Close account" })).toBeNull();
   });
 
-  it("opens a premium custom menu for timezone instead of a native select", () => {
-    renderDialog();
+  it("keeps timezone and number format only under preferences", () => {
+    render(
+      <MemoryRouter>
+        <SettingsProvider>
+          <OpenSettings section="preferences" />
+          <SettingsDialog />
+        </SettingsProvider>
+      </MemoryRouter>,
+    );
     fireEvent.click(screen.getByRole("button", { name: "Open" }));
-    fireEvent.click(screen.getAllByRole("button", { name: "Edit" })[0]);
     expect(screen.queryByRole("combobox")).toBeNull();
-    const trigger = screen.getByRole("button", { name: "Timezone" });
+    const trigger = screen.getByRole("button", { name: "Time zone" });
     fireEvent.click(trigger);
-    expect(screen.getByRole("listbox", { name: "Timezone" })).toBeTruthy();
+    expect(screen.getByRole("listbox", { name: "Time zone" })).toBeTruthy();
     expect(screen.getByRole("option", { name: /Kolkata/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Number format" })).toBeTruthy();
   });
 
   it("renders preferences section groups", () => {
