@@ -17,7 +17,12 @@ def market_data_service_url() -> str:
     return os.getenv("MARKET_DATA_SERVICE_URL", "http://localhost:8002").rstrip("/")
 
 def trading_symbols() -> list[str]:
-    raw = os.getenv("TRADING_SYMBOLS", "BTCUSDT,ETHUSDT")
+    raw = os.getenv(
+        "TRADING_SYMBOLS",
+        "BTCUSDT,ETHUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,"
+        "LTCUSDT,LINKUSDT,AVAXUSDT,DOTUSDT,APTUSDT,ATOMUSDT,"
+        "BCHUSDT,POLUSDT,XLMUSDT,ARBUSDT",
+    )
     return [s.strip().upper() for s in raw.split(",") if s.strip()]
 
 def maker_liquidity_enabled() -> bool:
