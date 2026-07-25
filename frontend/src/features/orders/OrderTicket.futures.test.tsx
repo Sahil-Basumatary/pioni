@@ -7,13 +7,13 @@ import OrderTicket from "./OrderTicket";
 import instrumentReducer from "../instrument/instrumentSlice";
 
 vi.mock("@clerk/clerk-react", () => ({
-  useAuth: () => ({ isSignedIn: false }),
-  useClerk: () => ({ openSignIn: vi.fn() }),
+  useAuth: () => ({ isSignedIn: true }),
+  useClerk: () => ({ openSignIn: vi.fn(), openSignUp: vi.fn() }),
 }));
 
 vi.mock("../portfolio/portfolioApi", () => ({
-  useGetMyPortfolioQuery: () => ({ data: undefined }),
-  useGetMyPositionsQuery: () => ({ data: undefined }),
+  useGetMyPortfolioQuery: () => ({ data: { cash_balance: "10000" } }),
+  useGetMyPositionsQuery: () => ({ data: [] }),
 }));
 
 vi.mock("./ordersApi", () => ({
@@ -45,7 +45,7 @@ describe("OrderTicket futures venue", () => {
     expect(screen.getByRole("tab", { name: "Short" })).toBeInTheDocument();
     expect(screen.getByLabelText("Cross 100x")).toBeInTheDocument();
     expect(screen.getByText("Unlock derivatives")).toBeInTheDocument();
-    expect(screen.getByText("Learn more")).toBeInTheDocument();
+    expect(screen.getByText("Trade spot instead")).toBeInTheDocument();
     expect(screen.getByText("Available balance")).toBeInTheDocument();
     expect(screen.getByLabelText("Reduce only")).toBeChecked();
     expect(screen.getByText("Required margin")).toBeInTheDocument();

@@ -4,11 +4,13 @@ import { portfolioApi } from "../portfolio/portfolioApi";
 
 export type OrderSide = "BUY" | "SELL";
 export type OrderType = "MARKET" | "LIMIT";
+export type OrderTimeInForce = "GTC" | "IOC";
 
 export interface SubmitOrderBody {
   symbol: string;
   side: OrderSide;
   order_type: OrderType;
+  time_in_force?: OrderTimeInForce;
   quantity: string;
   price?: string;
 }
