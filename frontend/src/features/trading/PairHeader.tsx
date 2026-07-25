@@ -8,16 +8,13 @@ import { assetIconUrl, baseAsset } from "../../components/shell/activityFormat";
 import { useGetOrderBookQuery } from "../orders/ordersApi";
 import type { TickerSnapshot } from "../../types/market";
 import type { TradingVenue } from "./tradingVenue";
+import { paperFees } from "./paperFees";
 import InfoTip from "../onboarding/InfoTip";
 import type { GlossaryTermId } from "../onboarding/glossary";
 
 const DEFAULT_GATEWAY_URL = "http://localhost:8000";
 const SNAPSHOT_REFRESH_MS = 15_000;
 const FLASH_DURATION_MS = 500;
-const PAPER_MAKER_FEE = "0.00%";
-const PAPER_TAKER_FEE = "0.00%";
-const FUTURES_PAPER_MAKER_FEE = "0.0200%";
-const FUTURES_PAPER_TAKER_FEE = "0.0500%";
 const FUTURES_PAPER_FUNDING = "0.0000% / hr";
 
 function nextFundingAtLabel(): string {
@@ -420,9 +417,9 @@ function PairHeader({
             compact ? "text-[14px]" : "text-[13px]"
           }`}
         >
-          {venue === "futures" ? FUTURES_PAPER_MAKER_FEE : PAPER_MAKER_FEE}
+          {paperFees(venue).maker}
           <span className="text-[var(--text-muted)]">/</span>
-          {venue === "futures" ? FUTURES_PAPER_TAKER_FEE : PAPER_TAKER_FEE}
+          {paperFees(venue).taker}
           <ChevronRightTiny />
         </Link>
       </div>

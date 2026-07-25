@@ -5,12 +5,14 @@ import LayoutsMenu from "./LayoutsMenu";
 import ProductSwitcher from "./ProductSwitcher";
 import { useMarketSearch } from "../../features/markets/MarketSearchContext";
 import { useConvert } from "../../features/convert/ConvertContext";
-import { ConvertIcon, DepositIcon, SearchIcon } from "./shellIcons";
+import { useSettings } from "../../features/settings/settingsContext";
+import { ConvertIcon, DepositIcon, SearchIcon, UserIcon } from "./shellIcons";
 import { SIGN_IN_PATH, SIGN_UP_PATH } from "../../features/auth/authRoutes";
 
 export default function TopBar({ compact = false }: { compact?: boolean }) {
   const { openSearch } = useMarketSearch();
   const { openConvert } = useConvert();
+  const { openSettings } = useSettings();
 
   if (compact) {
     return (
@@ -35,6 +37,18 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
                 <span aria-hidden="true">-</span>
               </SignedOut>
             </div>
+            <SignedIn>
+              {/* The right rail is desktop-only, so this is the sole route to settings
+                  and sign-out on a small screen. */}
+              <button
+                type="button"
+                aria-label="Account settings"
+                onClick={() => openSettings("account")}
+                className="rail-icon flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-primary)] hover:bg-black/[0.04]"
+              >
+                <UserIcon className="h-6 w-6" />
+              </button>
+            </SignedIn>
             <SignedOut>
               <AuthButtons />
             </SignedOut>
