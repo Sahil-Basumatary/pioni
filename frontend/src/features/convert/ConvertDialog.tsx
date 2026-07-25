@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { useAuth } from "@clerk/clerk-react";
 import {
   ChevronDownIcon,
   CloseSmallIcon,
@@ -8,11 +9,18 @@ import {
 import { useConvert } from "./ConvertContext";
 import {
   CONVERT_ASSETS,
-  PAPER_USD_BALANCE,
   formatConvertAmount,
   quoteReceive,
   type ConvertAsset,
 } from "./convertQuote";
+import { useLiveMarketTrade } from "../market/liveMarketStore";
+import {
+  STATUS_BAR_SYMBOLS,
+  useMarketSocket,
+} from "../market/MarketSocketProvider";
+import { useGetMySummaryQuery } from "../portfolio/portfolioApi";
+import SignedOutUnlock from "../auth/SignedOutUnlock";
+import { baseAsset } from "../../components/shell/activityFormat";
 import { useToast } from "../toasts/useToast";
 
 function assetBySymbol(symbol: string): ConvertAsset {
@@ -38,12 +46,70 @@ function AssetBadge({ asset }: { asset: ConvertAsset }) {
   );
 }
 
+// Only the status-bar symbols stream by default, so the dialog subscribes to the remainder for
+// as long as it is open — otherwise SOL and XRP would never receive a price.
+const ALWAYS_STREAMED = new Set<string>(STATUS_BAR_SYMBOLS);
+const CONVERT_EXTRA_SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT"].filter(
+  (symbol) => !ALWAYS_STREAMED.has(symbol),
+);
+
+function useConvertStream(open: boolean) {
+  const { subscribe, unsubscribe } = useMarketSocket();
+  useEffect(() => {
+    if (!open) return;
+    subscribe(CONVERT_EXTRA_SYMBOLS);
+    return () => unsubscribe(CONVERT_EXTRA_SYMBOLS);
+  }, [open, subscribe, unsubscribe]);
+}
+
+/**
+ * Live USD price per convertible asset. The hook count is fixed because CONVERT_ASSETS is a
+ * module constant, so calling one hook per asset here stays rules-of-hooks safe.
+ */
+function useConvertPrices(): Record<string, number | null> {
+  const btc = useLiveMarketTrade("BTCUSDT");
+  const eth = useLiveMarketTrade("ETHUSDT");
+  const sol = useLiveMarketTrade("SOLUSDT");
+  const xrp = useLiveMarketTrade("XRPUSDT");
+  return useMemo(() => {
+    const price = (trade: { price: string } | null) => {
+      const n = trade ? Number(trade.price) : NaN;
+      return Number.isFinite(n) && n > 0 ? n : null;
+    };
+    return {
+      USD: 1,
+      BTC: price(btc),
+      ETH: price(eth),
+      SOL: price(sol),
+      XRP: price(xrp),
+    };
+  }, [btc, eth, sol, xrp]);
+}
+
 export default function ConvertDialog() {
   const { open, fromSymbol, toSymbol, closeConvert, setPair } = useConvert();
+  const { isSignedIn } = useAuth();
   const [fromRaw, setFromRaw] = useState("");
   const [pct, setPct] = useState(100);
   const [menu, setMenu] = useState<"from" | "to" | null>(null);
   const toast = useToast();
+  useConvertStream(open);
+  const prices = useConvertPrices();
+  const { data: summary } = useGetMySummaryQuery(undefined, {
+    skip: !isSignedIn || !open,
+  });
+
+  const balances = useMemo(() => {
+    const map: Record<string, number> = {
+      USD: Number(summary?.portfolio.cash_balance ?? 0),
+    };
+    for (const position of summary?.positions ?? []) {
+      const qty = Number(position.quantity);
+      if (!Number.isFinite(qty) || qty === 0) continue;
+      map[baseAsset(position.symbol)] = qty;
+    }
+    return map;
+  }, [summary]);
 
   useEffect(() => {
     if (!open) return;
@@ -61,13 +127,17 @@ export default function ConvertDialog() {
     };
   }, [open]);
 
-  const available =
-    fromSymbol === "USD" ? PAPER_USD_BALANCE : fromSymbol === "BTC" ? 0.05 : 0;
+  const available = balances[fromSymbol] ?? 0;
   const fromAmount = Number.parseFloat(fromRaw.replace(/,/g, "")) || 0;
-  const toAmount = quoteReceive(fromSymbol, toSymbol, fromAmount);
-  const canReview = fromAmount > 0 && fromAmount <= available + 1e-12;
+  const toAmount = quoteReceive(fromAmount, prices[fromSymbol], prices[toSymbol]);
+  const priced = prices[fromSymbol] != null && prices[toSymbol] != null;
+  const canReview =
+    priced && fromAmount > 0 && fromAmount <= available + 1e-12;
 
   const hint = useMemo(() => {
+    if (!priced) {
+      return `Waiting for a live ${prices[fromSymbol] == null ? fromSymbol : toSymbol} price`;
+    }
     if (available <= 0) {
       return `You don't have any ${fromSymbol} to convert`;
     }
@@ -75,7 +145,7 @@ export default function ConvertDialog() {
       return `Amount exceeds available ${fromSymbol}`;
     }
     return `Available ${available.toLocaleString("en-US")} ${fromSymbol}`;
-  }, [available, fromAmount, fromSymbol]);
+  }, [available, fromAmount, fromSymbol, priced, prices, toSymbol]);
 
   if (!open) return null;
 
@@ -145,6 +215,11 @@ export default function ConvertDialog() {
           </button>
         </div>
 
+        {!isSignedIn ? (
+          <div className="px-5 pb-5">
+            <SignedOutUnlock size="panel" />
+          </div>
+        ) : (
         <div className="flex flex-col gap-2 px-5 pb-5">
           <AssetRow
             label="From"
@@ -219,7 +294,7 @@ export default function ConvertDialog() {
             disabled={!canReview}
             onClick={() =>
               flash(
-                `Paper convert ${fromRaw || "0"} ${fromSymbol} → ${formatConvertAmount(toAmount, toSymbol)} ${toSymbol}`,
+                `Preview only — converting ${fromRaw || "0"} ${fromSymbol} would return about ${formatConvertAmount(toAmount, toSymbol)} ${toSymbol}. No balances moved.`,
               )
             }
             className={`mt-2 inline-flex h-10 w-full items-center justify-center rounded-xl bg-black text-sm font-medium text-white ${
@@ -231,6 +306,7 @@ export default function ConvertDialog() {
             Review
           </button>
         </div>
+        )}
       </div>
     </div>,
     document.body,

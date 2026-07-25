@@ -1,16 +1,54 @@
-# React + Vite
+# Pioni frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript single-page app for the Pioni paper-trading platform, built with Vite.
 
-Currently, two official plugins are available:
+## Running locally
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```bash
+npm ci
+cp .env.example .env   # then fill in VITE_CLERK_PUBLISHABLE_KEY
+npm run dev            # http://localhost:5173
+```
 
-## React Compiler
+The app expects the gateway on `VITE_GATEWAY_URL` (default `http://localhost:8000`). See the
+repository root `README.md` and `Makefile` for bringing up the backend services.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Scripts
 
-## Expanding the ESLint configuration
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Vite dev server with HMR |
+| `npm run build` | Typecheck (`tsc -b`) then production build |
+| `npm run lint` | ESLint over the whole workspace |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run test` | Vitest in watch mode |
+| `npm run test:run` | Vitest once |
+| `npm run coverage` | Vitest with V8 coverage thresholds |
+| `npm run cy:run` | Cypress against a running dev server |
+| `npm run e2e` | Boots the dev server and runs the stubbed Cypress suite |
+| `npm run e2e:smoke` | Cypress smoke checks against a live backend stack |
+| `npm run perf:size` | Build, then report bundle sizes |
+| `npm run perf:budget` | Build, then fail if the bundle budget is exceeded |
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+CI runs lint, typecheck, coverage, the stubbed Cypress suite, the production build, and the
+bundle budget check.
+
+## Layout
+
+```
+src/
+  app/          Redux store, typed hooks, RTK Query base query
+  components/   Shared UI and the application shell (top bar, nav, rails)
+  features/     Vertical slices — trading, orders, portfolio, markets, settings, onboarding
+  pages/        Route-level components
+  hooks/        Cross-cutting hooks
+  utils/        Formatting helpers
+```
+
+Anything backed by an authenticated endpoint renders `features/auth/SignedOutUnlock` when the
+visitor is signed out, rather than sample data. Home and History use the full-page unlock splash.
+
+## Performance
+
+`docs/perf-lab/` records the measurements behind each performance change, and
+`docs/performance.md` summarises the current budgets.

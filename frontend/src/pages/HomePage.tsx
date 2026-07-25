@@ -4,10 +4,10 @@ import {
   useGetMyPnlChartQuery,
   useGetMySummaryQuery,
 } from "../features/portfolio/portfolioApi";
+import SignedOutUnlock from "../features/auth/SignedOutUnlock";
 import HomeActivity from "../features/home/HomeActivity";
 import HomeHoldingsPanel from "../features/home/HomeHoldingsPanel";
 import HomeMarketsStrip from "../features/home/HomeMarketsStrip";
-import { PAPER_HOME_CASH } from "../features/home/paperHomeDemo";
 import PortfolioInsights from "../features/home/PortfolioInsights";
 import TotalValueCard, {
   RANGE_DAYS,
@@ -27,23 +27,24 @@ export default function HomePage() {
     { skip: !isSignedIn },
   );
 
-  const totalValue = summary?.total_value != null
-    ? Number(summary.total_value)
-    : isSignedIn
-      ? null
-      : PAPER_HOME_CASH;
+  if (!isSignedIn) {
+    return (
+      <div className="mx-auto flex w-full max-w-[1750px] flex-col">
+        <SignedOutUnlock size="page" showLogo />
+      </div>
+    );
+  }
+
+  const totalValue =
+    summary?.total_value != null ? Number(summary.total_value) : null;
   const cash =
     summary?.portfolio.cash_balance != null
       ? Number(summary.portfolio.cash_balance)
-      : isSignedIn
-        ? null
-        : PAPER_HOME_CASH;
+      : null;
   const upnl =
     summary?.total_unrealized_pnl != null
       ? Number(summary.total_unrealized_pnl)
-      : isSignedIn
-        ? null
-        : 0;
+      : null;
 
   return (
     <div className="mx-auto flex w-full max-w-[1750px] flex-col gap-2">
@@ -54,7 +55,8 @@ export default function HomePage() {
             points={points}
             range={range}
             onRangeChange={setRange}
-            loading={isSignedIn && summaryLoading}
+            loading={summaryLoading}
+            signedIn
           />
           <PortfolioInsights
             totalValue={totalValue}

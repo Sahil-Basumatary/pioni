@@ -7,8 +7,8 @@ import {
 import { useListOrdersQuery, type Order } from "../orders/ordersApi";
 import { useLiveMarketTrade } from "../market/liveMarketStore";
 import { assetIconUrl, baseAsset } from "../../components/shell/activityFormat";
+import SignedOutUnlock from "../auth/SignedOutUnlock";
 import TeachingEmpty from "../onboarding/TeachingEmpty";
-import { PAPER_BTC_MID, PAPER_HOME_CASH } from "./paperHomeDemo";
 
 type HoldingsTab = "balances" | "orders" | "positions";
 
@@ -115,17 +115,13 @@ function BalancesTable({
 }) {
   const liveBtc = useLiveMarketTrade("BTCUSDT");
   const btcMark =
-    liveBtc && Number.isFinite(Number(liveBtc.price))
-      ? Number(liveBtc.price)
-      : PAPER_BTC_MID;
+    liveBtc && Number.isFinite(Number(liveBtc.price)) ? Number(liveBtc.price) : null;
 
-  if (signedIn && loading) return <Empty copy="Loading balances…" />;
+  if (!signedIn) return <SignedOutUnlock size="panel" />;
+  if (loading) return <Empty copy="Loading balances…" />;
 
-  const cashNum = signedIn
-    ? cash != null && Number.isFinite(Number(cash))
-      ? Number(cash)
-      : 0
-    : PAPER_HOME_CASH;
+  const cashNum =
+    cash != null && Number.isFinite(Number(cash)) ? Number(cash) : 0;
 
   const byAsset = new Map<string, BalanceRowModel>();
   byAsset.set("USD", {
@@ -135,33 +131,22 @@ function BalancesTable({
     currentPrice: 1,
   });
 
-  if (signedIn) {
-    for (const p of positions) {
-      const qty = Number(p.quantity);
-      if (!Number.isFinite(qty) || qty === 0) continue;
-      const symbol = baseAsset(p.symbol);
-      const avg = Number(p.avg_entry_price);
-      const mark = p.market_price != null ? Number(p.market_price) : null;
-      byAsset.set(symbol, {
-        symbol,
-        balance: qty,
-        avgPrice: Number.isFinite(avg) ? avg : null,
-        currentPrice: mark != null && Number.isFinite(mark) ? mark : null,
-      });
-    }
+  for (const p of positions) {
+    const qty = Number(p.quantity);
+    if (!Number.isFinite(qty) || qty === 0) continue;
+    const symbol = baseAsset(p.symbol);
+    const avg = Number(p.avg_entry_price);
+    const mark = p.market_price != null ? Number(p.market_price) : null;
+    byAsset.set(symbol, {
+      symbol,
+      balance: qty,
+      avgPrice: Number.isFinite(avg) ? avg : null,
+      currentPrice: mark != null && Number.isFinite(mark) ? mark : null,
+    });
   }
 
-  if (!byAsset.has("BTC")) {
-    byAsset.set("BTC", {
-      symbol: "BTC",
-      balance: 0,
-      avgPrice: null,
-      currentPrice: btcMark,
-    });
-  } else {
-    const btc = byAsset.get("BTC")!;
-    if (btc.currentPrice == null) btc.currentPrice = btcMark;
-  }
+  const btc = byAsset.get("BTC");
+  if (btc && btc.currentPrice == null) btc.currentPrice = btcMark;
 
   const rows = [...byAsset.values()].sort((a, b) => {
     if (a.symbol === "USD") return -1;
@@ -218,7 +203,7 @@ function PositionsTable({
   signedIn: boolean;
 }) {
   if (!signedIn) {
-    return <TeachingEmpty id="home_positions" size="panel" />;
+    return <SignedOutUnlock size="panel" />;
   }
   if (loading) return <Empty copy="Loading positions…" />;
   if (!positions.length) {
@@ -264,7 +249,7 @@ function OrdersTable({ signedIn }: { signedIn: boolean }) {
     { skip: !signedIn },
   );
   if (!signedIn) {
-    return <TeachingEmpty id="home_orders" size="panel" />;
+    return <SignedOutUnlock size="panel" />;
   }
   if (isLoading) return <Empty copy="Loading orders…" />;
   if (isError) {

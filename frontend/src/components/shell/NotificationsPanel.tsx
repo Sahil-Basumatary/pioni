@@ -2,9 +2,10 @@ import { useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { useGetMyTradesQuery } from "../../features/portfolio/portfolioApi";
 import { ActivityFillRow } from "../../features/home/ActivityFillRow";
+import SignedOutUnlock from "../../features/auth/SignedOutUnlock";
 import TeachingEmpty from "../../features/onboarding/TeachingEmpty";
 import { useSettings } from "../../features/settings/settingsContext";
-import { CloseIcon, TablePinIcon, BellIcon } from "./shellIcons";
+import { CloseIcon, BellIcon } from "./shellIcons";
 
 type InboxTab = "inbox" | "alerts";
 
@@ -25,24 +26,14 @@ export default function NotificationsPanel({ onClose }: { onClose: () => void })
     >
       <div className="flex h-11 shrink-0 items-center justify-between gap-2 px-4">
         <span className="text-sm font-medium text-[var(--text-muted)]">Notifications</span>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            aria-label="Pin"
-            title="Pin"
-            className="rail-icon flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)]"
-          >
-            <TablePinIcon className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            aria-label="Close notifications"
-            onClick={onClose}
-            className="rail-icon flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)]"
-          >
-            <CloseIcon className="h-5 w-5" />
-          </button>
-        </div>
+        <button
+          type="button"
+          aria-label="Close notifications"
+          onClick={onClose}
+          className="rail-icon flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)]"
+        >
+          <CloseIcon className="h-5 w-5" />
+        </button>
       </div>
       <div className="flex shrink-0 gap-0 px-4 pb-3">
         <TabChip
@@ -74,11 +65,8 @@ export default function NotificationsPanel({ onClose }: { onClose: () => void })
             </button>
           </div>
         ) : !isSignedIn ? (
-          <div className="flex flex-col items-center justify-center gap-3 px-8 py-20 text-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-black/[0.04] text-[var(--text-muted)]">
-              <BellIcon className="h-8 w-8" />
-            </span>
-            <TeachingEmpty id="notifications_inbox" size="panel" />
+          <div className="flex flex-col items-center justify-center px-8 py-20">
+            <SignedOutUnlock size="panel" />
           </div>
         ) : isLoading ? (
           <div className="flex flex-col items-center justify-center gap-3 px-8 py-20 text-center">

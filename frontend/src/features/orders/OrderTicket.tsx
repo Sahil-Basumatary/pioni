@@ -12,17 +12,20 @@ import { useSubmitOrderMutation, useGetOrderBookQuery, type OrderSide, type Orde
 import { evaluateOrder } from "./orderValidation";
 import type { TradingVenue } from "../trading/tradingVenue";
 import { ChevronDownSmallIcon } from "../../components/shell/shellIcons";
+import { baseAsset } from "../../components/shell/activityFormat";
+import { paperFees } from "../trading/paperFees";
 import { useToast } from "../toasts/useToast";
 import { toastFromOrder } from "../toasts/orderToastCopy";
 import { watchOpenOrder } from "../toasts/orderWatch";
 import InfoTip from "../onboarding/InfoTip";
-import type { GlossaryTermId } from "../onboarding/glossary";
+import {
+  ChevronTiny,
+  DetailRow,
+  Field,
+  TicketCheck,
+} from "./ticketControls";
 import { readDisplayPrefs, formatPrefLimitPrice } from "../settings/displayPrefs";
-import { SIGN_IN_PATH } from "../auth/authRoutes";
-
-function baseAsset(symbol: string): string {
-  return symbol.replace(/USDT$|USD$|USDC$/i, "") || symbol;
-}
+import { SIGN_UP_PATH } from "../auth/authRoutes";
 
 function parseDecimal(raw: string): number {
   const cleaned = String(raw).replace(/,/g, "").trim();
@@ -52,7 +55,7 @@ function formatTotalInput(n: number): string {
 }
 
 type Feedback = { tone: "success" | "error"; message: string };
-type TimeInForce = "GTC" | "IOC" | "FOK";
+type TimeInForce = "GTC" | "IOC";
 
 const ADVANCED_TYPES = [
   { id: "stop-loss", label: "Stop loss" },
@@ -60,17 +63,17 @@ const ADVANCED_TYPES = [
   { id: "trailing-stop", label: "Trailing stop" },
 ] as const;
 
-const TIF_OPTIONS: { id: TimeInForce; label: string; ready: boolean }[] = [
-  { id: "GTC", label: "Good till canceled", ready: true },
-  { id: "IOC", label: "Immediate or cancel", ready: false },
-  { id: "FOK", label: "Fill or kill", ready: false },
+// FOK is not offered: the engine cancels an unfilled remainder but does not reject a partial
+// fill, which is IOC behaviour, not fill-or-kill.
+const TIF_OPTIONS: { id: TimeInForce; label: string }[] = [
+  { id: "GTC", label: "Good till canceled" },
+  { id: "IOC", label: "Immediate or cancel" },
 ];
 
 const MARGIN_LEVERAGE_OPTIONS = [2, 3, 4, 5, 10] as const;
 const FUTURES_LEVERAGE_OPTIONS = [1, 2, 3, 5, 10, 20, 50, 100] as const;
 const DEFAULT_MARGIN_LEVERAGE = 10;
 const DEFAULT_FUTURES_LEVERAGE = 100;
-const PAPER_MAKER_FEE = "0.00%";
 
 export default function OrderTicket({
   venue = "spot",
@@ -315,11 +318,6 @@ export default function OrderTicket({
 
   async function handleSubmit() {
     setFeedback(null);
-    if (!isSignedIn) {
-      navigate(SIGN_IN_PATH);
-      return;
-    }
-    if (needsFunds) return;
     const prefs = readDisplayPrefs();
     if (prefs.confirmOrders) {
       const ok = window.confirm(
@@ -332,6 +330,7 @@ export default function OrderTicket({
         symbol,
         side,
         order_type: orderType,
+        time_in_force: tif,
         quantity,
         ...(orderType === "LIMIT"
           ? { price: String(limitPrice).replace(/,/g, "") }
@@ -351,7 +350,7 @@ export default function OrderTicket({
       setSizePct(0);
       setTpSl(false);
       setPostOnly(false);
-      setReduceOnly(false);
+      setReduceOnly(isDeriv);
     } catch (err) {
       const message = extractError(err);
       setFeedback({ tone: "error", message });
@@ -388,9 +387,10 @@ export default function OrderTicket({
             </button>
             <button
               type="button"
+              onClick={goSpot}
               className="rail-icon inline-flex h-9 shrink-0 items-center whitespace-nowrap !bg-[rgba(104,107,130,0.08)] px-3 py-2 text-sm font-medium leading-5 text-[var(--text-primary)] hover:!bg-[rgba(104,107,130,0.12)] rounded-xl"
             >
-              Sell {asset}/USD {leverage}x
+              Trade spot instead
             </button>
           </div>
         </div>
@@ -412,9 +412,10 @@ export default function OrderTicket({
             </button>
             <button
               type="button"
+              onClick={goSpot}
               className="rail-icon inline-flex h-9 shrink-0 items-center whitespace-nowrap !bg-[rgba(104,107,130,0.08)] px-3 py-2 text-sm font-medium leading-5 text-[var(--text-primary)] hover:!bg-[rgba(104,107,130,0.12)] rounded-xl"
             >
-              Learn more
+              Trade spot instead
             </button>
           </div>
         </div>
@@ -731,33 +732,31 @@ export default function OrderTicket({
       <div className="flex items-center justify-between gap-2 text-xs">
         <InfoTip term="available_to_trade" label={availableLabel} />
         <span className="flex items-center gap-1 tabular-nums text-[var(--text-primary)]">
-          <Link
-            to="/deposit"
-            className="rail-icon inline-flex h-4 w-4 items-center justify-center rounded-full border border-[rgba(104,107,130,0.32)] text-[11px] leading-none text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-            aria-label="Add funds"
-            title="Add funds"
-          >
-            +
-          </Link>
-          <button
-            type="button"
-            aria-label="Order related balance"
-            className="rail-icon text-xs tabular-nums text-[var(--text-primary)]"
+          {isSignedIn && (
+            <Link
+              to="/deposit"
+              className="rail-icon inline-flex h-4 w-4 items-center justify-center rounded-full border border-[rgba(104,107,130,0.32)] text-[11px] leading-none text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              aria-label="Add funds"
+              title="Add funds"
+            >
+              +
+            </Link>
+          )}
+          <span
+            className="text-xs tabular-nums text-[var(--text-primary)]"
             title={isSignedIn ? relatedBalancePlain : undefined}
           >
-            {isSignedIn ? (
-              isBuy ? (
-                relatedBalancePlain
-              ) : (
-                <>
-                  {relatedBalancePlain}
-                  <span className="ms-0.5 text-[rgb(104,107,130)]">{asset}</span>
-                </>
-              )
-            ) : (
+            {!isSignedIn ? (
               "—"
+            ) : isBuy ? (
+              relatedBalancePlain
+            ) : (
+              <>
+                {relatedBalancePlain}
+                <span className="ms-0.5 text-[rgb(104,107,130)]">{asset}</span>
+              </>
             )}
-          </button>
+          </span>
         </span>
       </div>
       <div className="flex flex-wrap gap-3">
@@ -811,7 +810,7 @@ export default function OrderTicket({
       </div>
       {tpSl && !tpSlDisabled && (
         <p className="px-0.5 text-[11px] leading-4 text-[var(--text-muted)]">
-          TP/SL attaches on the next fill path — control is for layout parity.
+          TP/SL is display-only for now.
         </p>
       )}
       {postOnly && orderType === "LIMIT" && (
@@ -819,7 +818,19 @@ export default function OrderTicket({
           Post-only is display-only for now.
         </p>
       )}
-      {needsFunds ? (
+      {reduceOnly && !reduceOnlyLocked && (
+        <p className="px-0.5 text-[11px] leading-4 text-[var(--text-muted)]">
+          Reduce-only is display-only for now.
+        </p>
+      )}
+      {!isSignedIn ? (
+        <Link
+          to={SIGN_UP_PATH}
+          className="mt-auto flex h-10 min-h-10 w-full shrink-0 items-center justify-center rounded-xl bg-[rgba(104,107,130,0.08)] px-3 py-2.5 text-sm font-medium leading-5 text-[#101114] hover:bg-[rgba(104,107,130,0.12)]"
+        >
+          Sign up to trade
+        </Link>
+      ) : needsFunds ? (
         <Link
           to="/deposit"
           className="mt-auto flex h-9 min-h-9 shrink-0 items-center justify-center rounded-xl bg-black px-3 py-2 text-sm font-medium leading-5 text-white transition-colors hover:bg-[rgb(32,32,32)]"
@@ -830,14 +841,8 @@ export default function OrderTicket({
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={
-            isLoading || (isSignedIn ? !evaluation.canSubmit : !quantity.trim())
-          }
-          title={
-            isSignedIn && !evaluation.canSubmit
-              ? evaluation.reason ?? undefined
-              : undefined
-          }
+          disabled={isLoading || !evaluation.canSubmit}
+          title={!evaluation.canSubmit ? evaluation.reason ?? undefined : undefined}
           className={`mt-auto flex h-9 min-h-9 shrink-0 items-center justify-center rounded-xl px-3 py-2 text-sm font-medium leading-5 text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
             isBuy
               ? "!bg-[#08844f] hover:!bg-[#077043]"
@@ -896,9 +901,8 @@ export default function OrderTicket({
                 className="min-w-0 max-w-[11rem] cursor-pointer appearance-none border-0 bg-transparent py-0.5 text-right text-xs font-medium text-[rgb(72,75,94)] outline-none"
               >
                 {TIF_OPTIONS.map((opt) => (
-                  <option key={opt.id} value={opt.id} disabled={!opt.ready}>
+                  <option key={opt.id} value={opt.id}>
                     {opt.label}
-                    {!opt.ready ? " (soon)" : ""}
                   </option>
                 ))}
               </select>
@@ -926,15 +930,17 @@ export default function OrderTicket({
                 <div className="flex items-center justify-between text-xs">
                   <InfoTip term="maker_fee" label="Your maker fee" />
                   <span className="tabular-nums font-medium text-[rgb(72,75,94)]">
-                    {PAPER_MAKER_FEE}
+                    {paperFees(venue).maker}
                   </span>
                 </div>
               </>
             )}
             {isMargin && <DetailRow label="Est. margin fee" value="—" />}
-            {tif === "GTC" && !isFutures && (
+            {!isFutures && (
               <p className="text-[10px] text-[var(--text-muted)]">
-                Paper orders rest until filled or canceled.
+                {tif === "GTC"
+                  ? "Paper orders rest until filled or canceled."
+                  : "Any quantity that cannot fill immediately is canceled."}
               </p>
             )}
           </div>
@@ -950,157 +956,10 @@ export default function OrderTicket({
         </p>
       )}
       <p className="text-[11px] leading-relaxed text-[var(--text-muted)]">
-        Practice money only — you can’t lose anything real.
+        {isDeriv
+          ? `Practice money only. Margin figures are a preview — the order fills unlevered against your paper balance, not at ${leverage}x.`
+          : "Practice money only — you can’t lose anything real."}
       </p>
     </div>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  placeholder,
-  radius,
-  prefix,
-  tip,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  radius: string;
-  prefix?: string;
-  tip?: GlossaryTermId;
-}) {
-  return (
-    <label
-      className={`relative flex h-10 min-w-0 flex-1 flex-col justify-end bg-[rgba(104,107,130,0.08)] px-3 hover:bg-[rgba(104,107,130,0.12)] focus-within:outline focus-within:outline-2 focus-within:outline-[var(--text-primary)] ${
-        tip ? "overflow-visible" : "overflow-hidden"
-      } ${radius}`}
-    >
-      <span
-        className={`absolute left-3 top-1 z-[1] text-xs font-normal text-[rgb(104,107,130)] ${
-          tip ? "" : "pointer-events-none"
-        }`}
-      >
-        {tip ? (
-          <InfoTip term={tip} label={label} className="text-xs font-normal" />
-        ) : (
-          label
-        )}
-      </span>
-      <span className="flex min-w-0 items-baseline gap-0.5 pb-1 pt-4">
-        {prefix ? (
-          <span className="shrink-0 text-sm font-medium text-[var(--text-primary)]">
-            {prefix}
-          </span>
-        ) : null}
-        <input
-          inputMode="decimal"
-          aria-label={label}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="w-full min-w-0 bg-transparent text-sm font-medium tabular-nums text-[var(--text-primary)] outline-none placeholder:text-[rgb(104,107,130)]"
-        />
-      </span>
-    </label>
-  );
-}
-
-function DetailRow({
-  label,
-  value,
-  labelUnderline = false,
-  tip,
-}: {
-  label: string;
-  value: string;
-  labelUnderline?: boolean;
-  tip?: GlossaryTermId;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-2 text-xs">
-      {tip ? (
-        <InfoTip term={tip} label={label} />
-      ) : (
-        <span
-          className={`text-[rgb(104,107,130)] ${
-            labelUnderline
-              ? "underline decoration-dashed underline-offset-4"
-              : ""
-          }`}
-        >
-          {label}
-        </span>
-      )}
-      <span className="tabular-nums font-medium text-[rgb(72,75,94)]">
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function TicketCheck({
-  checked,
-  disabled,
-  onChange,
-  label,
-}: {
-  checked: boolean;
-  disabled?: boolean;
-  onChange: (next: boolean) => void;
-  label: string;
-}) {
-  return (
-    <span className="relative inline-flex h-4 w-4 shrink-0 items-center justify-center">
-      <input
-        type="checkbox"
-        checked={checked}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
-        aria-label={label}
-        className="peer absolute inset-0 z-10 cursor-pointer opacity-0 disabled:cursor-not-allowed"
-      />
-      <span
-        aria-hidden="true"
-        className={`pointer-events-none inline-flex h-4 w-4 items-center justify-center rounded-[3px] ${
-          checked ? "bg-[rgb(113,50,245)]" : "bg-[rgba(104,107,130,0.32)]"
-        } ${disabled ? "opacity-50" : ""}`}
-      >
-        {checked && (
-          <svg viewBox="0 0 12 12" className="h-2.5 w-2.5 text-white">
-            <path
-              d="M2.5 6.2 4.8 8.5 9.5 3.5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        )}
-      </span>
-    </span>
-  );
-}
-
-function ChevronTiny({ open }: { open: boolean }) {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 12 12"
-      className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`}
-    >
-      <path
-        d="M2.5 4.5 6 8l3.5-3.5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }

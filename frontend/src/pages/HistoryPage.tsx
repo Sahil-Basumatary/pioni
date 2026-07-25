@@ -1,22 +1,30 @@
 import { useMemo, useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { ArrowTopRightIcon, ChevronDownSmallIcon } from "../components/shell/shellIcons";
-import { useGetMyTradesQuery, type PortfolioTrade } from "../features/portfolio/portfolioApi";
-import { ActivityFillRow } from "../features/home/ActivityFillRow";
+import { baseAsset } from "../components/shell/activityFormat";
+import {
+  useGetMyPositionsQuery,
+  useGetMyTradesQuery,
+  type PortfolioPosition,
+  type PortfolioTrade,
+} from "../features/portfolio/portfolioApi";
+import { useListOrdersQuery, type Order } from "../features/orders/ordersApi";
+import SignedOutUnlock from "../features/auth/SignedOutUnlock";
 import TeachingEmpty from "../features/onboarding/TeachingEmpty";
 import { useToast } from "../features/toasts/useToast";
+import { formatUsd } from "../utils/formatters";
 import {
   LEDGER_COLUMNS,
   ORDER_COLUMNS,
-  PAPER_LEDGER,
-  PAPER_ORDERS,
-  PAPER_TRADES,
   TRADE_COLUMNS,
   filtersForSection,
+  ledgerFromTrades,
   sectionsForScope,
   type HistoryScope,
   type HistorySection,
 } from "../features/history/historyContent";
+
+const TRADE_FETCH_LIMIT = 100;
 
 const SCOPES: { id: HistoryScope; label: string }[] = [
   { id: "main", label: "Main" },
@@ -31,23 +39,59 @@ const SECTION_LABEL: Record<HistorySection, string> = {
   positions: "Positions",
 };
 
+function formatWhen(iso: string): string {
+  const when = new Date(iso);
+  if (Number.isNaN(when.getTime())) return "—";
+  return when.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function matches(value: string, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  return !q || value.toLowerCase().includes(q);
+}
+
 export default function HistoryPage() {
   const { isSignedIn } = useAuth();
   const toast = useToast();
   const [scope, setScope] = useState<HistoryScope>("main");
   const [section, setSection] = useState<HistorySection>("ledger");
-  const sections = sectionsForScope(scope);
-  const filters = filtersForSection(section);
+  const [filterState, setFilterState] = useState<Record<string, string>>({});
 
-  const { data, isLoading, isError, refetch } = useGetMyTradesQuery(
-    { limit: 100 },
-    { skip: !isSignedIn || section !== "trades" || scope !== "main" },
+  const sections = sectionsForScope(scope);
+  const activeSection = sections.includes(section) ? section : sections[0];
+  const filters = filtersForSection(activeSection);
+  const mainScope = scope === "main";
+
+  const trades = useGetMyTradesQuery(
+    { limit: TRADE_FETCH_LIMIT },
+    {
+      skip:
+        !isSignedIn ||
+        !mainScope ||
+        (activeSection !== "ledger" && activeSection !== "trades"),
+    },
+  );
+  const orders = useListOrdersQuery(
+    { limit: TRADE_FETCH_LIMIT },
+    { skip: !isSignedIn || !mainScope || activeSection !== "orders" },
+  );
+  const positions = useGetMyPositionsQuery(
+    { openOnly: false },
+    { skip: !isSignedIn || !mainScope || activeSection !== "positions" },
   );
 
-  const activeSection = sections.includes(section) ? section : sections[0];
+  if (!isSignedIn) {
+    return <SignedOutUnlock size="page" showLogo />;
+  }
 
   const onScope = (next: HistoryScope) => {
     setScope(next);
+    setFilterState({});
     const nextSections = sectionsForScope(next);
     if (!nextSections.includes(section)) setSection(nextSections[0]);
   };
@@ -56,7 +100,6 @@ export default function HistoryPage() {
     () => Object.fromEntries(filters.map((f) => [f, ""])),
     [filters],
   );
-  const [filterState, setFilterState] = useState<Record<string, string>>({});
   const mergedFilters = { ...filterValues, ...filterState };
 
   return (
@@ -98,7 +141,10 @@ export default function HistoryPage() {
               type="button"
               role="tab"
               aria-selected={activeSection === id}
-              onClick={() => setSection(id)}
+              onClick={() => {
+                setSection(id);
+                setFilterState({});
+              }}
               className={`rail-icon rounded-[10px] px-3 py-1.5 text-xs font-medium ${
                 activeSection === id
                   ? "!bg-white text-[var(--text-primary)]"
@@ -120,9 +166,9 @@ export default function HistoryPage() {
       </div>
 
       <section className="flex w-full grow flex-col overflow-hidden rounded-2xl bg-[var(--card-bg)] shadow-[0_1px_4px_rgba(16,24,40,0.04)]">
-        <div className="px-3 pt-3">
-          <div className="mb-3 flex w-full flex-wrap items-center justify-between gap-2">
-            <div className="flex w-full flex-wrap gap-2">
+        {isSignedIn && mainScope && (
+          <div className="px-3 pt-3">
+            <div className="mb-3 flex w-full flex-wrap gap-2">
               {filters.map((label) => (
                 <label
                   key={label}
@@ -149,208 +195,321 @@ export default function HistoryPage() {
               </button>
             </div>
           </div>
-        </div>
+        )}
 
-        {activeSection === "ledger" ? (
-          <LedgerTable
-            query={mergedFilters.Assets ?? ""}
-            typeQuery={mergedFilters.Types ?? ""}
+        {!mainScope ? (
+          <EmptyPanel
+            title={`No ${scope === "earn" ? "Earn" : "OTC"} activity`}
+            body={`${scope === "earn" ? "Earn" : "OTC"} runs on simulated desks that do not post to your ledger yet.`}
           />
+        ) : activeSection === "ledger" ? (
+          <SectionPanel query={trades} empty={<TeachingEmpty id="history_ledger" size="panel" />}>
+            {(rows: PortfolioTrade[]) => (
+              <LedgerTable
+                trades={rows}
+                assetQuery={mergedFilters.Assets ?? ""}
+                typeQuery={mergedFilters.Types ?? ""}
+              />
+            )}
+          </SectionPanel>
         ) : activeSection === "orders" ? (
-          <OrdersTable />
+          <SectionPanel query={orders} empty={<TeachingEmpty id="history_orders" size="panel" />}>
+            {(rows: Order[]) => (
+              <OrdersTable
+                orders={rows}
+                marketQuery={mergedFilters.Market ?? ""}
+                typeQuery={mergedFilters.Types ?? ""}
+              />
+            )}
+          </SectionPanel>
         ) : activeSection === "trades" ? (
-          <TradesPanel
-            isSignedIn={!!isSignedIn}
-            isLoading={isLoading}
-            isError={isError}
-            onRetry={() => refetch()}
-            live={data}
-          />
+          <SectionPanel query={trades} empty={<TeachingEmpty id="history_trades" size="panel" />}>
+            {(rows: PortfolioTrade[]) => (
+              <TradesTable trades={rows} marketQuery={mergedFilters.Market ?? ""} />
+            )}
+          </SectionPanel>
         ) : (
-          <TeachingEmpty id="history_activity" size="panel" />
+          <SectionPanel query={positions} empty={<TeachingEmpty id="home_positions" size="panel" />}>
+            {(rows: PortfolioPosition[]) => (
+              <PositionsTable
+                positions={rows}
+                marketQuery={mergedFilters.Market ?? ""}
+              />
+            )}
+          </SectionPanel>
         )}
       </section>
     </div>
   );
 }
 
-function LedgerTable({
-  query,
-  typeQuery,
-}: {
-  query: string;
-  typeQuery: string;
-}) {
-  const rows = PAPER_LEDGER.filter((r) => {
-    const q = query.trim().toLowerCase();
-    const t = typeQuery.trim().toLowerCase();
-    if (q && !`${r.asset} ${r.ticker}`.toLowerCase().includes(q)) return false;
-    if (t && !r.type.toLowerCase().includes(t)) return false;
-    return true;
-  });
-  if (!rows.length) {
-    return <TeachingEmpty id="history_ledger" size="panel" />;
-  }
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[840px] border-collapse text-sm">
-        <thead>
-          <tr className="border-y border-[var(--card-border)] text-left text-xs text-[var(--text-muted)]">
-            {LEDGER_COLUMNS.map((c) => (
-              <th key={c} className="px-4 py-2 font-medium">
-                {c}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr
-              key={row.id}
-              className="border-b border-[var(--card-border)] last:border-b-0"
-            >
-              <td className="px-4 py-3 font-medium">{row.type}</td>
-              <td className="px-4 py-3 text-[var(--text-muted)]">{row.wallet}</td>
-              <td className="px-4 py-3">{row.asset}</td>
-              <td className="px-4 py-3 text-[var(--text-muted)]">{row.ticker}</td>
-              <td className="px-4 py-3 tabular-nums">{row.amount}</td>
-              <td className="px-4 py-3 tabular-nums text-[var(--text-muted)]">
-                {row.fee}
-              </td>
-              <td className="px-4 py-3 tabular-nums">{row.balance}</td>
-              <td className="px-4 py-3 font-mono text-xs text-[var(--text-muted)]">
-                {row.id}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function OrdersTable() {
-  if (!PAPER_ORDERS.length) {
-    return <TeachingEmpty id="history_orders" size="panel" />;
-  }
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[720px] border-collapse text-sm">
-        <thead>
-          <tr className="border-y border-[var(--card-border)] text-left text-xs text-[var(--text-muted)]">
-            {ORDER_COLUMNS.map((c) => (
-              <th key={c} className="px-4 py-2 font-medium">
-                {c}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {PAPER_ORDERS.map((row) => (
-            <tr key={row.id} className="border-b border-[var(--card-border)]">
-              <td className="px-4 py-3">{row.side}</td>
-              <td className="px-4 py-3">{row.type}</td>
-              <td className="px-4 py-3">{row.status}</td>
-              <td className="px-4 py-3 tabular-nums">{row.quantity}</td>
-              <td className="px-4 py-3 tabular-nums">{row.cost}</td>
-              <td className="px-4 py-3 font-mono text-xs text-[var(--text-muted)]">
-                {row.id}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function TradesPanel({
-  isSignedIn,
-  isLoading,
-  isError,
-  onRetry,
-  live,
-}: {
-  isSignedIn: boolean;
+type SectionQuery<T> = {
+  data?: T[];
   isLoading: boolean;
   isError: boolean;
-  onRetry: () => void;
-  live?: PortfolioTrade[] | null;
+  refetch: () => unknown;
+};
+
+function SectionPanel<T>({
+  query,
+  empty,
+  children,
+}: {
+  query: SectionQuery<T>;
+  empty: React.ReactNode;
+  children: (rows: T[]) => React.ReactNode;
 }) {
-  if (isSignedIn) {
-    if (isLoading) {
-      return (
-        <p className="px-4 py-12 text-center text-sm text-[var(--text-muted)]">
-          Loading…
-        </p>
-      );
-    }
-    if (isError) {
-      return (
-        <div className="flex flex-col items-center gap-2 px-4 py-12">
-          <p className="text-sm text-[var(--text-muted)]">Couldn’t load trades.</p>
-          <button
-            type="button"
-            onClick={onRetry}
-            className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-medium text-white"
-          >
-            Retry
-          </button>
-        </div>
-      );
-    }
-    if (live?.length) {
-      return (
-        <ul className="mx-auto flex max-w-xl list-none flex-col px-2 pb-4">
-          {live.map((trade) => (
-            <ActivityFillRow key={trade.id} trade={trade} />
-          ))}
-        </ul>
-      );
-    }
-    return <TeachingEmpty id="history_trades" size="panel" />;
+  if (query.isLoading) {
+    return (
+      <p className="px-4 py-12 text-center text-sm text-[var(--text-muted)]">Loading…</p>
+    );
   }
-
-  if (!PAPER_TRADES.length) {
-    return <TeachingEmpty id="history_trades" size="panel" />;
+  if (query.isError) {
+    return (
+      <div className="flex flex-col items-center gap-2 px-4 py-12">
+        <p className="text-sm text-[var(--text-muted)]">Couldn’t load history.</p>
+        <button
+          type="button"
+          onClick={() => query.refetch()}
+          className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-medium text-white"
+        >
+          Retry
+        </button>
+      </div>
+    );
   }
+  const rows = query.data ?? [];
+  if (!rows.length) return <>{empty}</>;
+  return <>{children(rows)}</>;
+}
 
+function EmptyPanel({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="flex flex-col items-center px-4 py-12 text-center">
+      <p className="text-sm font-medium text-[var(--text-primary)]">{title}</p>
+      <p className="mt-1 max-w-md text-sm text-[var(--text-muted)]">{body}</p>
+    </div>
+  );
+}
+
+function TableShell({
+  columns,
+  minWidth,
+  children,
+}: {
+  columns: readonly string[];
+  minWidth: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[720px] border-collapse text-sm">
+      <table className={`w-full ${minWidth} border-collapse text-sm`}>
         <thead>
           <tr className="border-y border-[var(--card-border)] text-left text-xs text-[var(--text-muted)]">
-            {TRADE_COLUMNS.map((c) => (
+            {columns.map((c) => (
               <th key={c} className="px-4 py-2 font-medium">
                 {c}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody>
-          {PAPER_TRADES.map((row) => (
-            <tr
-              key={row.id}
-              className="border-b border-[var(--card-border)] last:border-b-0"
-            >
-              <td className="px-4 py-3 font-medium">{row.side}</td>
-              <td className="px-4 py-3 text-[var(--text-muted)]">{row.type}</td>
-              <td className="px-4 py-3">
-                <div className="font-medium">{row.market}</div>
-                <div className="text-xs text-[var(--text-muted)]">
-                  {row.marketName}
-                </div>
-              </td>
-              <td className="px-4 py-3 tabular-nums">{row.volume}</td>
-              <td className="px-4 py-3 tabular-nums">{row.cost}</td>
-              <td className="px-4 py-3 font-mono text-xs text-[var(--text-muted)]">
-                {row.id}
-              </td>
-            </tr>
-          ))}
-        </tbody>
+        <tbody>{children}</tbody>
       </table>
     </div>
   );
 }
 
+function NoMatch({ span }: { span: number }) {
+  return (
+    <tr>
+      <td
+        colSpan={span}
+        className="px-4 py-10 text-center text-sm text-[var(--text-muted)]"
+      >
+        No rows match these filters.
+      </td>
+    </tr>
+  );
+}
+
+function LedgerTable({
+  trades,
+  assetQuery,
+  typeQuery,
+}: {
+  trades: PortfolioTrade[];
+  assetQuery: string;
+  typeQuery: string;
+}) {
+  const rows = ledgerFromTrades(trades).filter(
+    (r) => matches(r.asset, assetQuery) && matches(r.type, typeQuery),
+  );
+  return (
+    <TableShell columns={LEDGER_COLUMNS} minWidth="min-w-[840px]">
+      {!rows.length ? (
+        <NoMatch span={LEDGER_COLUMNS.length} />
+      ) : (
+        rows.map((row) => (
+          <tr key={row.id} className="border-b border-[var(--card-border)] last:border-b-0">
+            <td className="px-4 py-3 font-medium">{row.type}</td>
+            <td className="px-4 py-3 text-[var(--text-muted)]">{row.wallet}</td>
+            <td className="px-4 py-3">{row.asset}</td>
+            <td className="px-4 py-3 tabular-nums">{row.amount}</td>
+            <td className="px-4 py-3 tabular-nums text-[var(--text-muted)]">{row.fee}</td>
+            <td className="px-4 py-3 text-[var(--text-muted)]">{formatWhen(row.at)}</td>
+            <td className="px-4 py-3 font-mono text-xs text-[var(--text-muted)]">{row.id}</td>
+          </tr>
+        ))
+      )}
+    </TableShell>
+  );
+}
+
+function OrdersTable({
+  orders,
+  marketQuery,
+  typeQuery,
+}: {
+  orders: Order[];
+  marketQuery: string;
+  typeQuery: string;
+}) {
+  const rows = orders.filter(
+    (o) => matches(baseAsset(o.symbol), marketQuery) && matches(o.order_type, typeQuery),
+  );
+  return (
+    <TableShell columns={ORDER_COLUMNS} minWidth="min-w-[820px]">
+      {!rows.length ? (
+        <NoMatch span={ORDER_COLUMNS.length} />
+      ) : (
+        rows.map((row) => {
+          const filled = Number(row.filled_quantity);
+          const avg = row.average_fill_price != null ? Number(row.average_fill_price) : null;
+          const cost =
+            avg != null && Number.isFinite(filled) ? formatUsd(avg * filled) : "—";
+          return (
+            <tr key={row.id} className="border-b border-[var(--card-border)] last:border-b-0">
+              <td className="px-4 py-3 font-medium">{baseAsset(row.symbol)}/USD</td>
+              <td
+                className={`px-4 py-3 font-medium ${
+                  row.side === "BUY" ? "text-emerald-600" : "text-rose-500"
+                }`}
+              >
+                {row.side === "BUY" ? "Buy" : "Sell"}
+              </td>
+              <td className="px-4 py-3 text-[var(--text-muted)]">{row.order_type}</td>
+              <td className="px-4 py-3 text-[var(--text-muted)]">{row.status}</td>
+              <td className="px-4 py-3 tabular-nums">{row.filled_quantity}</td>
+              <td className="px-4 py-3 tabular-nums">{cost}</td>
+              <td className="px-4 py-3 font-mono text-xs text-[var(--text-muted)]">{row.id}</td>
+            </tr>
+          );
+        })
+      )}
+    </TableShell>
+  );
+}
+
+function TradesTable({
+  trades,
+  marketQuery,
+}: {
+  trades: PortfolioTrade[];
+  marketQuery: string;
+}) {
+  const rows = trades.filter((t) => matches(baseAsset(t.symbol), marketQuery));
+  return (
+    <TableShell columns={TRADE_COLUMNS} minWidth="min-w-[820px]">
+      {!rows.length ? (
+        <NoMatch span={TRADE_COLUMNS.length} />
+      ) : (
+        rows.map((row) => {
+          const asset = baseAsset(row.symbol);
+          const qty = Number(row.quantity);
+          const price = Number(row.price);
+          const cost =
+            Number.isFinite(qty) && Number.isFinite(price)
+              ? formatUsd(qty * price)
+              : "—";
+          return (
+            <tr key={row.id} className="border-b border-[var(--card-border)] last:border-b-0">
+              <td
+                className={`px-4 py-3 font-medium ${
+                  row.side === "BUY" ? "text-emerald-600" : "text-rose-500"
+                }`}
+              >
+                {row.side === "BUY" ? "Buy" : "Sell"}
+              </td>
+              <td className="px-4 py-3 text-[var(--text-muted)]">Fill</td>
+              <td className="px-4 py-3 font-medium">{asset}/USD</td>
+              <td className="px-4 py-3 tabular-nums">
+                {row.quantity} {asset}
+              </td>
+              <td className="px-4 py-3 tabular-nums">{cost}</td>
+              <td className="px-4 py-3 text-[var(--text-muted)]">
+                {formatWhen(row.executed_at)}
+              </td>
+              <td className="px-4 py-3 font-mono text-xs text-[var(--text-muted)]">{row.id}</td>
+            </tr>
+          );
+        })
+      )}
+    </TableShell>
+  );
+}
+
+const POSITION_COLUMNS = [
+  "Market",
+  "Size",
+  "Avg. entry",
+  "Mark",
+  "Unrealized P&L",
+  "Realized P&L",
+] as const;
+
+function PositionsTable({
+  positions,
+  marketQuery,
+}: {
+  positions: PortfolioPosition[];
+  marketQuery: string;
+}) {
+  const rows = positions.filter((p) => matches(baseAsset(p.symbol), marketQuery));
+  return (
+    <TableShell columns={POSITION_COLUMNS} minWidth="min-w-[760px]">
+      {!rows.length ? (
+        <NoMatch span={POSITION_COLUMNS.length} />
+      ) : (
+        rows.map((row) => {
+          const upnl = row.unrealized_pnl != null ? Number(row.unrealized_pnl) : null;
+          return (
+            <tr key={row.id} className="border-b border-[var(--card-border)] last:border-b-0">
+              <td className="px-4 py-3 font-medium">{baseAsset(row.symbol)}/USD</td>
+              <td className="px-4 py-3 tabular-nums">{row.quantity}</td>
+              <td className="px-4 py-3 tabular-nums text-[var(--text-muted)]">
+                {formatUsd(row.avg_entry_price)}
+              </td>
+              <td className="px-4 py-3 tabular-nums text-[var(--text-muted)]">
+                {row.market_price != null ? formatUsd(row.market_price) : "—"}
+              </td>
+              <td
+                className={`px-4 py-3 font-medium tabular-nums ${
+                  upnl == null
+                    ? "text-[var(--text-muted)]"
+                    : upnl >= 0
+                      ? "text-emerald-600"
+                      : "text-rose-500"
+                }`}
+              >
+                {upnl == null ? "—" : formatUsd(upnl)}
+              </td>
+              <td className="px-4 py-3 tabular-nums text-[var(--text-muted)]">
+                {formatUsd(row.realized_pnl)}
+              </td>
+            </tr>
+          );
+        })
+      )}
+    </TableShell>
+  );
+}

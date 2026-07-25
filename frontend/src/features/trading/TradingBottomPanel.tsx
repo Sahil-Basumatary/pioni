@@ -15,6 +15,7 @@ import {
 } from "../portfolio/portfolioApi";
 import { baseAsset } from "../../components/shell/activityFormat";
 import { formatUsd } from "../../utils/formatters";
+import SignedOutUnlock from "../auth/SignedOutUnlock";
 import InfoTip from "../onboarding/InfoTip";
 import TeachingEmpty from "../onboarding/TeachingEmpty";
 
@@ -107,7 +108,7 @@ function BalancesTab() {
     skip: !isSignedIn,
   });
   if (!isSignedIn) {
-    return <TeachingEmpty id="balances" />;
+    return <SignedOutUnlock />;
   }
   if (isLoading) return <Empty copy="Loading balances…" />;
   if (isError || !data) {
@@ -176,7 +177,7 @@ function PositionsTab() {
     () => (data ?? []).filter((p) => Number(p.quantity) !== 0),
     [data],
   );
-  if (!isSignedIn) return <TeachingEmpty id="positions" />;
+  if (!isSignedIn) return <SignedOutUnlock />;
   if (isLoading) return <Empty copy="Loading positions…" />;
   if (isError) {
     return (
@@ -269,7 +270,7 @@ function OrdersTab({
   }, [data, mode]);
   if (!isSignedIn) {
     return (
-      <TeachingEmpty id={mode === "open" ? "open_orders" : "closed_orders"} />
+      <SignedOutUnlock />
     );
   }
   if (isLoading) {
@@ -360,7 +361,7 @@ function TradesTab({ symbol }: { symbol: string }) {
     { symbol, limit: 50 },
     { skip: !isSignedIn },
   );
-  if (!isSignedIn) return <TeachingEmpty id="trades" />;
+  if (!isSignedIn) return <SignedOutUnlock />;
   if (isLoading) return <Empty copy="Loading trades…" />;
   if (isError) {
     return (
