@@ -1,7 +1,7 @@
 import { useLiveMarketTrades } from "../market/liveMarketStore";
 import type { Trade } from "../../types/market";
 
-function formatPx(raw: string | number): string {
+export function formatTapePrice(raw: string | number): string {
   const n = Number(raw);
   if (!Number.isFinite(n)) return "—";
   if (n >= 1000) return n.toLocaleString("en-US", { maximumFractionDigits: 1 });
@@ -9,14 +9,14 @@ function formatPx(raw: string | number): string {
   return n.toPrecision(4);
 }
 
-function formatQty(raw: string | number): string {
+export function formatTapeQty(raw: string | number): string {
   const n = Number(raw);
   if (!Number.isFinite(n)) return "—";
   if (n >= 1) return n.toFixed(5);
   return n.toFixed(8);
 }
 
-function formatTime(ts: number): string {
+export function formatTapeTime(ts: number): string {
   const ms = ts < 1e12 ? ts * 1000 : ts;
   const d = new Date(ms);
   if (Number.isNaN(d.getTime())) return "—";
@@ -28,13 +28,18 @@ function formatTime(ts: number): string {
   });
 }
 
+export function tapeSide(trade: Trade): "Buy" | "Sell" {
+  return trade.buyer_maker ? "Sell" : "Buy";
+}
+
 export default function MarketTradesPanel({ symbol }: { symbol: string }) {
   const trades = useLiveMarketTrades(symbol);
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--card-bg)]">
-      <div className="grid shrink-0 grid-cols-3 gap-2 px-2 py-1 text-[10px] font-medium text-[var(--text-muted)]">
-        <span>Price</span>
+      <div className="grid shrink-0 grid-cols-[0.7fr_1.1fr_1.1fr_1fr] gap-2 border-b border-[var(--card-border)] px-2 py-1 text-[10px] font-medium text-[var(--text-muted)]">
+        <span>Side</span>
+        <span className="text-right">Price</span>
         <span className="text-right">Quantity</span>
         <span className="text-right">Time</span>
       </div>
@@ -59,14 +64,19 @@ export default function MarketTradesPanel({ symbol }: { symbol: string }) {
 }
 
 function TradeRow({ trade }: { trade: Trade }) {
-  const isBuy = !trade.buyer_maker;
+  const side = tapeSide(trade);
+  const isBuy = side === "Buy";
+  const tone = isBuy ? "text-emerald-600" : "text-rose-500";
   return (
-    <li className="grid h-[22px] grid-cols-3 items-center gap-2 px-2 text-[11px] tabular-nums">
-      <span className={isBuy ? "text-emerald-600" : "text-rose-500"}>
-        {formatPx(trade.price)}
+    <li className="grid h-[22px] grid-cols-[0.7fr_1.1fr_1.1fr_1fr] items-center gap-2 px-2 text-[11px] tabular-nums">
+      <span className={tone}>{side}</span>
+      <span className={`text-right ${tone}`}>{formatTapePrice(trade.price)}</span>
+      <span className="text-right text-[var(--text-primary)]">
+        {formatTapeQty(trade.quantity)}
       </span>
-      <span className="text-right text-[var(--text-primary)]">{formatQty(trade.quantity)}</span>
-      <span className="text-right text-[var(--text-muted)]">{formatTime(trade.timestamp)}</span>
+      <span className="text-right text-[var(--text-muted)]">
+        {formatTapeTime(trade.timestamp)}
+      </span>
     </li>
   );
 }
