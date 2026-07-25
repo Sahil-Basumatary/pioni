@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useClerk, useAuth } from "@clerk/clerk-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import NotificationsPanel from "./NotificationsPanel";
+import FavoritesRailPanel from "./FavoritesRailPanel";
 import { useConvert } from "../../features/convert/ConvertContext";
 import { useSettings } from "../../features/settings/settingsContext";
 import {
@@ -21,6 +22,7 @@ type RailTab = "notifications" | "favorites" | "apps" | null;
 
 export default function RightRail() {
   const [tab, setTab] = useState<RailTab>(null);
+  const navigate = useNavigate();
   const { isSignedIn } = useAuth();
   const clerk = useClerk();
   const { openConvert } = useConvert();
@@ -58,9 +60,7 @@ export default function RightRail() {
       {tab === "favorites" && (
         <div className="fixed inset-y-2 right-11 z-[56] flex w-[min(360px,calc(100vw-3.5rem))] flex-col md:right-12">
           <SideCard title="Favorites" onClose={() => setTab(null)}>
-            <p className="px-4 py-10 text-center text-sm text-[var(--text-muted)]">
-              Star markets from Trade to pin them here.
-            </p>
+            <FavoritesRailPanel onClose={() => setTab(null)} />
           </SideCard>
         </div>
       )}
