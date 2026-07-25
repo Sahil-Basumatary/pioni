@@ -23,7 +23,7 @@ class RiskMetrics:
 def calculate_returns(points: list[EquityPoint]) -> list[Decimal]:
     ordered = sorted(points, key=lambda p: p.snapshot_at)
     returns: list[Decimal] = []
-    for previous, current in zip(ordered, ordered[1:]):
+    for previous, current in zip(ordered, ordered[1:], strict=False):
         if previous.total_value <= 0:
             raise ValueError("previous total_value must be positive")
         returns.append((current.total_value - previous.total_value) / previous.total_value)

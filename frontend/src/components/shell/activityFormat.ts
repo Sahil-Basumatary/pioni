@@ -2,9 +2,7 @@ export function baseAsset(symbol: string): string {
   return symbol.replace(/USDT$|USD$|USDC$/i, "") || symbol;
 }
 
-export function formatTradeHeadline(_side: "BUY" | "SELL", _symbol: string): string {
-  return "Order filled";
-}
+export const TRADE_HEADLINE = "Order filled";
 
 export type TradeDetailParts = {
   sideLabel: "Buy" | "Sell";

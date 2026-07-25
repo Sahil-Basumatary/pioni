@@ -8,6 +8,9 @@ Recorded: 2026-06-18
 - Reused the existing production bundle size script with a `--budget` mode.
 - Wired the budget check into GitHub Actions after the frontend production build.
 
+> Superseded by `014-initial-load-budget.md`: the total-across-all-assets budget below was
+> replaced with an initial-load budget once route code-splitting made the total misleading.
+
 ## Budgets
 
 - Total JavaScript/CSS gzip: 180 KiB

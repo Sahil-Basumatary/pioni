@@ -38,7 +38,16 @@ export default defineConfig([
     },
     rules: {
       'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // argsIgnorePattern honours the leading-underscore convention for deliberately unused
+      // parameters, which varsIgnorePattern does not cover.
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { varsIgnorePattern: '^[A-Z_]', argsIgnorePattern: '^_' },
+      ],
+      // Context providers ship next to their own hook throughout this codebase. That costs
+      // Fast Refresh in those files only, so the rule stays visible as a warning rather than
+      // failing the build.
+      'react-refresh/only-export-components': 'warn',
     },
   },
 ])

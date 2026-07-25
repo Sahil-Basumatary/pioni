@@ -10,9 +10,13 @@ const REPORTED_EXTENSIONS = new Set([".js", ".css"]);
 const CHECK_BUDGET = process.argv.includes("--budget");
 const KiB = 1024;
 
+// The gate measures initial load — the entry script plus the stylesheets and preloaded
+// chunks index.html references — not the sum of every emitted asset. Summing all assets
+// penalises route code-splitting: adding a lazily-loaded page would fail the gate even
+// though no first visit downloads it.
 const BUDGETS = {
-  totalGzip: 180 * KiB,
-  totalBrotli: 160 * KiB,
+  initialGzip: 135 * KiB,
+  initialBrotli: 120 * KiB,
   assets: [
     { name: "entry chunk", pattern: /^assets\/index-.*\.js$/, gzip: 110 * KiB },
     { name: "trading route", pattern: /^assets\/TradingPage-.*\.js$/, gzip: 65 * KiB },
@@ -37,18 +41,35 @@ function formatKib(bytes) {
   return `${(bytes / 1024).toFixed(2)} KiB`;
 }
 
-function assertBudget({ rows, gzipTotal, brotliTotal }) {
-  const failures = [];
+async function readInitialAssets() {
+  const html = await readFile(join(DIST_DIR, "index.html"), "utf8");
+  const refs = new Set();
+  for (const match of html.matchAll(/(?:src|href)="\/?([^"]+\.(?:js|css))"/g)) {
+    refs.add(match[1]);
+  }
+  return refs;
+}
 
-  if (gzipTotal > BUDGETS.totalGzip) {
+function assertBudget({ rows, initialAssets }) {
+  const failures = [];
+  const initialRows = rows.filter((row) => initialAssets.has(row.file));
+
+  if (initialRows.length === 0) {
+    failures.push("no initial-load assets were found in index.html");
+  }
+
+  const initialGzip = initialRows.reduce((sum, row) => sum + row.gzipBytes, 0);
+  const initialBrotli = initialRows.reduce((sum, row) => sum + row.brotliBytes, 0);
+
+  if (initialGzip > BUDGETS.initialGzip) {
     failures.push(
-      `total gzip ${formatKib(gzipTotal)} exceeds ${formatKib(BUDGETS.totalGzip)}`,
+      `initial-load gzip ${formatKib(initialGzip)} exceeds ${formatKib(BUDGETS.initialGzip)}`,
     );
   }
 
-  if (brotliTotal > BUDGETS.totalBrotli) {
+  if (initialBrotli > BUDGETS.initialBrotli) {
     failures.push(
-      `total brotli ${formatKib(brotliTotal)} exceeds ${formatKib(BUDGETS.totalBrotli)}`,
+      `initial-load brotli ${formatKib(initialBrotli)} exceeds ${formatKib(BUDGETS.initialBrotli)}`,
     );
   }
 
@@ -124,8 +145,14 @@ async function main() {
   console.log(`  gzip:   ${formatKib(gzipTotal)}`);
   console.log(`  brotli: ${formatKib(brotliTotal)}`);
 
+  const initialAssets = await readInitialAssets();
+  console.log("Initial load:");
+  for (const row of rows.filter((row) => initialAssets.has(row.file))) {
+    console.log(`  ${row.file}  gzip ${row.gzip}  brotli ${row.brotli}`);
+  }
+
   if (CHECK_BUDGET) {
-    assertBudget({ rows, gzipTotal, brotliTotal });
+    assertBudget({ rows, initialAssets });
   }
 }
 

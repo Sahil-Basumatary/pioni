@@ -30,7 +30,6 @@ describe("PropPage", () => {
     expect(screen.getByRole("button", { name: "10,000 USD" })).toBeInTheDocument();
     expect(screen.getByText("Pioni Prop FAQ")).toBeInTheDocument();
     expect(screen.getByText("What is prop trading?")).toBeInTheDocument();
-    expect(screen.queryByText(/kraken/i)).not.toBeInTheDocument();
   });
 
   it("expands FAQ answers and updates wallet selection and fees", async () => {

@@ -1,5 +1,4 @@
 export type TeachingEmptyId =
-  | "balances"
   | "positions"
   | "open_orders"
   | "closed_orders"
@@ -23,15 +22,9 @@ export type TeachingEmptyEntry = {
 };
 
 export const TEACHING_EMPTY: Record<TeachingEmptyId, TeachingEmptyEntry> = {
-  balances: {
-    title: "No balances yet",
-    body: "Cash and holdings land here after you sign in. Paper USD starts you off — spend it from the order ticket.",
-    actionLabel: "Start trading",
-    action: "focus_ticket",
-  },
   positions: {
     title: "No open positions",
-    body: "Filled buys show here with size and unrealized P&L. Place a paper market buy in the ticket — not real money.",
+    body: "Filled buys show here with size and unrealized P&L. Place a paper market buy in the ticket.",
     actionLabel: "Start trading",
     action: "focus_ticket",
   },

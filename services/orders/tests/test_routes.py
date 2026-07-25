@@ -6,7 +6,6 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from common import get_db, OrderSide, OrderType, OrderStatus, TimeInForce
-from orders.book_types import BookSnapshot
 from orders.routes import router
 from orders.schemas import OrderResponse, CancelOrderResponse
 from orders.service import OrderNotFoundError

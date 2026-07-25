@@ -17,7 +17,7 @@ import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
 sys.path.insert(0, ".")
-from common.database.models import OrderSide, OrderType, OrderStatus, TimeInForce
+from common.database.models import OrderSide, OrderType, TimeInForce
 from orders.book_types import BookOrder
 from orders.engine import MatchingEngine
 

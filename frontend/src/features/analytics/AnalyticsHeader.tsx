@@ -15,12 +15,11 @@ import {
 } from "../../components/shell/shellIcons";
 import { assetIconUrl, baseAsset } from "../../components/shell/activityFormat";
 import { useGetOrderBookQuery } from "../orders/ordersApi";
+import { paperFees } from "../trading/paperFees";
 import type { TickerSnapshot } from "../../types/market";
 
 const DEFAULT_GATEWAY_URL = "http://localhost:8000";
 const SNAPSHOT_REFRESH_MS = 15_000;
-const PAPER_MAKER_FEE = "0.00%";
-const PAPER_TAKER_FEE = "0.00%";
 
 function priceDecimals(price: number): number {
   if (price >= 100) return 1;
@@ -280,9 +279,9 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
               FEES
             </span>
             <span className="text-xs font-medium leading-none tabular-nums text-[var(--text-primary)]">
-              {PAPER_MAKER_FEE}
+              {paperFees().maker}
               <span className="text-[var(--text-muted)]"> / </span>
-              {PAPER_TAKER_FEE}
+              {paperFees().taker}
             </span>
           </Link>
         </div>

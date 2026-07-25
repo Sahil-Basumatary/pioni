@@ -32,8 +32,8 @@ export default function DepthChartPanel({ symbol }: { symbol: string }) {
     const bids = cumulative(data?.bids ?? [], false);
     const asks = cumulative(data?.asks ?? [], true);
     const maxCum = Math.max(
-      bids.at(-1)?.cum ?? 0,
-      asks.at(-1)?.cum ?? 0,
+      bids[bids.length - 1]?.cum ?? 0,
+      asks[asks.length - 1]?.cum ?? 0,
       1,
     );
     const prices = [...bids, ...asks].map((p) => p.price);

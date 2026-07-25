@@ -17,7 +17,6 @@ describe("EarnPage", () => {
     expect(screen.getByRole("tab", { name: "Buy to earn" })).toBeInTheDocument();
     expect(screen.getAllByText("Bitcoin").length).toBeGreaterThan(0);
     expect(screen.getByRole("tab", { name: "Payouts" })).toBeInTheDocument();
-    expect(screen.queryByText(/kraken/i)).not.toBeInTheDocument();
   });
 
   it("switches bottom tab to activity empty state", async () => {

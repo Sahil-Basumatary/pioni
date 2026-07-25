@@ -5,7 +5,7 @@ import {
   baseAsset,
   formatActivityClock,
   formatActivityDate,
-  formatTradeHeadline,
+  TRADE_HEADLINE,
   tradeDetailParts,
 } from "../../components/shell/activityFormat";
 
@@ -40,7 +40,7 @@ export function ActivityFillRow({ trade }: { trade: PortfolioTrade }) {
           </span>
           <div className="flex min-w-0 flex-grow flex-col gap-1">
             <span className="text-xs text-[var(--text-muted)]">
-              {formatTradeHeadline(trade.side, trade.symbol)}
+              {TRADE_HEADLINE}
             </span>
             <span className="text-xs font-medium text-[var(--text-primary)]">
               <span className={isBuy ? "text-emerald-600" : "text-rose-500"}>

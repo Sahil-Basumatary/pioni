@@ -35,10 +35,7 @@ describe("layoutStorage", () => {
   });
 
   it("clamps corrupt stored values", () => {
-    localStorage.setItem(
-      "pioni.tradingLayout.v1",
-      JSON.stringify({ ticketWidth: 9999, bookWidth: 10, bottomHeight: -5 }),
-    );
+    writeTradingLayout({ ticketWidth: 9999, bookWidth: 10, bottomHeight: -5 });
     const layout = readTradingLayout();
     expect(layout.ticketWidth).toBe(420);
     expect(layout.bookWidth).toBe(200);

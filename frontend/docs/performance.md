@@ -56,10 +56,12 @@ Status legend: `BASELINE` (before optimization) · `IN PROGRESS` · `MET` · `ST
 ## CI Budgets
 
 The CI workflow checks production build output after `npm run build` and fails if the
-frontend regresses beyond these limits:
+frontend regresses beyond these limits. Initial load means the scripts and stylesheets
+`dist/index.html` references, not the sum of every emitted chunk — see
+`perf-lab/014-initial-load-budget.md`:
 
-- Total JavaScript/CSS gzip: 180 KiB
-- Total JavaScript/CSS brotli: 160 KiB
+- Initial-load JavaScript/CSS gzip: 135 KiB
+- Initial-load JavaScript/CSS brotli: 120 KiB
 - Entry chunk gzip: 110 KiB
 - Trading route gzip: 65 KiB
 - Sentiment route gzip: 12 KiB

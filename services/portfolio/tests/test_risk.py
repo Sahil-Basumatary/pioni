@@ -2,6 +2,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from decimal import Decimal
 import pytest
+from dataclasses import FrozenInstanceError
 from portfolio.risk import (
     EquityPoint,
     RiskMetrics,
@@ -18,7 +19,7 @@ def test_equity_point_is_immutable():
         snapshot_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
         total_value=Decimal("100000"),
     )
-    with pytest.raises(Exception):
+    with pytest.raises(FrozenInstanceError):
         point.total_value = Decimal("90000")
 
 

@@ -710,9 +710,13 @@ function PaperSection() {
 
 function NotificationsSection() {
   const toast = useToast();
+  const navigate = useNavigate();
+  const { isSignedIn } = useAuth();
   const { user } = useUser();
-  const { setSection } = useSettings();
-  const { data: remotePrefs } = useGetMyNotificationPrefsQuery();
+  const { setSection, closeSettings } = useSettings();
+  const { data: remotePrefs } = useGetMyNotificationPrefsQuery(undefined, {
+    skip: !isSignedIn,
+  });
   const [patchRemotePrefs] = usePatchMyNotificationPrefsMutation();
   const [prefs, setPrefs] = useState<NotificationPrefs>(() =>
     readNotificationPrefs(),
@@ -766,6 +770,26 @@ function NotificationsSection() {
       return;
     }
     await update({ browserNotifications: true });
+  }
+
+  if (!isSignedIn) {
+    return (
+      <div className="flex flex-col items-start gap-3">
+        <p className="text-sm text-[#787774]">
+          Sign in to choose which order events notify you.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            closeSettings();
+            navigate(SIGN_IN_PATH);
+          }}
+          className="rounded-[6px] bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white"
+        >
+          Sign in
+        </button>
+      </div>
+    );
   }
 
   return (

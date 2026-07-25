@@ -5,14 +5,13 @@ import {
   formatActivityDate,
   formatActivityTime,
   formatTradeDetail,
-  formatTradeHeadline,
+  TRADE_HEADLINE,
   tradeDetailParts,
 } from "./activityFormat";
 
 describe("activityFormat", () => {
   it("uses Order filled as the activity headline", () => {
-    expect(formatTradeHeadline("BUY", "BTCUSDT")).toBe("Order filled");
-    expect(formatTradeHeadline("SELL", "ETHUSDT")).toBe("Order filled");
+    expect(TRADE_HEADLINE).toBe("Order filled");
   });
 
   it("formats a readable trade detail line", () => {

@@ -10,6 +10,7 @@ import {
 import { useConvert } from "../convert/ConvertContext";
 import type { PnlChartPoint } from "../portfolio/portfolioApi";
 import EquityChart from "./EquityChart";
+import { SIGN_IN_PATH, SIGN_UP_PATH } from "../auth/authRoutes";
 
 export type ChartRange = "1D" | "1W" | "1M" | "3M" | "1Y";
 
@@ -29,6 +30,7 @@ type TotalValueCardProps = {
   range: ChartRange;
   onRangeChange: (range: ChartRange) => void;
   loading?: boolean;
+  signedIn: boolean;
 };
 
 export default function TotalValueCard({
@@ -37,6 +39,7 @@ export default function TotalValueCard({
   range,
   onRangeChange,
   loading,
+  signedIn,
 }: TotalValueCardProps) {
   const { openConvert } = useConvert();
   const value = totalValue ?? 0;
@@ -134,16 +137,36 @@ export default function TotalValueCard({
             </span>
           </div>
         </div>
-        <div className="flex w-full flex-row justify-between gap-2 px-2 py-2 sm:justify-start sm:gap-4 sm:px-4">
-          <ActionLink to="/deposit" label="Deposit" icon={<DepositIcon className="h-4 w-4" />} />
-          <ActionLink to="/deposit" label="Withdraw" icon={<WithdrawIcon className="h-4 w-4" />} />
-          <ActionButton
-            label="Convert"
-            icon={<ConvertVerticalIcon className="h-4 w-4" />}
-            onClick={() => openConvert()}
-          />
-          <ActionLink to="/earn" label="Earn" icon={<StakeIcon className="h-4 w-4" />} />
-        </div>
+        {signedIn ? (
+          <div className="flex w-full flex-row justify-between gap-2 px-2 py-2 sm:justify-start sm:gap-4 sm:px-4">
+            <ActionLink to="/deposit" label="Deposit" icon={<DepositIcon className="h-4 w-4" />} />
+            <ActionLink to="/deposit" label="Withdraw" icon={<WithdrawIcon className="h-4 w-4" />} />
+            <ActionButton
+              label="Convert"
+              icon={<ConvertVerticalIcon className="h-4 w-4" />}
+              onClick={() => openConvert()}
+            />
+            <ActionLink to="/earn" label="Earn" icon={<StakeIcon className="h-4 w-4" />} />
+          </div>
+        ) : (
+          <div className="flex w-full flex-wrap items-center gap-2 px-2 py-2 sm:px-4">
+            <Link
+              to={SIGN_UP_PATH}
+              className="inline-flex h-8 items-center rounded-lg bg-[var(--accent)] px-3 text-xs font-medium text-white hover:bg-[var(--accent-soft)]"
+            >
+              Create a paper account
+            </Link>
+            <Link
+              to={SIGN_IN_PATH}
+              className="rail-icon inline-flex h-8 items-center rounded-lg px-3 text-xs font-medium text-[var(--text-primary)] hover:bg-black/[0.04]"
+            >
+              Sign in
+            </Link>
+            <span className="text-xs text-[var(--text-muted)]">
+              Practice with simulated funds — no real money.
+            </span>
+          </div>
+        )}
         <EquityChart points={points} fallbackValue={value} days={RANGE_DAYS[range]} />
       </div>
     </section>

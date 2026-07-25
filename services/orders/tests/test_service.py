@@ -1,12 +1,10 @@
-import asyncio
 import uuid
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 import pytest
 from common import OrderSide, OrderType, OrderStatus
 from orders.schemas import SubmitOrderRequest
 from orders.service import (
-    OrderNotFoundError,
     OrderNotCancellableError,
     PortfolioNotFoundError,
 )

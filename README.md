@@ -26,8 +26,6 @@ A live trading intelligence platform that transforms social sentiment and news i
   <a href="https://pioni.ai">
     <img src="https://img.shields.io/badge/Live-pioni.ai-blue?style=for-the-badge" alt="Live Demo">
   </a>
-  <br/><br/>
-  <img src="docs/demo.gif" alt="Demo preview" width="900" />
 </div>
 
 ### Tech Stack
@@ -37,15 +35,15 @@ A live trading intelligence platform that transforms social sentiment and news i
 | **Backend**    | [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/) [![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org/) [![Upstash](https://img.shields.io/badge/Upstash_Redis-00E9A3?style=for-the-badge&logo=upstash&logoColor=white)](https://upstash.com/) [![Pytest](https://img.shields.io/badge/Pytest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white)](https://pytest.org/) |
 | **NLP**        | [![HuggingFace](https://img.shields.io/badge/FinBERT-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/ProsusAI/finbert) [![VADER](https://img.shields.io/badge/VADER-4B8BBE?style=for-the-badge)](https://github.com/cjhutto/vaderSentiment) |
 | **Data**       | [![NewsAPI](https://img.shields.io/badge/NewsAPI-1A1A1A?style=for-the-badge)](https://newsapi.org/) [![Reddit](https://img.shields.io/badge/Reddit_API-FF4500?style=for-the-badge&logo=reddit&logoColor=white)](https://www.reddit.com/dev/api/) |
-| **Frontend**   | [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/) [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/) [![Tailwind](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/) [![Chart.js](https://img.shields.io/badge/Chart.js-FF6384?style=for-the-badge&logo=chartdotjs&logoColor=white)](https://www.chartjs.org/) |
+| **Frontend**   | [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/) [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/) [![Tailwind](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/) [![Lightweight Charts](https://img.shields.io/badge/Lightweight_Charts-2962FF?style=for-the-badge)](https://tradingview.github.io/lightweight-charts/) |
 | **Infrastructure** | [![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/features/actions) [![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/) |
 
 ## Quality Gates
 
-- **Frontend unit/component tests:** 10 Vitest tests covering Redux state, RTK Query integration, and the trading symbol selector.
-- **Browser E2E tests:** 3 stubbed Cypress tests for the trading critical path, plus 5 live-stack smoke checks for gateway, market data, orders, and WebSocket connectivity.
+- **Frontend unit/component tests:** 154 Vitest tests across 47 files covering Redux state, RTK Query integration, order validation, the trading workspace, and settings.
+- **Browser E2E tests:** stubbed Cypress specs for the trading critical path, a tick-to-paint latency spec, and live-stack smoke checks for gateway, market data, orders, and WebSocket connectivity.
 - **CI enforcement:** GitHub Actions runs Python lint/tests, frontend lint/typecheck, coverage with a ratcheting baseline, stubbed Cypress E2E, and the production build.
-- **Coverage baseline:** Frontend coverage currently starts at 6% global lines/statements while the larger legacy pages are backfilled; the threshold prevents regression and is designed to be raised as coverage expands.
+- **Coverage baseline:** Frontend coverage thresholds are ratcheted in `vite.config.ts` (currently 24% statements / 23% lines) so coverage cannot regress while the larger pages are backfilled.
 
 ## Technical Highlights
 
@@ -74,7 +72,7 @@ A live trading intelligence platform that transforms social sentiment and news i
 │                              CLIENT (React SPA)                          │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐  │
 │  │  Dashboard  │  │   Ticker    │  │  Evidence   │  │  Trend Charts   │  │
-│  │   Panel     │  │   Search    │  │    Feed     │  │   (Chart.js)    │  │
+│  │   Panel     │  │   Search    │  │    Feed     │  │  (Lightweight)  │  │
 │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └────────┬────────┘  │
 │         └────────────────┴────────────────┴──────────────────┘           │
 │                                   │                                      │

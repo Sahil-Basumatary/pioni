@@ -24,7 +24,7 @@ from common import (
     estimate_required_cash,
     held_quantity,
 )
-from orders.book_types import BookOrder, BookSnapshot, Fill, _FastResult
+from orders.book_types import BookOrder, BookSnapshot, _FastResult
 from orders.engine import MatchingEngine
 from orders.metrics import record_submission
 from orders.events import (
@@ -113,9 +113,8 @@ class OrderService:
     async def submit_order(
         self, req: SubmitOrderRequest, session: AsyncSession,
     ) -> OrderResponse:
-        # Portfolio row is locked for the duration of this request to prevent two concurrent
-        # BUYs (or two concurrent SELLs that share a position) from both passing the
-        # availability check against the same balance/quantity.
+        # Locking the portfolio row stops two concurrent orders both passing the availability
+        # check against the same balance.
         portfolio = await session.get(
             Portfolio, req.portfolio_id, with_for_update=True,
         )
@@ -401,10 +400,6 @@ class OrderService:
         )
         return count
 
-
-    # ------------------------------------------------------------------
-    # Event publishing (fire-and-forget)
-    # ------------------------------------------------------------------
 
     async def _publish_submit_events(
         self,

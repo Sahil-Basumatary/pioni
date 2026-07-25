@@ -27,9 +27,9 @@ async def submit_order(
     try:
         return await svc.submit_order(req, session)
     except PortfolioNotFoundError as e:
-        raise HTTPException(status_code=404, detail={"error": e.code, "message": e.message})
+        raise HTTPException(status_code=404, detail={"error": e.code, "message": e.message}) from None
     except OrderError as e:
-        raise HTTPException(status_code=400, detail={"error": e.code, "message": e.message})
+        raise HTTPException(status_code=400, detail={"error": e.code, "message": e.message}) from None
 
 
 @router.delete("/orders/{order_id}", response_model=CancelOrderResponse)
@@ -42,11 +42,11 @@ async def cancel_order(
     try:
         return await svc.cancel_order(order_id, portfolio_id, session)
     except OrderNotFoundError as e:
-        raise HTTPException(status_code=404, detail={"error": e.code, "message": e.message})
+        raise HTTPException(status_code=404, detail={"error": e.code, "message": e.message}) from None
     except OrderNotCancellableError as e:
-        raise HTTPException(status_code=409, detail={"error": e.code, "message": e.message})
+        raise HTTPException(status_code=409, detail={"error": e.code, "message": e.message}) from None
     except OrderError as e:
-        raise HTTPException(status_code=400, detail={"error": e.code, "message": e.message})
+        raise HTTPException(status_code=400, detail={"error": e.code, "message": e.message}) from None
 
 
 @router.get("/orders/{order_id}", response_model=OrderResponse)
@@ -59,7 +59,7 @@ async def get_order(
     try:
         return await svc.get_order(order_id, portfolio_id, session)
     except OrderNotFoundError as e:
-        raise HTTPException(status_code=404, detail={"error": e.code, "message": e.message})
+        raise HTTPException(status_code=404, detail={"error": e.code, "message": e.message}) from None
 
 
 @router.get("/orders", response_model=list[OrderResponse])
