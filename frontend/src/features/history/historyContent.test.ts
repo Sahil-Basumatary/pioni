@@ -27,13 +27,17 @@ describe("ledgerFromTrades", () => {
     expect(rows).toHaveLength(2);
     expect(rows[0]).toMatchObject({
       type: "Trade buy",
-      asset: "BTC",
+      asset: "Bitcoin",
+      ticker: "BTC",
       amount: "0.5 BTC",
+      balance: "—",
     });
     expect(rows[1]).toMatchObject({
       type: "Trade buy",
-      asset: "USD",
+      asset: "US Dollar",
+      ticker: "USD",
       amount: "−30000 USD",
+      balance: "—",
     });
   });
 

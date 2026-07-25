@@ -9,8 +9,10 @@ export type LedgerRow = {
   type: string;
   wallet: string;
   asset: string;
+  ticker: string;
   amount: string;
   fee: string;
+  balance: string;
   at: string;
 };
 
@@ -18,9 +20,10 @@ export const LEDGER_COLUMNS = [
   "Type",
   "Wallet",
   "Asset",
+  "Ticker",
   "Amount",
   "Fee",
-  "Date",
+  "Balance",
   "ID",
 ] as const;
 
@@ -40,17 +43,25 @@ export const TRADE_COLUMNS = [
   "Market",
   "Volume",
   "Cost",
-  "Date",
   "ID",
 ] as const;
+
+const ASSET_NAME: Record<string, string> = {
+  BTC: "Bitcoin",
+  ETH: "Ethereum",
+  SOL: "Solana",
+  XRP: "XRP",
+  USD: "US Dollar",
+};
 
 /**
  * Every fill moves two balances, so one trade becomes two ledger rows. Deposits and
  * withdrawals are not implemented, so fills are currently the only source of ledger activity.
+ * Balance stays "—" until a running ledger balance is available from the portfolio service.
  */
 export function ledgerFromTrades(trades: PortfolioTrade[]): LedgerRow[] {
   return trades.flatMap((trade) => {
-    const asset = baseAsset(trade.symbol);
+    const ticker = baseAsset(trade.symbol);
     const qty = Number(trade.quantity);
     const price = Number(trade.price);
     const isBuy = trade.side === "BUY";
@@ -62,18 +73,22 @@ export function ledgerFromTrades(trades: PortfolioTrade[]): LedgerRow[] {
         id: `${trade.id}-asset`,
         type: isBuy ? "Trade buy" : "Trade sell",
         wallet: "Spot",
-        asset,
-        amount: `${sign(qty, isBuy)} ${asset}`,
+        asset: ASSET_NAME[ticker] ?? ticker,
+        ticker,
+        amount: `${sign(qty, isBuy)} ${ticker}`,
         fee: "—",
+        balance: "—",
         at: trade.executed_at,
       },
       {
         id: `${trade.id}-cash`,
         type: isBuy ? "Trade buy" : "Trade sell",
         wallet: "Spot",
-        asset: "USD",
+        asset: ASSET_NAME.USD,
+        ticker: "USD",
         amount: `${sign(Number(cash.toFixed(2)), !isBuy)} USD`,
         fee: `${trade.fee} USD`,
+        balance: "—",
         at: trade.executed_at,
       },
     ];

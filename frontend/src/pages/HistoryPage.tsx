@@ -39,17 +39,6 @@ const SECTION_LABEL: Record<HistorySection, string> = {
   positions: "Positions",
 };
 
-function formatWhen(iso: string): string {
-  const when = new Date(iso);
-  if (Number.isNaN(when.getTime())) return "—";
-  return when.toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 function matches(value: string, query: string): boolean {
   const q = query.trim().toLowerCase();
   return !q || value.toLowerCase().includes(q);
@@ -354,9 +343,10 @@ function LedgerTable({
             <td className="px-4 py-3 font-medium">{row.type}</td>
             <td className="px-4 py-3 text-[var(--text-muted)]">{row.wallet}</td>
             <td className="px-4 py-3">{row.asset}</td>
+            <td className="px-4 py-3 text-[var(--text-muted)]">{row.ticker}</td>
             <td className="px-4 py-3 tabular-nums">{row.amount}</td>
             <td className="px-4 py-3 tabular-nums text-[var(--text-muted)]">{row.fee}</td>
-            <td className="px-4 py-3 text-[var(--text-muted)]">{formatWhen(row.at)}</td>
+            <td className="px-4 py-3 tabular-nums text-[var(--text-muted)]">{row.balance}</td>
             <td className="px-4 py-3 font-mono text-xs text-[var(--text-muted)]">{row.id}</td>
           </tr>
         ))
@@ -446,9 +436,6 @@ function TradesTable({
                 {row.quantity} {asset}
               </td>
               <td className="px-4 py-3 tabular-nums">{cost}</td>
-              <td className="px-4 py-3 text-[var(--text-muted)]">
-                {formatWhen(row.executed_at)}
-              </td>
               <td className="px-4 py-3 font-mono text-xs text-[var(--text-muted)]">{row.id}</td>
             </tr>
           );
