@@ -10,6 +10,7 @@ import {
   timezoneLabel,
 } from "./regionalPrefs";
 import { isSettingsSection } from "./settingsNav";
+import { LanguageProvider } from "../auth/LanguageProvider";
 
 vi.mock("@clerk/clerk-react", () => ({
   useAuth: () => ({ isSignedIn: true }),
@@ -118,12 +119,14 @@ function OpenSettings({
 
 function renderDialog() {
   return render(
-    <MemoryRouter>
-      <SettingsProvider>
-        <OpenSettings />
-        <SettingsDialog />
-      </SettingsProvider>
-    </MemoryRouter>,
+    <LanguageProvider>
+      <MemoryRouter>
+        <SettingsProvider>
+          <OpenSettings />
+          <SettingsDialog />
+        </SettingsProvider>
+      </MemoryRouter>
+    </LanguageProvider>,
   );
 }
 
@@ -228,12 +231,14 @@ describe("SettingsDialog", () => {
 
   it("keeps timezone and number format only under preferences", () => {
     render(
+      <LanguageProvider>
       <MemoryRouter>
         <SettingsProvider>
           <OpenSettings section="preferences" />
           <SettingsDialog />
         </SettingsProvider>
-      </MemoryRouter>,
+      </MemoryRouter>
+      </LanguageProvider>,
     );
     fireEvent.click(screen.getByRole("button", { name: "Open" }));
     expect(screen.queryByRole("combobox")).toBeNull();
@@ -246,12 +251,14 @@ describe("SettingsDialog", () => {
 
   it("renders preferences section groups", () => {
     render(
+      <LanguageProvider>
       <MemoryRouter>
         <SettingsProvider>
           <OpenSettings section="preferences" />
           <SettingsDialog />
         </SettingsProvider>
-      </MemoryRouter>,
+      </MemoryRouter>
+      </LanguageProvider>,
     );
     fireEvent.click(screen.getByRole("button", { name: "Open" }));
     expect(screen.getByRole("heading", { name: "Preferences" })).toBeTruthy();
@@ -269,12 +276,14 @@ describe("SettingsDialog", () => {
 
   it("renders notification preference controls", () => {
     render(
+      <LanguageProvider>
       <MemoryRouter>
         <SettingsProvider>
           <OpenSettings section="notifications" />
           <SettingsDialog />
         </SettingsProvider>
-      </MemoryRouter>,
+      </MemoryRouter>
+      </LanguageProvider>,
     );
     fireEvent.click(screen.getByRole("button", { name: "Open" }));
     expect(screen.getByRole("heading", { name: "Notifications" })).toBeTruthy();
@@ -289,12 +298,14 @@ describe("SettingsDialog", () => {
 
   it("renders static paper funding limit cards", () => {
     render(
+      <LanguageProvider>
       <MemoryRouter>
         <SettingsProvider>
           <OpenSettings section="limits" />
           <SettingsDialog />
         </SettingsProvider>
-      </MemoryRouter>,
+      </MemoryRouter>
+      </LanguageProvider>,
     );
     fireEvent.click(screen.getByRole("button", { name: "Open" }));
     expect(screen.getByRole("heading", { name: "Limits" })).toBeTruthy();
@@ -311,12 +322,14 @@ describe("SettingsDialog", () => {
 
   it("renders connections and api keys section chrome", () => {
     render(
+      <LanguageProvider>
       <MemoryRouter>
         <SettingsProvider>
           <OpenSettings section="connections" />
           <SettingsDialog />
         </SettingsProvider>
-      </MemoryRouter>,
+      </MemoryRouter>
+      </LanguageProvider>,
     );
     fireEvent.click(screen.getByRole("button", { name: "Open" }));
     expect(screen.getByRole("heading", { name: "Connections & API" })).toBeTruthy();
@@ -328,12 +341,14 @@ describe("SettingsDialog", () => {
 
   it("renders privacy controls and data export", () => {
     render(
+      <LanguageProvider>
       <MemoryRouter>
         <SettingsProvider>
           <OpenSettings section="privacy" />
           <SettingsDialog />
         </SettingsProvider>
-      </MemoryRouter>,
+      </MemoryRouter>
+      </LanguageProvider>,
     );
     fireEvent.click(screen.getByRole("button", { name: "Open" }));
     expect(screen.getByRole("heading", { name: "Privacy" })).toBeTruthy();
@@ -344,12 +359,14 @@ describe("SettingsDialog", () => {
 
   it("renders keyboard shortcuts reference", () => {
     render(
+      <LanguageProvider>
       <MemoryRouter>
         <SettingsProvider>
           <OpenSettings section="shortcuts" />
           <SettingsDialog />
         </SettingsProvider>
-      </MemoryRouter>,
+      </MemoryRouter>
+      </LanguageProvider>,
     );
     fireEvent.click(screen.getByRole("button", { name: "Open" }));
     expect(screen.getByRole("heading", { name: "Keyboard shortcuts" })).toBeTruthy();
@@ -360,12 +377,14 @@ describe("SettingsDialog", () => {
 
   it("renders activity devices and recent paper trades", () => {
     render(
+      <LanguageProvider>
       <MemoryRouter>
         <SettingsProvider>
           <OpenSettings section="activity" />
           <SettingsDialog />
         </SettingsProvider>
-      </MemoryRouter>,
+      </MemoryRouter>
+      </LanguageProvider>,
     );
     fireEvent.click(screen.getByRole("button", { name: "Open" }));
     expect(screen.getByRole("heading", { name: "Activity" })).toBeTruthy();

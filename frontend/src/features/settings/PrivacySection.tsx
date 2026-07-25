@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { useAuth, useClerk, useUser } from "@clerk/clerk-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth, useUser } from "@clerk/clerk-react";
 import { LEGAL } from "../../pages/legal/legalConfig";
 import { useGetMyOnboardingQuery } from "../onboarding/onboardingApi";
 import {
@@ -16,11 +16,12 @@ import { readNotificationPrefs } from "./notificationPrefs";
 import { buildPrivacyExport, downloadPrivacyExport } from "./privacyExport";
 import { readRegionalPrefs } from "./regionalPrefs";
 import { useSettings } from "./settingsContext";
+import { SIGN_IN_PATH } from "../auth/authRoutes";
 
 export default function PrivacySection() {
   const { isSignedIn } = useAuth();
   const { user } = useUser();
-  const clerk = useClerk();
+  const navigate = useNavigate();
   const toast = useToast();
   const { setSection, closeSettings } = useSettings();
   const [exporting, setExporting] = useState(false);
@@ -43,7 +44,10 @@ export default function PrivacySection() {
         </p>
         <button
           type="button"
-          onClick={() => clerk.openSignIn()}
+          onClick={() => {
+            closeSettings();
+            navigate(SIGN_IN_PATH);
+          }}
           className="rounded-[6px] bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white"
         >
           Sign in

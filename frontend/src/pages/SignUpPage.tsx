@@ -1,13 +1,13 @@
 import { useAuth } from "@clerk/clerk-react";
 import { Navigate } from "react-router-dom";
 import AuthLayout, {
-  AuthCreateAccountChip,
   AuthLanguageChip,
+  AuthSignInChip,
 } from "../features/auth/AuthLayout";
-import SignInForm from "../features/auth/SignInForm";
-import { SIGN_UP_PATH } from "../features/auth/authRoutes";
+import SignUpForm from "../features/auth/SignUpForm";
+import { SIGN_IN_PATH } from "../features/auth/authRoutes";
 
-export default function SignInPage() {
+export default function SignUpPage() {
   const { isSignedIn, isLoaded } = useAuth();
   if (!isLoaded) {
     return <div className="min-h-dvh bg-[#F6F5F9]" aria-label="Loading" />;
@@ -21,11 +21,11 @@ export default function SignInPage() {
       headerAction={
         <>
           <AuthLanguageChip />
-          <AuthCreateAccountChip to={SIGN_UP_PATH} />
+          <AuthSignInChip to={SIGN_IN_PATH} />
         </>
       }
     >
-      <SignInForm />
+      <SignUpForm />
     </AuthLayout>
   );
 }

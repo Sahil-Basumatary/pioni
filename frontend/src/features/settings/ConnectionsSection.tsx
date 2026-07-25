@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
-import { useAuth, useClerk } from "@clerk/clerk-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@clerk/clerk-react";
 import { useToast } from "../toasts/useToast";
 import {
   useCreateMyApiKeyMutation,
@@ -7,6 +8,7 @@ import {
   useRevokeMyApiKeyMutation,
   type PaperApiKeyCreated,
 } from "./apiKeysApi";
+import { SIGN_IN_PATH } from "../auth/authRoutes";
 
 function scopeLabel(canQuery: boolean, canTrade: boolean): string {
   const parts: string[] = [];
@@ -17,7 +19,7 @@ function scopeLabel(canQuery: boolean, canTrade: boolean): string {
 
 export default function ConnectionsSection() {
   const { isSignedIn } = useAuth();
-  const clerk = useClerk();
+  const navigate = useNavigate();
   const toast = useToast();
   const { data: keys = [], isLoading } = useGetMyApiKeysQuery(undefined, {
     skip: !isSignedIn,
@@ -39,7 +41,7 @@ export default function ConnectionsSection() {
         </p>
         <button
           type="button"
-          onClick={() => clerk.openSignIn()}
+          onClick={() => navigate(SIGN_IN_PATH)}
           className="rounded-[6px] bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white"
         >
           Sign in

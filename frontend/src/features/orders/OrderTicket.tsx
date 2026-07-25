@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { useAuth, useClerk } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/clerk-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppSelector } from "../../app/hooks";
 import { selectSymbol } from "../instrument/instrumentSlice";
@@ -18,6 +18,7 @@ import { watchOpenOrder } from "../toasts/orderWatch";
 import InfoTip from "../onboarding/InfoTip";
 import type { GlossaryTermId } from "../onboarding/glossary";
 import { readDisplayPrefs, formatPrefLimitPrice } from "../settings/displayPrefs";
+import { SIGN_IN_PATH } from "../auth/authRoutes";
 
 function baseAsset(symbol: string): string {
   return symbol.replace(/USDT$|USD$|USDC$/i, "") || symbol;
@@ -81,7 +82,6 @@ export default function OrderTicket({
   const isDeriv = isMargin || isFutures;
   const navigate = useNavigate();
   const { isSignedIn } = useAuth();
-  const { openSignIn } = useClerk();
   const symbol = useAppSelector(selectSymbol);
   const trade = useLiveMarketTrade(symbol);
   const livePrice = trade ? Number(trade.price) : null;
@@ -316,7 +316,7 @@ export default function OrderTicket({
   async function handleSubmit() {
     setFeedback(null);
     if (!isSignedIn) {
-      openSignIn({});
+      navigate(SIGN_IN_PATH);
       return;
     }
     if (needsFunds) return;

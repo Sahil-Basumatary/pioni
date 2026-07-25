@@ -1,13 +1,13 @@
 import { useAuth } from "@clerk/clerk-react";
 import { Navigate } from "react-router-dom";
 import AuthLayout, {
-  AuthCreateAccountChip,
   AuthLanguageChip,
+  AuthSupportChip,
 } from "../features/auth/AuthLayout";
-import SignInForm from "../features/auth/SignInForm";
-import { SIGN_UP_PATH } from "../features/auth/authRoutes";
+import ForgotPasswordForm from "../features/auth/ForgotPasswordForm";
+import { SIGN_IN_PATH } from "../features/auth/authRoutes";
 
-export default function SignInPage() {
+export default function ForgotPasswordPage() {
   const { isSignedIn, isLoaded } = useAuth();
   if (!isLoaded) {
     return <div className="min-h-dvh bg-[#F6F5F9]" aria-label="Loading" />;
@@ -17,15 +17,16 @@ export default function SignInPage() {
   }
   return (
     <AuthLayout
+      backAboveCard={{ to: SIGN_IN_PATH }}
       showLegalFooter
       headerAction={
         <>
           <AuthLanguageChip />
-          <AuthCreateAccountChip to={SIGN_UP_PATH} />
+          <AuthSupportChip />
         </>
       }
     >
-      <SignInForm />
+      <ForgotPasswordForm />
     </AuthLayout>
   );
 }

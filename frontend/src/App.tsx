@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import AppShell from "./components/shell/AppShell";
 import ComingSoonPage from "./pages/ComingSoonPage";
+import { LanguageProvider } from "./features/auth/LanguageProvider";
 import { startPagePath } from "./features/settings/displayPrefs";
 import "./App.css";
 
@@ -27,6 +28,7 @@ const TermsPage = lazy(() => import("./pages/TermsPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const SignInPage = lazy(() => import("./pages/SignInPage"));
 const SignUpPage = lazy(() => import("./pages/SignUpPage"));
+const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
 const SsoCallbackPage = lazy(() => import("./pages/SsoCallbackPage"));
 
 function RouteFallback() {
@@ -67,11 +69,13 @@ function ShellLayout() {
 
 function App() {
   return (
+    <LanguageProvider>
     <BrowserRouter>
       <Suspense fallback={<div className="min-h-dvh bg-[#F6F5F9]" aria-label="Loading" />}>
         <Routes>
           <Route path="/sign-in/*" element={<SignInPage />} />
           <Route path="/sign-up/*" element={<SignUpPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/sso-callback" element={<SsoCallbackPage />} />
           <Route element={<ShellLayout />}>
             <Route path="/home" element={<HomePage />} />
@@ -109,6 +113,7 @@ function App() {
         </Routes>
       </Suspense>
     </BrowserRouter>
+    </LanguageProvider>
   );
 }
 

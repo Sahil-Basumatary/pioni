@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSignIn } from "@clerk/clerk-react";
-import { isClerkAPIResponseError } from "@clerk/clerk-react/errors";
 import { EyeIcon, EyeOffIcon } from "../../components/shell/shellIcons";
-import { SIGN_UP_PATH } from "./authRoutes";
+import { clerkErrorMessage } from "./authErrors";
+import { FORGOT_PASSWORD_PATH, SIGN_UP_PATH } from "./authRoutes";
+import { AuthRichText } from "./AuthRichText";
+import { useLanguage } from "./LanguageProvider";
 
 const SSO_CALLBACK = "/sso-callback";
 const fieldIdle =
@@ -11,6 +13,7 @@ const fieldIdle =
 
 export default function SignInForm() {
   const { isLoaded, signIn, setActive } = useSignIn();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -35,10 +38,10 @@ export default function SignInForm() {
         return;
       }
       if (result.status === "needs_second_factor") {
-        setError("Additional verification is required for this account");
+        setError(t("needsSecondFactor"));
         return;
       }
-      setError("Couldn’t complete sign in. Try again");
+      setError(t("couldntSignIn"));
     } catch (err) {
       setError(clerkErrorMessage(err));
     } finally {
@@ -62,12 +65,17 @@ export default function SignInForm() {
     }
   }
 
+  const forgotHref =
+    identifier.trim().includes("@")
+      ? `${FORGOT_PASSWORD_PATH}?email=${encodeURIComponent(identifier.trim())}`
+      : FORGOT_PASSWORD_PATH;
+
   return (
     <div className="flex w-full flex-col gap-4 rounded-[20px] bg-white px-6 py-6 shadow-[0_1px_4px_rgba(16,24,40,0.04)]">
       <div className="flex flex-col items-center gap-3">
         <img src="/logo.svg" alt="" className="h-14 w-auto" />
         <h1 className="text-center text-[28px] font-medium leading-9 tracking-tight text-[#101114]">
-          Sign in to Pioni
+          {t("signInTitle")}
         </h1>
       </div>
       <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
@@ -75,7 +83,9 @@ export default function SignInForm() {
           <label
             className={`box-border flex h-[52px] flex-col justify-center overflow-clip rounded-t-[12px] rounded-b-[4px] px-3 ${fieldIdle}`}
           >
-            <span className="text-xs leading-4 text-[#686B82]">Email or username</span>
+            <span className="text-xs leading-4 text-[#686B82]">
+              {t("emailOrUsername")}
+            </span>
             <input
               name="identifier"
               autoComplete="username"
@@ -89,7 +99,7 @@ export default function SignInForm() {
             className={`box-border flex h-[52px] items-center gap-2 overflow-clip rounded-t-[4px] rounded-b-[12px] px-3 ${fieldIdle}`}
           >
             <span className="flex min-w-0 flex-1 flex-col justify-center">
-              <span className="text-xs leading-4 text-[#686B82]">Password</span>
+              <span className="text-xs leading-4 text-[#686B82]">{t("password")}</span>
               <input
                 name="password"
                 type={showPassword ? "text" : "password"}
@@ -102,7 +112,7 @@ export default function SignInForm() {
             </span>
             <button
               type="button"
-              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-label={showPassword ? t("hidePassword") : t("showPassword")}
               onClick={() => setShowPassword((v) => !v)}
               className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[#686B82] hover:bg-black/[0.04] hover:text-[#101114]"
             >
@@ -115,29 +125,27 @@ export default function SignInForm() {
           </label>
         </div>
         <p className="text-sm text-[#686B82]">
-          Forgot{" "}
-          <button
-            type="button"
-            className="font-medium text-[#101114] underline-offset-2 hover:underline"
-            onClick={() =>
-              setError(
-                "Password reset isn’t available in this paper build yet. Use Google or X, or Sign up",
-              )
-            }
-          >
-            password
-          </button>{" "}
-          or{" "}
-          <button
-            type="button"
-            className="font-medium text-[#101114] underline-offset-2 hover:underline"
-            onClick={() =>
-              setError("Enter the email on your account. Usernames match your profile")
-            }
-          >
-            username
-          </button>
-          ?
+          <AuthRichText
+            id="forgotPasswordOrUsername"
+            values={{
+              password: (
+                <Link
+                  to={forgotHref}
+                  className="font-medium text-[#101114] underline-offset-2 hover:underline"
+                >
+                  {t("passwordLink")}
+                </Link>
+              ),
+              username: (
+                <Link
+                  to={FORGOT_PASSWORD_PATH}
+                  className="font-medium text-[#101114] underline-offset-2 hover:underline"
+                >
+                  {t("usernameLink")}
+                </Link>
+              ),
+            }}
+          />
         </p>
         {error ? (
           <p className="text-sm text-[rgb(209,29,69)]" role="alert">
@@ -149,12 +157,12 @@ export default function SignInForm() {
           disabled={busy || !isLoaded}
           className="flex h-[52px] w-full items-center justify-center rounded-xl bg-[#101114] text-base font-medium text-white hover:bg-[#2A2A2A] disabled:opacity-60"
         >
-          Continue
+          {t("continue")}
         </button>
       </form>
       <div className="flex items-center gap-3">
         <div className="h-px flex-1 bg-[rgba(104,107,130,0.16)]" />
-        <span className="text-sm text-[#686B82]">Or</span>
+        <span className="text-sm text-[#686B82]">{t("or")}</span>
         <div className="h-px flex-1 bg-[rgba(104,107,130,0.16)]" />
       </div>
       <div className="flex flex-col gap-2">
@@ -164,7 +172,7 @@ export default function SignInForm() {
           onClick={() => void onOAuth("oauth_google")}
           className="flex h-[52px] w-full items-center justify-center rounded-xl bg-[rgba(104,107,130,0.08)] text-base font-medium text-[#101114] hover:bg-[rgba(104,107,130,0.12)] disabled:opacity-60"
         >
-          Sign in with Google
+          {t("signInWithGoogle")}
         </button>
         <button
           type="button"
@@ -172,26 +180,18 @@ export default function SignInForm() {
           onClick={() => void onOAuth("oauth_x")}
           className="flex h-[52px] w-full items-center justify-center rounded-xl bg-[rgba(104,107,130,0.08)] text-base font-medium text-[#101114] hover:bg-[rgba(104,107,130,0.12)] disabled:opacity-60"
         >
-          Sign in with X
+          {t("signInWithX")}
         </button>
       </div>
       <p className="text-center text-sm text-[#686B82]">
-        Don&apos;t have an account?{" "}
+        {t("noAccount")}{" "}
         <Link
           to={SIGN_UP_PATH}
           className="font-medium text-[#101114] underline-offset-2 hover:underline"
         >
-          Sign up
+          {t("signUpLink")}
         </Link>
       </p>
     </div>
   );
-}
-
-export function clerkErrorMessage(err: unknown): string {
-  if (isClerkAPIResponseError(err)) {
-    return err.errors[0]?.longMessage || err.errors[0]?.message || "Sign in failed";
-  }
-  if (err instanceof Error && err.message) return err.message;
-  return "Sign in failed";
 }

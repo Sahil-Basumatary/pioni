@@ -1,9 +1,44 @@
 const KEY = "pioni.regionalPrefs";
 
+export const LANGUAGE_OPTIONS = [
+  { value: "en-US", label: "English (US)" },
+  { value: "ms-MY", label: "Bahasa Melayu" },
+  { value: "cs-CZ", label: "Čeština" },
+  { value: "da-DK", label: "Dansk" },
+  { value: "de-DE", label: "Deutsch" },
+  { value: "en-AU", label: "English (Australia)" },
+  { value: "en-CA", label: "English (Canada)" },
+  { value: "en-GB", label: "English (UK)" },
+  { value: "es-AR", label: "Español (Argentina)" },
+  { value: "es-ES", label: "Español (España)" },
+  { value: "es-419", label: "Español (Latinoamérica)" },
+  { value: "es-MX", label: "Español (México)" },
+  { value: "fr-FR", label: "Français" },
+  { value: "it-IT", label: "Italiano" },
+  { value: "hu-HU", label: "Magyar" },
+  { value: "nl-NL", label: "Nederlands" },
+  { value: "nb-NO", label: "Norsk" },
+  { value: "pl-PL", label: "Polski" },
+  { value: "pt-BR", label: "Português (Brasil)" },
+  { value: "pt-PT", label: "Português (Portugal)" },
+  { value: "ro-RO", label: "Română" },
+  { value: "sv-SE", label: "Svenska" },
+  { value: "vi-VN", label: "Tiếng Việt" },
+  { value: "tr-TR", label: "Türkçe" },
+  { value: "el-GR", label: "Ελληνικά" },
+  { value: "ru-RU", label: "Русский" },
+  { value: "uk-UA", label: "Українська" },
+  { value: "ko-KR", label: "한국어" },
+  { value: "zh-CN", label: "简体中文" },
+  { value: "zh-TW", label: "繁體中文" },
+] as const;
+
+export type AppLanguage = (typeof LANGUAGE_OPTIONS)[number]["value"];
+
 export type RegionalPrefs = {
   timezone: string;
   currency: "USD";
-  language: "en-US";
+  language: AppLanguage;
   numberFormat: "en-US" | "de-DE";
 };
 
@@ -31,6 +66,16 @@ function detectTimezone(): string {
   return "Europe/London";
 }
 
+function parseLanguage(value: unknown): AppLanguage {
+  if (
+    typeof value === "string" &&
+    LANGUAGE_OPTIONS.some((o) => o.value === value)
+  ) {
+    return value as AppLanguage;
+  }
+  return "en-US";
+}
+
 export const DEFAULT_REGIONAL_PREFS: RegionalPrefs = {
   timezone: "Europe/London",
   currency: "USD",
@@ -55,7 +100,7 @@ export function readRegionalPrefs(): RegionalPrefs {
     return {
       timezone,
       currency: "USD",
-      language: "en-US",
+      language: parseLanguage(parsed.language),
       numberFormat,
     };
   } catch {
@@ -73,4 +118,12 @@ export function timezoneLabel(value: string): string {
 
 export function numberFormatLabel(value: RegionalPrefs["numberFormat"]): string {
   return NUMBER_FORMAT_OPTIONS.find((o) => o.value === value)?.label ?? value;
+}
+
+export function languageLabel(value: AppLanguage): string {
+  return LANGUAGE_OPTIONS.find((o) => o.value === value)?.label ?? value;
+}
+
+export function applyDocumentLanguage(language: AppLanguage): void {
+  document.documentElement.lang = language;
 }

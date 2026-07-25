@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useClerk, SignedIn, SignedOut } from "@clerk/clerk-react";
+import { SignedIn, SignedOut } from "@clerk/clerk-react";
 import { ChevronDownSmallIcon } from "../components/shell/shellIcons";
 import { OTC_FAQ, OTC_RESOURCES, OTC_WHY } from "../features/otc/otcContent";
 import { isOtcUnlocked, setOtcUnlocked } from "../features/otc/otcPortalContent";
 import { useToast } from "../features/toasts/useToast";
+import { SIGN_IN_PATH } from "../features/auth/authRoutes";
 
 export default function OtcPage() {
-  const { openSignIn } = useClerk();
   const navigate = useNavigate();
   const toast = useToast();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -97,7 +97,7 @@ export default function OtcPage() {
               <SignedOut>
                 <button
                   type="button"
-                  onClick={() => openSignIn({})}
+                  onClick={() => navigate(SIGN_IN_PATH)}
                   className="inline-flex h-10 items-center rounded-lg bg-[var(--accent)] px-4 text-sm font-medium text-white hover:bg-[var(--accent-soft)]"
                 >
                   Unlock OTC trading

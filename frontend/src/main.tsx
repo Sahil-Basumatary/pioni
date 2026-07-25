@@ -6,6 +6,11 @@ import './index.css'
 import App from './App'
 import { store } from './app/store'
 import { ClerkTokenBridge } from './features/auth/ClerkTokenBridge'
+import { clerkAppearance, clerkLocalization } from './features/auth/clerkAppearance'
+import {
+  applyDocumentLanguage,
+  readRegionalPrefs,
+} from './features/settings/regionalPrefs'
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
@@ -13,9 +18,18 @@ if (!PUBLISHABLE_KEY) {
   throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY')
 }
 
+applyDocumentLanguage(readRegionalPrefs().language)
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
+    <ClerkProvider
+      publishableKey={PUBLISHABLE_KEY}
+      afterSignOutUrl="/home"
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+      appearance={clerkAppearance}
+      localization={clerkLocalization}
+    >
       <Provider store={store}>
         <ClerkTokenBridge />
         <App />

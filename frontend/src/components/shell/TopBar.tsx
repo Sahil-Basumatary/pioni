@@ -1,16 +1,16 @@
 import { Link, NavLink } from "react-router-dom";
-import { SignedIn, SignedOut, useClerk } from "@clerk/clerk-react";
+import { SignedIn, SignedOut } from "@clerk/clerk-react";
 import BalanceChip from "./BalanceChip";
 import LayoutsMenu from "./LayoutsMenu";
 import ProductSwitcher from "./ProductSwitcher";
 import { useMarketSearch } from "../../features/markets/MarketSearchContext";
 import { useConvert } from "../../features/convert/ConvertContext";
 import { ConvertIcon, DepositIcon, SearchIcon } from "./shellIcons";
+import { SIGN_IN_PATH, SIGN_UP_PATH } from "../../features/auth/authRoutes";
 
 export default function TopBar({ compact = false }: { compact?: boolean }) {
   const { openSearch } = useMarketSearch();
   const { openConvert } = useConvert();
-  const { openSignIn, openSignUp } = useClerk();
 
   if (compact) {
     return (
@@ -36,10 +36,7 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
               </SignedOut>
             </div>
             <SignedOut>
-              <AuthButtons
-                onSignIn={() => openSignIn({})}
-                onSignUp={() => openSignUp({})}
-              />
+              <AuthButtons />
             </SignedOut>
           </div>
         </div>
@@ -87,10 +84,7 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
             </span>
           </SignedIn>
           <SignedOut>
-            <AuthButtons
-              onSignIn={() => openSignIn({})}
-              onSignUp={() => openSignUp({})}
-            />
+            <AuthButtons />
           </SignedOut>
         </div>
       </div>
@@ -98,29 +92,21 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
   );
 }
 
-function AuthButtons({
-  onSignIn,
-  onSignUp,
-}: {
-  onSignIn: () => void;
-  onSignUp: () => void;
-}) {
+function AuthButtons() {
   return (
     <div className="relative z-[60] flex items-center gap-1">
-      <button
-        type="button"
-        onClick={onSignIn}
+      <Link
+        to={SIGN_IN_PATH}
         className="rounded-full px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:bg-black/[0.04]"
       >
         Sign in
-      </button>
-      <button
-        type="button"
-        onClick={onSignUp}
+      </Link>
+      <Link
+        to={SIGN_UP_PATH}
         className="rounded-full bg-[var(--accent)] px-3.5 py-1.5 text-sm font-medium text-white hover:bg-[var(--accent-soft)]"
       >
         Sign up
-      </button>
+      </Link>
     </div>
   );
 }

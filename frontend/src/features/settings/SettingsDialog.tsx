@@ -22,6 +22,7 @@ import {
 } from "../onboarding/onboardingApi";
 import { useTour } from "../onboarding/TourProvider";
 import { useToast } from "../toasts/useToast";
+import { SIGN_IN_PATH } from "../auth/authRoutes";
 import {
   DEFAULT_DISPLAY_PREFS,
   DEFAULT_ORDER_TYPE_OPTIONS,
@@ -49,7 +50,9 @@ import {
   usePatchMyNotificationPrefsMutation,
 } from "./notificationPrefsApi";
 import { PAPER_LIMIT_CARDS } from "./paperLimits";
+import { useLanguage } from "../auth/LanguageProvider";
 import {
+  LANGUAGE_OPTIONS,
   NUMBER_FORMAT_OPTIONS,
   TIMEZONE_OPTIONS,
   readRegionalPrefs,
@@ -206,6 +209,7 @@ function AccountSection() {
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const clerk = useClerk();
+  const navigate = useNavigate();
   const toast = useToast();
   const { closeSettings } = useSettings();
   const [editingName, setEditingName] = useState(false);
@@ -250,7 +254,10 @@ function AccountSection() {
         </p>
         <button
           type="button"
-          onClick={() => clerk.openSignIn()}
+          onClick={() => {
+            closeSettings();
+            navigate(SIGN_IN_PATH);
+          }}
           className="rounded-[6px] bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white"
         >
           Sign in
@@ -368,6 +375,7 @@ function AccountSection() {
 
 function PreferencesSection() {
   const toast = useToast();
+  const { setLanguage } = useLanguage();
   const [prefs, setPrefs] = useState<DisplayPrefs>(() => readDisplayPrefs());
   const [regional, setRegional] = useState<RegionalPrefs>(() => readRegionalPrefs());
 
@@ -382,6 +390,7 @@ function PreferencesSection() {
     const merged = { ...regional, ...next };
     setRegional(merged);
     writeRegionalPrefs(merged);
+    if (next.language) setLanguage(next.language);
     toast("Preferences saved");
   }
 
@@ -466,9 +475,9 @@ function PreferencesSection() {
             </p>
             <SettingsSelect
               aria-label="Language"
-              value="en-US"
-              options={[{ value: "en-US", label: "English (US)" }]}
-              onChange={() => toast("English (US) is selected")}
+              value={regional.language}
+              options={[...LANGUAGE_OPTIONS]}
+              onChange={(language) => saveRegional({ language })}
             />
           </div>
           <div>
@@ -547,7 +556,6 @@ function PreferencesSection() {
 
 function PaperSection() {
   const { isSignedIn } = useAuth();
-  const clerk = useClerk();
   const navigate = useNavigate();
   const toast = useToast();
   const { closeSettings } = useSettings();
@@ -568,7 +576,10 @@ function PaperSection() {
         </p>
         <button
           type="button"
-          onClick={() => clerk.openSignIn()}
+          onClick={() => {
+            closeSettings();
+            navigate(SIGN_IN_PATH);
+          }}
           className="rounded-[6px] bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white"
         >
           Sign in

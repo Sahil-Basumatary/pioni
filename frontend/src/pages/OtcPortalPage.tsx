@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth, useClerk } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/clerk-react";
 import OtcPortalShell from "../features/otc/OtcPortalShell";
 import OtcRfqPanel from "../features/otc/OtcRfqPanel";
 import OtcDashboardPanel from "../features/otc/OtcDashboardPanel";
 import { isOtcUnlocked, setOtcUnlocked } from "../features/otc/otcPortalContent";
+import { SIGN_IN_PATH } from "../features/auth/authRoutes";
 
 export default function OtcPortalPage() {
   const { isSignedIn, isLoaded } = useAuth();
-  const { openSignIn } = useClerk();
   const location = useLocation();
   const navigate = useNavigate();
   const [unlocked, setUnlocked] = useState(() => isOtcUnlocked());
@@ -32,7 +32,7 @@ export default function OtcPortalPage() {
         </p>
         <button
           type="button"
-          onClick={() => openSignIn({})}
+          onClick={() => navigate(SIGN_IN_PATH)}
           className="inline-flex h-10 items-center rounded-lg bg-[var(--accent)] px-4 text-sm font-medium text-white"
         >
           Sign in

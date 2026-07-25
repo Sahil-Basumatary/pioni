@@ -251,8 +251,12 @@ export function ChevronDownSmallIcon({ className }: IconProps) {
   return (
     <svg {...base} className={className}>
       <path
-        d="M16.8486 10L16.4238 10.4238L12.4238 14.4238L12 14.8486L11.5762 14.4238L7.57617 10.4238L7.15137 10L8 9.15137L8.42383 9.57617L12 13.1523L15.5762 9.57617L16 9.15137L16.8486 10Z"
-        className="fill-current"
+        d="M7.5 9.98291L11.2045 13.6874C11.6438 14.1268 12.3562 14.1268 12.7955 13.6874L16.5 9.98291"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="fill-transparent"
       />
     </svg>
   );
@@ -633,10 +637,60 @@ export function ChevronRightSmallIcon({ className }: IconProps) {
 
 export function ChevronLeftSmallIcon({ className }: IconProps) {
   return (
-    <svg {...base} className={className} viewBox="0 0 24 24">
+    <svg {...base} className={className}>
       <path
-        d="M14.3486 8L13.9238 8.42383L10.3477 12L13.9238 15.5762L14.3486 16L13.5 16.8486L13.0762 16.4238L9.07617 12.4238L8.65137 12L9.07617 11.5762L13.0762 7.57617L13.5 7.15137L14.3486 8Z"
-        className="fill-current"
+        d="M14.2413 17L10.1251 12.8839C9.63699 12.3957 9.63699 11.6043 10.1252 11.1161L14.2413 7"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="fill-transparent"
+      />
+    </svg>
+  );
+}
+
+export function GlobeIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path
+        d="M21 12C21 16.9706 16.9706 21 12 21M21 12C21 7.02944 16.9706 3 12 3M21 12H3M12 21C7.02944 21 3 16.9706 3 12M12 21C9.79086 21 8 16.9706 8 12C8 7.02944 9.79086 3 12 3M12 21C14.2091 21 16 16.9706 16 12C16 7.02944 14.2091 3 12 3M3 12C3 7.02944 7.02944 3 12 3"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="square"
+        className="fill-transparent"
+      />
+    </svg>
+  );
+}
+
+export function SupportIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path
+        d="M18.375 10.05C18.375 10.0224 18.3974 10 18.425 10H19.875C20.7034 10 21.375 10.6716 21.375 11.5V15.0625C21.375 15.8909 20.7034 16.5625 19.875 16.5625H18.575C18.4645 16.5625 18.375 16.473 18.375 16.3625V10.05Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        className="fill-transparent"
+      />
+      <path
+        d="M2.9375 11.5C2.9375 10.6716 3.60907 10 4.4375 10H5.7375C5.84796 10 5.9375 10.0895 5.9375 10.2V16.5125C5.9375 16.5401 5.91511 16.5625 5.8875 16.5625H4.4375C3.60907 16.5625 2.9375 15.8909 2.9375 15.0625V11.5Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        className="fill-transparent"
+      />
+      <path
+        d="M19.3125 9.25C19.3125 4.07233 15.25 3 12.125 3C9 3 5 4.07233 5 9.25"
+        stroke="currentColor"
+        strokeWidth="2"
+        className="fill-transparent"
+      />
+      <path
+        d="M19.5312 17.0312C19.5312 19.5938 17.375 21 14.9375 21H13.1156C12.4375 21 11.7812 20.2031 11.8594 19"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        className="fill-transparent"
       />
     </svg>
   );
