@@ -4,7 +4,9 @@ export type SettingsSectionId =
   | "paper"
   | "notifications"
   | "limits"
-  | "connections";
+  | "connections"
+  | "privacy"
+  | "shortcuts";
 
 export type SettingsNavItem = {
   id: SettingsSectionId;
@@ -33,6 +35,12 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
     group: "Account",
   },
   {
+    id: "privacy",
+    label: "Privacy",
+    description: "Manage privacy controls and export your data",
+    group: "Account",
+  },
+  {
     id: "paper",
     label: "Paper trading",
     description: "Manage your paper balances and onboarding",
@@ -48,6 +56,12 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
     id: "connections",
     label: "Connections & API",
     description: "Manage connected apps and paper API keys",
+    group: "Workspace",
+  },
+  {
+    id: "shortcuts",
+    label: "Keyboard shortcuts",
+    description: "View keyboard shortcuts for Pioni",
     group: "Workspace",
   },
 ];

@@ -106,4 +106,8 @@ export const {
   useGetMyTradesQuery,
   useGetMyPositionsQuery,
   useResetPortfolioMutation,
+  useLazyGetMyPortfolioQuery,
+  useLazyGetMySummaryQuery,
+  useLazyGetMyTradesQuery,
+  useLazyGetMyPositionsQuery,
 } = portfolioApi;
