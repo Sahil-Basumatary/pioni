@@ -11,6 +11,7 @@ import {
   isSettingsSection,
   type SettingsSectionId,
 } from "./settingsNav";
+import { isEditableKeyboardTarget } from "./keyboardShortcuts";
 
 const HASH_PREFIX = "#dialog/settings/";
 
@@ -85,6 +86,18 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     window.addEventListener("hashchange", sync);
     return () => window.removeEventListener("hashchange", sync);
   }, []);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "/") {
+        if (isEditableKeyboardTarget(e.target)) return;
+        e.preventDefault();
+        openSettings("shortcuts");
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [openSettings]);
 
   useEffect(() => {
     if (!open) return;
