@@ -1,7 +1,10 @@
-.PHONY: help install dev-gateway dev-gateway-perf dev-sentiment dev-market-data dev-orders dev-portfolio dev-frontend test lint lint-python build infra infra-stop infra-logs infra-clean db-migrate db-upgrade db-downgrade db-current load-market load-orders
+.PHONY: help install dev dev-gateway dev-gateway-perf dev-sentiment dev-market-data dev-orders dev-portfolio dev-frontend test lint lint-python build infra infra-stop infra-logs infra-clean db-migrate db-upgrade db-downgrade db-current load-market load-orders
 
 help:
 	@echo "Pioni Development Commands"
+	@echo ""
+	@echo "All-in-one:"
+	@echo "  make dev              Start infra + all app services in one terminal"
 	@echo ""
 	@echo "Services:"
 	@echo "  make dev-gateway      Run gateway service (port 8000)"
@@ -12,7 +15,7 @@ help:
 	@echo "  make dev-portfolio    Run portfolio service (port 8004)"
 	@echo ""
 	@echo "Frontend:"
-	@echo "  make dev-frontend     Run Vite dev server"
+	@echo "  make dev-frontend     Run Vite dev server (http://localhost:5173)"
 	@echo "  make build            Build frontend for production"
 	@echo "  make lint             Run all linters"
 	@echo "  make lint-python      Run ruff on Python code"
@@ -61,6 +64,20 @@ dev-portfolio:
 
 dev-frontend:
 	cd frontend && npm run dev
+
+dev: infra
+	@echo "Starting Pioni stack — frontend http://localhost:5173  gateway http://localhost:8000"
+	@npx --yes concurrently \
+		--kill-others-on-fail false \
+		--restart-tries 0 \
+		--names "gateway,sentiment,market,orders,portfolio,frontend" \
+		--prefix-colors "blue,magenta,cyan,green,yellow,white" \
+		"$(MAKE) dev-gateway" \
+		"$(MAKE) dev-sentiment" \
+		"$(MAKE) dev-market-data" \
+		"$(MAKE) dev-orders" \
+		"$(MAKE) dev-portfolio" \
+		"$(MAKE) dev-frontend"
 
 test:
 	pytest services/ -v
