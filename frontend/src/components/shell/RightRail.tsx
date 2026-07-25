@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useClerk, useAuth } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/clerk-react";
 import { Link, useNavigate } from "react-router-dom";
 import NotificationsPanel from "./NotificationsPanel";
 import FavoritesRailPanel from "./FavoritesRailPanel";
@@ -24,7 +24,6 @@ export default function RightRail() {
   const [tab, setTab] = useState<RailTab>(null);
   const navigate = useNavigate();
   const { isSignedIn } = useAuth();
-  const clerk = useClerk();
   const { openConvert } = useConvert();
   const { openSettings } = useSettings();
   const { open: checklistOpen, toggle: toggleChecklist, setOpen: setChecklistOpen } =
@@ -90,16 +89,17 @@ export default function RightRail() {
         aria-label="Shortcuts"
         className="relative z-[57] me-2 flex h-full w-8 shrink-0 flex-col items-center gap-2 py-2"
       >
-        <RailIconButton
-          label="User settings"
-          onClick={() => {
-            setTab(null);
-            if (isSignedIn) openSettings("account");
-            else clerk.openSignIn();
-          }}
-        >
-          <UserIcon className="h-6 w-6" />
-        </RailIconButton>
+        {isSignedIn ? (
+          <RailIconButton
+            label="User settings"
+            onClick={() => {
+              setTab(null);
+              openSettings("account");
+            }}
+          >
+            <UserIcon className="h-6 w-6" />
+          </RailIconButton>
+        ) : null}
         <RailIconButton
           label="Show notifications"
           active={tab === "notifications"}

@@ -1,5 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
-import { SignedIn, SignedOut, UserButton, useClerk } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, useClerk } from "@clerk/clerk-react";
 import BalanceChip from "./BalanceChip";
 import LayoutsMenu from "./LayoutsMenu";
 import ProductSwitcher from "./ProductSwitcher";
@@ -10,7 +10,7 @@ import { ConvertIcon, DepositIcon, SearchIcon } from "./shellIcons";
 export default function TopBar({ compact = false }: { compact?: boolean }) {
   const { openSearch } = useMarketSearch();
   const { openConvert } = useConvert();
-  const { openSignIn } = useClerk();
+  const { openSignIn, openSignUp } = useClerk();
 
   if (compact) {
     return (
@@ -35,17 +35,11 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
                 <span aria-hidden="true">-</span>
               </SignedOut>
             </div>
-            <SignedIn>
-              <UserButton afterSignOutUrl="/home" />
-            </SignedIn>
             <SignedOut>
-              <button
-                type="button"
-                onClick={() => openSignIn({})}
-                className="relative z-[60] rounded-lg bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--accent-soft)]"
-              >
-                Sign in
-              </button>
+              <AuthButtons
+                onSignIn={() => openSignIn({})}
+                onSignUp={() => openSignUp({})}
+              />
             </SignedOut>
           </div>
         </div>
@@ -72,38 +66,61 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
         </button>
         <div className="ml-auto flex items-center gap-2">
           <LayoutsMenu />
-          <Link
-            to="/deposit"
-            className="hidden items-center gap-1.5 rounded-lg border border-[var(--card-border)] bg-transparent px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg)] sm:inline-flex"
-          >
-            <DepositIcon className="h-4 w-4" />
-            Deposit
-          </Link>
-          <button
-            type="button"
-            onClick={() => openConvert()}
-            className="hidden items-center gap-1.5 rounded-lg border border-[var(--card-border)] bg-transparent px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg)] md:inline-flex"
-          >
-            <ConvertIcon className="h-4 w-4" />
-            Convert
-          </button>
-          <span data-tour="balance">
-            <BalanceChip />
-          </span>
           <SignedIn>
-            <UserButton afterSignOutUrl="/home" />
-          </SignedIn>
-          <SignedOut>
+            <Link
+              to="/deposit"
+              className="hidden items-center gap-1.5 rounded-lg border border-[var(--card-border)] bg-transparent px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg)] sm:inline-flex"
+            >
+              <DepositIcon className="h-4 w-4" />
+              Deposit
+            </Link>
             <button
               type="button"
-              onClick={() => openSignIn({})}
-              className="relative z-[60] rounded-lg bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--accent-soft)]"
+              onClick={() => openConvert()}
+              className="hidden items-center gap-1.5 rounded-lg border border-[var(--card-border)] bg-transparent px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg)] md:inline-flex"
             >
-              Sign in
+              <ConvertIcon className="h-4 w-4" />
+              Convert
             </button>
+            <span data-tour="balance">
+              <BalanceChip />
+            </span>
+          </SignedIn>
+          <SignedOut>
+            <AuthButtons
+              onSignIn={() => openSignIn({})}
+              onSignUp={() => openSignUp({})}
+            />
           </SignedOut>
         </div>
       </div>
     </header>
+  );
+}
+
+function AuthButtons({
+  onSignIn,
+  onSignUp,
+}: {
+  onSignIn: () => void;
+  onSignUp: () => void;
+}) {
+  return (
+    <div className="relative z-[60] flex items-center gap-1">
+      <button
+        type="button"
+        onClick={onSignIn}
+        className="rounded-full px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:bg-black/[0.04]"
+      >
+        Sign in
+      </button>
+      <button
+        type="button"
+        onClick={onSignUp}
+        className="rounded-full bg-[var(--accent)] px-3.5 py-1.5 text-sm font-medium text-white hover:bg-[var(--accent-soft)]"
+      >
+        Sign up
+      </button>
+    </div>
   );
 }
