@@ -6,7 +6,8 @@ export type SettingsSectionId =
   | "limits"
   | "connections"
   | "privacy"
-  | "shortcuts";
+  | "shortcuts"
+  | "activity";
 
 export type SettingsNavItem = {
   id: SettingsSectionId;
@@ -38,6 +39,12 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
     id: "privacy",
     label: "Privacy",
     description: "Manage privacy controls and export your data",
+    group: "Account",
+  },
+  {
+    id: "activity",
+    label: "Activity",
+    description: "Manage devices and recent paper trading activity",
     group: "Account",
   },
   {

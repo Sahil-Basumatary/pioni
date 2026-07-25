@@ -5,6 +5,7 @@ import { useAuth, useClerk, useUser } from "@clerk/clerk-react";
 import {
   BellIcon,
   BookIcon,
+  ChecklistIcon,
   CloseSmallIcon,
   CoinsIcon,
   DepositIcon,
@@ -56,6 +57,7 @@ import {
   type RegionalPrefs,
 } from "./regionalPrefs";
 import AccountSecurity from "./AccountSecurity";
+import ActivitySection from "./ActivitySection";
 import ConnectionsSection from "./ConnectionsSection";
 import PrivacySection from "./PrivacySection";
 import ShortcutsSection from "./ShortcutsSection";
@@ -77,6 +79,8 @@ function navIcon(id: SettingsSectionId) {
       return Transfer2Icon;
     case "privacy":
       return BookIcon;
+    case "activity":
+      return ChecklistIcon;
     case "shortcuts":
       return QuestionMarkCircleIcon;
     default:
@@ -182,6 +186,7 @@ export default function SettingsDialog() {
             {section === "limits" && <LimitsSection />}
             {section === "connections" && <ConnectionsSection />}
             {section === "privacy" && <PrivacySection />}
+            {section === "activity" && <ActivitySection />}
             {section === "shortcuts" && <ShortcutsSection />}
           </div>
         </section>

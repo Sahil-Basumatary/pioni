@@ -54,6 +54,7 @@ vi.mock("../onboarding/onboardingApi", () => ({
 
 vi.mock("../portfolio/portfolioApi", () => ({
   useResetPortfolioMutation: () => [vi.fn(), { isLoading: false }],
+  useGetMyTradesQuery: () => ({ data: [], isLoading: false, isError: false }),
   useLazyGetMyPortfolioQuery: () => [vi.fn()],
   useLazyGetMySummaryQuery: () => [vi.fn()],
   useLazyGetMyTradesQuery: () => [vi.fn()],
@@ -104,7 +105,8 @@ function OpenSettings({
     | "paper"
     | "connections"
     | "privacy"
-    | "shortcuts",
+    | "shortcuts"
+    | "activity",
 }) {
   const { openSettings } = useSettings();
   return (
@@ -354,5 +356,21 @@ describe("SettingsDialog", () => {
     expect(screen.getByText("Search markets")).toBeTruthy();
     expect(screen.getByText("Open keyboard shortcuts")).toBeTruthy();
     expect(screen.getByText("Close dialog or menu")).toBeTruthy();
+  });
+
+  it("renders activity devices and recent paper trades", () => {
+    render(
+      <MemoryRouter>
+        <SettingsProvider>
+          <OpenSettings section="activity" />
+          <SettingsDialog />
+        </SettingsProvider>
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    expect(screen.getByRole("heading", { name: "Activity" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Devices" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Recent paper trades" })).toBeTruthy();
+    expect(screen.getByText(/No paper trades yet/i)).toBeTruthy();
   });
 });
