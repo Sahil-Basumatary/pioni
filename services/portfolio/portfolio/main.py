@@ -128,7 +128,7 @@ async def readiness():
         factory = get_session_factory()
         async with factory() as session:
             await session.execute(text("SELECT 1"))
-        return JSONResponse({"status": "ready"})
+        return JSONResponse({"status": "ready", "checks": {"db": True}})
     except Exception:
         logger.exception("readiness check failed")
         return JSONResponse({"status": "not_ready"}, status_code=503)
