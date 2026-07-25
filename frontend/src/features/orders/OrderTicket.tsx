@@ -17,7 +17,7 @@ import { toastFromOrder } from "../toasts/orderToastCopy";
 import { watchOpenOrder } from "../toasts/orderWatch";
 import InfoTip from "../onboarding/InfoTip";
 import type { GlossaryTermId } from "../onboarding/glossary";
-import { readDisplayPrefs } from "../settings/displayPrefs";
+import { readDisplayPrefs, formatPrefLimitPrice } from "../settings/displayPrefs";
 
 function baseAsset(symbol: string): string {
   return symbol.replace(/USDT$|USD$|USDC$/i, "") || symbol;
@@ -30,11 +30,7 @@ function parseDecimal(raw: string): number {
 }
 
 function formatLimitPrice(n: number): string {
-  if (!Number.isFinite(n) || n <= 0) return "";
-  // Keep input values free of thousand separators so validation can Number() them.
-  if (n >= 100) return n.toFixed(1).replace(/\.0$/, "");
-  if (n >= 1) return String(Number(n.toFixed(4)));
-  return String(n);
+  return formatPrefLimitPrice(n);
 }
 
 function extractError(err: unknown): string {
@@ -122,7 +118,9 @@ export default function OrderTicket({
     return row ? Number(row.quantity) : 0;
   }, [positions, symbol]);
   const [side, setSide] = useState<OrderSide>("BUY");
-  const [orderType, setOrderType] = useState<OrderType>("LIMIT");
+  const [orderType, setOrderType] = useState<OrderType>(
+    () => readDisplayPrefs().defaultOrderType,
+  );
   const [quantity, setQuantity] = useState("");
   const [limitPrice, setLimitPrice] = useState("");
   const [total, setTotal] = useState("");
