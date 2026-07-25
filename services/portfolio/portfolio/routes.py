@@ -14,6 +14,13 @@ from common import (
 )
 from portfolio.api_keys import create_api_key, list_active_api_keys, revoke_api_key
 from portfolio.charts import SnapshotValue, build_daily_pnl_chart
+from portfolio.email_notify import order_email_copy, send_resend_email
+from portfolio.notification_prefs import (
+    apply_notification_prefs_patch,
+    get_or_create_notification_prefs,
+    resolve_order_email_context,
+    should_email_status,
+)
 from portfolio.onboarding import apply_onboarding_patch, get_or_create_onboarding
 from portfolio.price_cache import PriceCache
 from portfolio.provisioning import Identity, get_or_create_portfolio
@@ -23,8 +30,11 @@ from portfolio.schemas import (
     ApiKeyCreatedResponse,
     ApiKeyResponse,
     DailyPnlPointResponse,
+    NotificationPrefsPatch,
+    NotificationPrefsResponse,
     OnboardingPatch,
     OnboardingResponse,
+    OrderEmailNotifyRequest,
     PortfolioResponse,
     PortfolioSummaryResponse,
     PositionResponse,
@@ -166,6 +176,49 @@ async def delete_my_api_key(
             detail={"error": "NOT_FOUND", "message": "API key not found"},
         )
     return ApiKeyResponse.model_validate(row)
+
+
+@router.get("/me/notification-prefs", response_model=NotificationPrefsResponse)
+async def get_my_notification_prefs(
+    identity: Identity = Depends(current_identity),
+    session: AsyncSession = Depends(get_db),
+) -> NotificationPrefsResponse:
+    row = await get_or_create_notification_prefs(session, identity)
+    return NotificationPrefsResponse.model_validate(row)
+
+
+@router.patch("/me/notification-prefs", response_model=NotificationPrefsResponse)
+async def patch_my_notification_prefs(
+    body: NotificationPrefsPatch,
+    identity: Identity = Depends(current_identity),
+    session: AsyncSession = Depends(get_db),
+) -> NotificationPrefsResponse:
+    row = await get_or_create_notification_prefs(session, identity)
+    patch = body.model_dump(exclude_unset=True)
+    if patch:
+        apply_notification_prefs_patch(row, patch)
+        await session.flush()
+        await session.refresh(row)
+    return NotificationPrefsResponse.model_validate(row)
+
+
+@router.post("/internal/notify/order-email")
+async def internal_notify_order_email(
+    body: OrderEmailNotifyRequest,
+    session: AsyncSession = Depends(get_db),
+) -> dict:
+    # Private network only — gateway calls this after order status fanout.
+    ctx = await resolve_order_email_context(session, body.portfolio_id)
+    if ctx is None:
+        return {"sent": False, "reason": "no_user"}
+    email, prefs = ctx
+    if not should_email_status(body.status, prefs):
+        return {"sent": False, "reason": "prefs"}
+    subject, text = order_email_copy(
+        symbol=body.symbol, side=body.side, status=body.status,
+    )
+    sent = await send_resend_email(to=email, subject=subject, text=text)
+    return {"sent": sent}
 
 
 def _not_found(portfolio_id: uuid.UUID) -> HTTPException:

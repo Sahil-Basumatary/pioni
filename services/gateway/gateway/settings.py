@@ -71,6 +71,9 @@ def portfolio_cache_ttl() -> float:
 def portfolio_cache_redis_ttl() -> int:
     return int(os.getenv("PORTFOLIO_ID_REDIS_TTL_SECONDS", "3600"))
 
+def user_email_cache_ttl() -> float:
+    return float(os.getenv("USER_EMAIL_CACHE_TTL_SECONDS", "900"))
+
 def clerk_secret_key() -> str | None:
     key = os.getenv("CLERK_SECRET_KEY", "").strip()
     return key or None

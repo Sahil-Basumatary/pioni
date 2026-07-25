@@ -12,6 +12,7 @@ from gateway.settings import (
     portfolio_cache_ttl,
     portfolio_service_url,
 )
+from gateway.user_email import resolve_email
 
 logger = logging.getLogger(__name__)
 me_router = APIRouter(prefix="/me", tags=["me"])
@@ -53,10 +54,11 @@ async def close_portfolio_client() -> None:
         _client = None
 
 
-def _identity_headers(ctx: AuthContext) -> dict[str, str]:
+async def _identity_headers(ctx: AuthContext) -> dict[str, str]:
     headers = {"X-Clerk-Id": ctx.clerk_id}
-    if ctx.email:
-        headers["X-User-Email"] = ctx.email
+    email = ctx.email or await resolve_email(ctx.clerk_id)
+    if email:
+        headers["X-User-Email"] = email
     if ctx.username:
         headers["X-User-Name"] = ctx.username
     return headers
@@ -75,7 +77,7 @@ def _unavailable() -> HTTPException:
 async def fetch_my_portfolio(ctx: AuthContext) -> dict:
     client = await _get_client()
     try:
-        resp = await client.get("/me/portfolio", headers=_identity_headers(ctx))
+        resp = await client.get("/me/portfolio", headers=await _identity_headers(ctx))
     except httpx.RequestError as e:
         logger.error("portfolio service unreachable", extra={"error": str(e)})
         raise _unavailable() from None
@@ -112,7 +114,7 @@ async def my_portfolio(ctx: AuthContext = Depends(require_auth)) -> dict:
 async def fetch_my_onboarding(ctx: AuthContext) -> dict:
     client = await _get_client()
     try:
-        resp = await client.get("/me/onboarding", headers=_identity_headers(ctx))
+        resp = await client.get("/me/onboarding", headers=await _identity_headers(ctx))
     except httpx.RequestError as e:
         logger.error("portfolio service unreachable", extra={"error": str(e)})
         raise _unavailable() from None
@@ -126,7 +128,7 @@ async def patch_my_onboarding_upstream(ctx: AuthContext, body: dict) -> dict:
     try:
         resp = await client.patch(
             "/me/onboarding",
-            headers=_identity_headers(ctx),
+            headers=await _identity_headers(ctx),
             json=body,
         )
     except httpx.RequestError as e:
@@ -153,7 +155,7 @@ async def patch_my_onboarding(
 async def fetch_my_api_keys(ctx: AuthContext) -> list:
     client = await _get_client()
     try:
-        resp = await client.get("/me/api-keys", headers=_identity_headers(ctx))
+        resp = await client.get("/me/api-keys", headers=await _identity_headers(ctx))
     except httpx.RequestError as e:
         logger.error("portfolio service unreachable", extra={"error": str(e)})
         raise _unavailable() from None
@@ -167,7 +169,7 @@ async def create_my_api_key_upstream(ctx: AuthContext, body: dict) -> dict:
     try:
         resp = await client.post(
             "/me/api-keys",
-            headers=_identity_headers(ctx),
+            headers=await _identity_headers(ctx),
             json=body,
         )
     except httpx.RequestError as e:
@@ -183,7 +185,7 @@ async def revoke_my_api_key_upstream(ctx: AuthContext, key_id: str) -> dict:
     try:
         resp = await client.delete(
             f"/me/api-keys/{key_id}",
-            headers=_identity_headers(ctx),
+            headers=await _identity_headers(ctx),
         )
     except httpx.RequestError as e:
         logger.error("portfolio service unreachable", extra={"error": str(e)})
@@ -206,6 +208,50 @@ async def create_my_api_key(body: dict, ctx: AuthContext = Depends(require_auth)
 @me_router.delete("/api-keys/{key_id}")
 async def revoke_my_api_key(key_id: str, ctx: AuthContext = Depends(require_auth)):
     return await revoke_my_api_key_upstream(ctx, key_id)
+
+
+async def fetch_my_notification_prefs(ctx: AuthContext) -> dict:
+    client = await _get_client()
+    try:
+        resp = await client.get(
+            "/me/notification-prefs",
+            headers=await _identity_headers(ctx),
+        )
+    except httpx.RequestError as e:
+        logger.error("portfolio service unreachable", extra={"error": str(e)})
+        raise _unavailable() from None
+    if resp.status_code >= 400:
+        raise HTTPException(status_code=resp.status_code, detail=resp.json())
+    return resp.json()
+
+
+async def patch_my_notification_prefs_upstream(ctx: AuthContext, body: dict) -> dict:
+    client = await _get_client()
+    try:
+        resp = await client.patch(
+            "/me/notification-prefs",
+            headers=await _identity_headers(ctx),
+            json=body,
+        )
+    except httpx.RequestError as e:
+        logger.error("portfolio service unreachable", extra={"error": str(e)})
+        raise _unavailable() from None
+    if resp.status_code >= 400:
+        raise HTTPException(status_code=resp.status_code, detail=resp.json())
+    return resp.json()
+
+
+@me_router.get("/notification-prefs")
+async def my_notification_prefs(ctx: AuthContext = Depends(require_auth)):
+    return await fetch_my_notification_prefs(ctx)
+
+
+@me_router.patch("/notification-prefs")
+async def patch_my_notification_prefs(
+    body: dict,
+    ctx: AuthContext = Depends(require_auth),
+):
+    return await patch_my_notification_prefs_upstream(ctx, body)
 
 
 async def _proxy_portfolio_get(path: str, params: dict | None = None):

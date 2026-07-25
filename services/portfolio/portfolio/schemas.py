@@ -113,3 +113,37 @@ class ApiKeyCreate(BaseModel):
 
 class ApiKeyCreatedResponse(ApiKeyResponse):
     api_key: str
+
+
+class NotificationPrefsResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    mode: str
+    toast_popups: bool
+    email_enabled: bool
+    browser_notifications: bool
+    fills: bool
+    partial_fills: bool
+    cancellations: bool
+    rejections: bool
+    placements: bool
+
+
+class NotificationPrefsPatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    mode: str | None = None
+    toast_popups: bool | None = None
+    email_enabled: bool | None = None
+    browser_notifications: bool | None = None
+    fills: bool | None = None
+    partial_fills: bool | None = None
+    cancellations: bool | None = None
+    rejections: bool | None = None
+    placements: bool | None = None
+
+
+class OrderEmailNotifyRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    portfolio_id: uuid.UUID
+    symbol: str
+    status: str
+    side: str | None = None

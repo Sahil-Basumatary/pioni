@@ -61,7 +61,9 @@ class User(UUIDMixin, TimestampMixin, Base):
         back_populates="user", uselist=False,
     )
     api_keys: Mapped[list[PaperApiKey]] = relationship(back_populates="user")
-
+    notification_prefs: Mapped[UserNotificationPrefs | None] = relationship(
+        back_populates="user", uselist=False,
+    )
 
 class UserOnboarding(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "user_onboarding"
@@ -125,6 +127,31 @@ class PaperApiKey(UUIDMixin, TimestampMixin, Base):
         DateTime(timezone=True), nullable=True,
     )
     user: Mapped[User] = relationship(back_populates="api_keys")
+
+
+class UserNotificationPrefs(UUIDMixin, TimestampMixin, Base):
+    __tablename__ = "user_notification_prefs"
+    __table_args__ = (
+        UniqueConstraint("user_id", name="uq_user_notification_prefs_user_id"),
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    mode: Mapped[str] = mapped_column(String(20), default="all", nullable=False)
+    toast_popups: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    email_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    browser_notifications: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False,
+    )
+    fills: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    partial_fills: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    cancellations: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    rejections: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    placements: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    user: Mapped[User] = relationship(back_populates="notification_prefs")
 
 
 class Portfolio(UUIDMixin, TimestampMixin, Base):

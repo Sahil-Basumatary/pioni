@@ -5,6 +5,8 @@ export type NotifyMode = "all" | "important" | "custom" | "mute";
 export type NotificationPrefs = {
   mode: NotifyMode;
   toastPopups: boolean;
+  emailEnabled: boolean;
+  browserNotifications: boolean;
   fills: boolean;
   partialFills: boolean;
   cancellations: boolean;
@@ -15,6 +17,8 @@ export type NotificationPrefs = {
 export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   mode: "all",
   toastPopups: true,
+  emailEnabled: false,
+  browserNotifications: false,
   fills: true,
   partialFills: true,
   cancellations: true,
@@ -42,13 +46,19 @@ export function readNotificationPrefs(): NotificationPrefs {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return { ...DEFAULT_NOTIFICATION_PREFS };
-    const parsed = JSON.parse(raw) as Partial<NotificationPrefs>;
+    const parsed = JSON.parse(raw) as Partial<NotificationPrefs> & {
+      browserPushEnabled?: boolean;
+    };
+    const browserNotifications =
+      parsed.browserNotifications != null
+        ? Boolean(parsed.browserNotifications)
+        : Boolean(parsed.browserPushEnabled);
     return {
       mode: isMode(parsed.mode) ? parsed.mode : DEFAULT_NOTIFICATION_PREFS.mode,
       toastPopups:
-        parsed.toastPopups == null
-          ? true
-          : Boolean(parsed.toastPopups),
+        parsed.toastPopups == null ? true : Boolean(parsed.toastPopups),
+      emailEnabled: Boolean(parsed.emailEnabled),
+      browserNotifications,
       fills: parsed.fills == null ? true : Boolean(parsed.fills),
       partialFills:
         parsed.partialFills == null ? true : Boolean(parsed.partialFills),
@@ -84,11 +94,11 @@ export function orderToastKind(status: string): OrderToastKind {
   return "placement";
 }
 
-export function shouldShowOrderToast(
+export function shouldNotifyOrderEvent(
   status: string,
   prefs: NotificationPrefs = readNotificationPrefs(),
 ): boolean {
-  if (!prefs.toastPopups || prefs.mode === "mute") return false;
+  if (prefs.mode === "mute") return false;
   const kind = orderToastKind(status);
   if (prefs.mode === "all") return true;
   if (prefs.mode === "important") {
@@ -106,4 +116,36 @@ export function shouldShowOrderToast(
     default:
       return prefs.placements;
   }
+}
+
+export function shouldShowOrderToast(
+  status: string,
+  prefs: NotificationPrefs = readNotificationPrefs(),
+): boolean {
+  return prefs.toastPopups && shouldNotifyOrderEvent(status, prefs);
+}
+
+export function shouldShowBrowserNotification(
+  status: string,
+  prefs: NotificationPrefs = readNotificationPrefs(),
+): boolean {
+  return prefs.browserNotifications && shouldNotifyOrderEvent(status, prefs);
+}
+
+export function browserNotificationPermission(): NotificationPermission | "unsupported" {
+  if (typeof window === "undefined" || !("Notification" in window)) {
+    return "unsupported";
+  }
+  return Notification.permission;
+}
+
+export async function requestBrowserNotificationPermission(): Promise<
+  NotificationPermission | "unsupported"
+> {
+  if (typeof window === "undefined" || !("Notification" in window)) {
+    return "unsupported";
+  }
+  if (Notification.permission === "granted") return "granted";
+  if (Notification.permission === "denied") return "denied";
+  return Notification.requestPermission();
 }

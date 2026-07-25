@@ -25,6 +25,7 @@ from gateway.ws import (
     get_order_manager,
     get_portfolio_manager,
 )
+from gateway.order_email import schedule_order_email
 from gateway.settings import (
     cors_origins, is_mock_mode, prewarm_enabled,
     prewarm_tickers, redis_url,
@@ -57,9 +58,14 @@ async def _init_pubsub() -> None:
         await _subscriber.start()
         logger.info("market data pub/sub subscriber started")
         order_mgr = get_order_manager()
+
+        async def on_order_status(portfolio_id: str, data: dict) -> None:
+            await order_mgr.broadcast_order_update(portfolio_id, data)
+            schedule_order_email(portfolio_id, data)
+
         _order_subscriber = OrderSubscriber(
             redis=_pubsub_redis,
-            on_order_status=order_mgr.broadcast_order_update,
+            on_order_status=on_order_status,
         )
         await _order_subscriber.start()
         logger.info("order status pub/sub subscriber started")

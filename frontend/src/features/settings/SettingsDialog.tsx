@@ -1,12 +1,14 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth, useClerk, useUser } from "@clerk/clerk-react";
 import {
   BellIcon,
+  BookIcon,
   CloseSmallIcon,
   CoinsIcon,
   DepositIcon,
+  QuestionMarkCircleIcon,
   SettingsSliderHorizontalIcon,
   Transfer2Icon,
   UserIcon,
@@ -21,6 +23,8 @@ import { useTour } from "../onboarding/TourProvider";
 import { useToast } from "../toasts/useToast";
 import {
   DEFAULT_DISPLAY_PREFS,
+  DEFAULT_ORDER_TYPE_OPTIONS,
+  PRICE_DECIMALS_OPTIONS,
   START_PAGE_OPTIONS,
   THEME_OPTIONS,
   readDisplayPrefs,
@@ -30,11 +34,19 @@ import {
 import {
   DEFAULT_NOTIFICATION_PREFS,
   NOTIFY_MODE_OPTIONS,
+  browserNotificationPermission,
   readNotificationPrefs,
+  requestBrowserNotificationPermission,
   writeNotificationPrefs,
   type NotificationPrefs,
   type NotifyMode,
 } from "./notificationPrefs";
+import {
+  fromServerPrefs,
+  toServerPrefsPatch,
+  useGetMyNotificationPrefsQuery,
+  usePatchMyNotificationPrefsMutation,
+} from "./notificationPrefsApi";
 import { PAPER_LIMIT_CARDS } from "./paperLimits";
 import {
   NUMBER_FORMAT_OPTIONS,
@@ -45,6 +57,8 @@ import {
 } from "./regionalPrefs";
 import AccountSecurity from "./AccountSecurity";
 import ConnectionsSection from "./ConnectionsSection";
+import PrivacySection from "./PrivacySection";
+import ShortcutsSection from "./ShortcutsSection";
 import SettingsSelect from "./SettingsSelect";
 import { useSettings } from "./settingsContext";
 import { SETTINGS_NAV, type SettingsSectionId } from "./settingsNav";
@@ -61,6 +75,10 @@ function navIcon(id: SettingsSectionId) {
       return DepositIcon;
     case "connections":
       return Transfer2Icon;
+    case "privacy":
+      return BookIcon;
+    case "shortcuts":
+      return QuestionMarkCircleIcon;
     default:
       return UserIcon;
   }
@@ -163,6 +181,8 @@ export default function SettingsDialog() {
             {section === "notifications" && <NotificationsSection />}
             {section === "limits" && <LimitsSection />}
             {section === "connections" && <ConnectionsSection />}
+            {section === "privacy" && <PrivacySection />}
+            {section === "shortcuts" && <ShortcutsSection />}
           </div>
         </section>
       </div>
@@ -383,6 +403,32 @@ function PreferencesSection() {
 
       <section className="border-t border-[rgba(42,28,0,0.07)] pt-6">
         <h3 className="text-base font-semibold text-[#2C2C2B]">Trading</h3>
+        <div className="mt-4 flex flex-col gap-5">
+          <div>
+            <p className="text-sm font-semibold text-[#2C2C2B]">Default order type</p>
+            <p className="mt-0.5 text-sm text-[#787774]">
+              Choose the order type selected when you open the ticket
+            </p>
+            <SettingsSelect
+              aria-label="Default order type"
+              value={prefs.defaultOrderType}
+              options={DEFAULT_ORDER_TYPE_OPTIONS}
+              onChange={(defaultOrderType) => update({ defaultOrderType })}
+            />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[#2C2C2B]">Price decimals</p>
+            <p className="mt-0.5 text-sm text-[#787774]">
+              Choose how many decimals to show when filling limit prices
+            </p>
+            <SettingsSelect
+              aria-label="Price decimals"
+              value={prefs.priceDecimals}
+              options={PRICE_DECIMALS_OPTIONS}
+              onChange={(priceDecimals) => update({ priceDecimals })}
+            />
+          </div>
+        </div>
         <div className="mt-2 flex flex-col">
           <ToggleRow
             title="Confirm before submitting orders"
@@ -648,16 +694,62 @@ function PaperSection() {
 
 function NotificationsSection() {
   const toast = useToast();
+  const { user } = useUser();
   const { setSection } = useSettings();
+  const { data: remotePrefs } = useGetMyNotificationPrefsQuery();
+  const [patchRemotePrefs] = usePatchMyNotificationPrefsMutation();
   const [prefs, setPrefs] = useState<NotificationPrefs>(() =>
     readNotificationPrefs(),
   );
+  const [browserPermission, setBrowserPermission] = useState(() =>
+    browserNotificationPermission(),
+  );
+  const email =
+    user?.primaryEmailAddress?.emailAddress ??
+    user?.emailAddresses[0]?.emailAddress ??
+    null;
 
-  function update(next: Partial<NotificationPrefs>) {
+  useEffect(() => {
+    if (!remotePrefs) return;
+    const mapped = fromServerPrefs(remotePrefs);
+    setPrefs(mapped);
+    writeNotificationPrefs(mapped);
+  }, [remotePrefs]);
+
+  async function update(next: Partial<NotificationPrefs>) {
+    const previous = prefs;
     const merged = { ...prefs, ...next };
     setPrefs(merged);
     writeNotificationPrefs(merged);
-    toast("Notification preferences saved");
+    try {
+      await patchRemotePrefs(toServerPrefsPatch(next)).unwrap();
+      toast("Notification preferences saved");
+    } catch {
+      setPrefs(previous);
+      writeNotificationPrefs(previous);
+      toast("Could not save notification preferences");
+    }
+  }
+
+  async function onToggleBrowserNotifications(checked: boolean) {
+    if (!checked) {
+      await update({ browserNotifications: false });
+      return;
+    }
+    const permission = await requestBrowserNotificationPermission();
+    setBrowserPermission(permission);
+    if (permission !== "granted") {
+      await update({ browserNotifications: false });
+      if (permission === "denied") {
+        toast("Browser notifications are blocked");
+      } else if (permission === "unsupported") {
+        toast("Browser notifications are not supported");
+      } else {
+        toast("Browser notification permission is required");
+      }
+      return;
+    }
+    await update({ browserNotifications: true });
   }
 
   return (
@@ -665,23 +757,52 @@ function NotificationsSection() {
       <section>
         <h3 className="text-base font-semibold text-[#2C2C2B]">Preference</h3>
         <div className="mt-4">
-          <p className="text-sm font-semibold text-[#2C2C2B]">Trading toasts</p>
+          <p className="text-sm font-semibold text-[#2C2C2B]">Trading updates</p>
           <p className="mt-0.5 text-sm text-[#787774]">
-            Choose which order updates appear as pop-up toasts
+            Choose which order events can notify you
           </p>
           <SettingsSelect
-            aria-label="Trading toasts"
+            aria-label="Trading updates"
             value={prefs.mode}
             options={NOTIFY_MODE_OPTIONS}
-            onChange={(mode: NotifyMode) => update({ mode })}
+            onChange={(mode: NotifyMode) => void update({ mode })}
           />
         </div>
-        <div className="mt-2">
+      </section>
+
+      <section className="border-t border-[rgba(42,28,0,0.07)] pt-6">
+        <h3 className="text-base font-semibold text-[#2C2C2B]">Channels</h3>
+        <p className="mt-1 text-sm text-[#787774]">
+          Choose where matching updates are delivered
+        </p>
+        <div className="mt-2 flex flex-col">
           <ToggleRow
-            title="Show toast pop-ups"
-            body="When off, trading updates still refresh balances and the inbox. Toast cards will not appear."
+            title="In-app toasts"
+            body="Show pop-up toast cards while you are in Pioni"
             checked={prefs.toastPopups}
-            onChange={(toastPopups) => update({ toastPopups })}
+            onChange={(toastPopups) => void update({ toastPopups })}
+          />
+          <ToggleRow
+            title="Email"
+            body={
+              email
+                ? `Send important trading updates to ${email}`
+                : "Add an email on your account to receive trading updates"
+            }
+            checked={prefs.emailEnabled}
+            onChange={(emailEnabled) => void update({ emailEnabled })}
+          />
+          <ToggleRow
+            title="Browser notifications"
+            body={
+              browserPermission === "unsupported"
+                ? "This browser does not support notifications"
+                : browserPermission === "denied"
+                  ? "Notifications are blocked in browser settings"
+                  : "Show desktop alerts when Pioni is open in a browser tab"
+            }
+            checked={prefs.browserNotifications}
+            onChange={(checked) => void onToggleBrowserNotifications(checked)}
           />
         </div>
       </section>
@@ -690,38 +811,38 @@ function NotificationsSection() {
         <section className="border-t border-[rgba(42,28,0,0.07)] pt-6">
           <h3 className="text-base font-semibold text-[#2C2C2B]">Customization</h3>
           <p className="mt-1 text-sm text-[#787774]">
-            Customize which order events trigger a toast
+            Customize which order events can notify you
           </p>
           <div className="mt-2 flex flex-col">
             <ToggleRow
               title="Fills"
               body="Notify when an order is fully filled."
               checked={prefs.fills}
-              onChange={(fills) => update({ fills })}
+              onChange={(fills) => void update({ fills })}
             />
             <ToggleRow
               title="Partial fills"
               body="Notify when an order is partially filled."
               checked={prefs.partialFills}
-              onChange={(partialFills) => update({ partialFills })}
+              onChange={(partialFills) => void update({ partialFills })}
             />
             <ToggleRow
               title="Cancellations"
               body="Notify when an order is canceled."
               checked={prefs.cancellations}
-              onChange={(cancellations) => update({ cancellations })}
+              onChange={(cancellations) => void update({ cancellations })}
             />
             <ToggleRow
               title="Rejections"
               body="Notify when an order is rejected."
               checked={prefs.rejections}
-              onChange={(rejections) => update({ rejections })}
+              onChange={(rejections) => void update({ rejections })}
             />
             <ToggleRow
               title="Placements"
               body="Notify on new and open order status updates."
               checked={prefs.placements}
-              onChange={(placements) => update({ placements })}
+              onChange={(placements) => void update({ placements })}
             />
           </div>
         </section>
@@ -746,11 +867,7 @@ function NotificationsSection() {
 
       <button
         type="button"
-        onClick={() => {
-          setPrefs(DEFAULT_NOTIFICATION_PREFS);
-          writeNotificationPrefs(DEFAULT_NOTIFICATION_PREFS);
-          toast("Notification preferences reset");
-        }}
+        onClick={() => void update(DEFAULT_NOTIFICATION_PREFS)}
         className="self-start rounded-[6px] px-3 py-1.5 text-sm text-[#787774] hover:bg-[rgba(42,28,0,0.045)] hover:text-[#2C2C2B]"
       >
         Reset notification preferences

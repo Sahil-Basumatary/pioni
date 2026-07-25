@@ -5,10 +5,13 @@ import pytest
 from fastapi import HTTPException
 from common import Portfolio as PortfolioORM
 from common import User as UserORM
+from sqlalchemy.exc import IntegrityError
 from portfolio.provisioning import (
     Identity,
     _fallback_email,
     get_or_create_portfolio,
+    get_or_create_user,
+    is_placeholder_email,
 )
 from portfolio.routes import current_identity
 
@@ -21,9 +24,23 @@ class _Result:
         return self._value
 
 
+class _Nested:
+    def __init__(self, error):
+        self._error = error
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        if self._error is not None:
+            raise self._error
+        return False
+
+
 class _FakeSession:
-    def __init__(self, results):
+    def __init__(self, results, nested_error=None):
         self._results = list(results)
+        self._nested_error = nested_error
         self.added: list = []
         self.refreshed: list = []
 
@@ -43,6 +60,9 @@ class _FakeSession:
 
     async def rollback(self):
         pass
+
+    def begin_nested(self):
+        return _Nested(self._nested_error)
 
 
 IDENTITY = Identity(clerk_id="user_abc", email="trader@pioni.ai", username="trader")
@@ -99,6 +119,50 @@ async def test_missing_email_uses_deterministic_fallback():
 
 def test_fallback_email_is_deterministic():
     assert _fallback_email("user_x") == "user_x@users.pioni.local"
+
+
+def test_placeholder_email_detection():
+    assert is_placeholder_email("user_x@users.pioni.local") is True
+    assert is_placeholder_email("trader@pioni.ai") is False
+    assert is_placeholder_email(None) is False
+
+
+async def test_placeholder_email_is_replaced_once_clerk_resolves_it():
+    user = UserORM(
+        clerk_id="user_abc",
+        email="user_abc@users.pioni.local",
+        username="user_abc",
+    )
+    user.id = uuid.uuid4()
+    session = _FakeSession(results=[user])
+    synced = await get_or_create_user(session, IDENTITY)
+    assert synced.email == "trader@pioni.ai"
+    assert synced.username == "trader"
+    assert session.added == []
+
+
+async def test_identity_sync_keeps_stored_values_on_conflict():
+    user = UserORM(
+        clerk_id="user_abc",
+        email="user_abc@users.pioni.local",
+        username="user_abc",
+    )
+    user.id = uuid.uuid4()
+    session = _FakeSession(
+        results=[user],
+        nested_error=IntegrityError("stmt", {}, Exception("duplicate")),
+    )
+    synced = await get_or_create_user(session, IDENTITY)
+    assert synced.email == "user_abc@users.pioni.local"
+    assert synced.username == "user_abc"
+
+
+async def test_identity_sync_is_a_no_op_when_unchanged():
+    user = UserORM(clerk_id="user_abc", email="trader@pioni.ai", username="trader")
+    user.id = uuid.uuid4()
+    session = _FakeSession(results=[user], nested_error=AssertionError("no write"))
+    synced = await get_or_create_user(session, IDENTITY)
+    assert synced is user
 
 
 def test_identity_requires_clerk_id():

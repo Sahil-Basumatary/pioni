@@ -54,12 +54,45 @@ vi.mock("../onboarding/onboardingApi", () => ({
 
 vi.mock("../portfolio/portfolioApi", () => ({
   useResetPortfolioMutation: () => [vi.fn(), { isLoading: false }],
+  useLazyGetMyPortfolioQuery: () => [vi.fn()],
+  useLazyGetMySummaryQuery: () => [vi.fn()],
+  useLazyGetMyTradesQuery: () => [vi.fn()],
+  useLazyGetMyPositionsQuery: () => [vi.fn()],
 }));
 
 vi.mock("./apiKeysApi", () => ({
   useGetMyApiKeysQuery: () => ({ data: [], isLoading: false }),
   useCreateMyApiKeyMutation: () => [vi.fn(), { isLoading: false }],
   useRevokeMyApiKeyMutation: () => [vi.fn(), { isLoading: false }],
+}));
+
+vi.mock("./notificationPrefsApi", () => ({
+  fromServerPrefs: (row: {
+    mode: string;
+    toast_popups: boolean;
+    email_enabled: boolean;
+    browser_notifications: boolean;
+    fills: boolean;
+    partial_fills: boolean;
+    cancellations: boolean;
+    rejections: boolean;
+    placements: boolean;
+  }) => ({
+    mode: row.mode,
+    toastPopups: row.toast_popups,
+    emailEnabled: row.email_enabled,
+    browserNotifications: row.browser_notifications,
+    fills: row.fills,
+    partialFills: row.partial_fills,
+    cancellations: row.cancellations,
+    rejections: row.rejections,
+    placements: row.placements,
+  }),
+  toServerPrefsPatch: (patch: Record<string, unknown>) => patch,
+  useGetMyNotificationPrefsQuery: () => ({ data: undefined }),
+  usePatchMyNotificationPrefsMutation: () => [
+    vi.fn(() => ({ unwrap: async () => ({}) })),
+  ],
 }));
 
 function OpenSettings({
@@ -69,7 +102,9 @@ function OpenSettings({
     | "notifications"
     | "limits"
     | "paper"
-    | "connections",
+    | "connections"
+    | "privacy"
+    | "shortcuts",
 }) {
   const { openSettings } = useSettings();
   return (
@@ -104,18 +139,24 @@ describe("displayPrefs", () => {
       showInfoTips: false,
       soundOnFill: true,
       startPage: "trading",
+      defaultOrderType: "MARKET",
+      priceDecimals: "4",
     });
     expect(readDisplayPrefs()).toEqual({
       confirmOrders: true,
       showInfoTips: false,
       soundOnFill: true,
       startPage: "trading",
+      defaultOrderType: "MARKET",
+      priceDecimals: "4",
     });
     writeDisplayPrefs({
       confirmOrders: false,
       showInfoTips: true,
       soundOnFill: false,
       startPage: "home",
+      defaultOrderType: "LIMIT",
+      priceDecimals: "auto",
     });
   });
 });
@@ -219,6 +260,8 @@ describe("SettingsDialog", () => {
     expect(
       screen.getByRole("switch", { name: /Confirm before submitting orders/i }),
     ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Default order type" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Price decimals" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Open on start" })).toBeTruthy();
   });
 
@@ -234,10 +277,11 @@ describe("SettingsDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open" }));
     expect(screen.getByRole("heading", { name: "Notifications" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Preference" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Trading toasts" })).toBeTruthy();
-    expect(
-      screen.getByRole("switch", { name: /Show toast pop-ups/i }),
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Channels" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Trading updates" })).toBeTruthy();
+    expect(screen.getByRole("switch", { name: /In-app toasts/i })).toBeTruthy();
+    expect(screen.getByRole("switch", { name: /^Email/i })).toBeTruthy();
+    expect(screen.getByRole("switch", { name: /Browser notifications/i })).toBeTruthy();
     expect(screen.queryByText("Coming soon")).toBeNull();
   });
 
@@ -278,5 +322,37 @@ describe("SettingsDialog", () => {
     expect(screen.getByRole("heading", { name: "API keys" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Create API key" })).toBeTruthy();
     expect(screen.getByText("No connected apps")).toBeTruthy();
+  });
+
+  it("renders privacy controls and data export", () => {
+    render(
+      <MemoryRouter>
+        <SettingsProvider>
+          <OpenSettings section="privacy" />
+          <SettingsDialog />
+        </SettingsProvider>
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    expect(screen.getByRole("heading", { name: "Privacy" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Open privacy policy" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Download data export" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Go to Account" })).toBeTruthy();
+  });
+
+  it("renders keyboard shortcuts reference", () => {
+    render(
+      <MemoryRouter>
+        <SettingsProvider>
+          <OpenSettings section="shortcuts" />
+          <SettingsDialog />
+        </SettingsProvider>
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    expect(screen.getByRole("heading", { name: "Keyboard shortcuts" })).toBeTruthy();
+    expect(screen.getByText("Search markets")).toBeTruthy();
+    expect(screen.getByText("Open keyboard shortcuts")).toBeTruthy();
+    expect(screen.getByText("Close dialog or menu")).toBeTruthy();
   });
 });

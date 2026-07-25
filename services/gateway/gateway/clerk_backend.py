@@ -30,6 +30,49 @@ async def close_clerk_client() -> None:
         _client = None
 
 
+def _verified_email(payload: dict) -> str | None:
+    addresses = payload.get("email_addresses")
+    if not isinstance(addresses, list):
+        return None
+    verified = {
+        entry.get("id"): entry.get("email_address")
+        for entry in addresses
+        if isinstance(entry, dict)
+        and isinstance(entry.get("email_address"), str)
+        and (entry.get("verification") or {}).get("status") == "verified"
+    }
+    if not verified:
+        return None
+    primary = payload.get("primary_email_address_id")
+    if primary in verified:
+        return verified[primary]
+    # Clerk allows a user to demote their primary address without verifying the replacement;
+    # any verified address is still a safe destination, an unverified one never is.
+    return next(iter(verified.values()))
+
+
+async def fetch_verified_email(clerk_id: str) -> str | None:
+    client = await _get_client()
+    if client is None:
+        return None
+    try:
+        resp = await client.get(f"/users/{clerk_id}")
+    except httpx.RequestError as e:
+        logger.warning("clerk user lookup unreachable", extra={"error": str(e)})
+        return None
+    if resp.status_code >= 400:
+        logger.info(
+            "clerk user lookup rejected",
+            extra={"status": resp.status_code, "clerk_id": clerk_id},
+        )
+        return None
+    try:
+        return _verified_email(resp.json())
+    except ValueError:
+        logger.warning("clerk user lookup returned non-JSON")
+        return None
+
+
 async def set_portfolio_metadata(clerk_id: str, portfolio_id: str) -> bool:
     # Best-effort: promoting the user into the zero-hop tier is an optimization, never a
     # correctness requirement, so a failed write is logged and swallowed rather than surfaced.

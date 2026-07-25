@@ -21,11 +21,18 @@ class Identity:
     username: str | None = None
 
 
+PLACEHOLDER_EMAIL_DOMAIN = "users.pioni.local"
+
+
 def _fallback_email(clerk_id: str) -> str:
     # Clerk's default session token carries only the user id. Until the token (or a Clerk
     # webhook) supplies a real email we store a deterministic placeholder that satisfies the
     # NOT NULL/unique contract and can be overwritten in place by a later sync.
-    return f"{clerk_id}@users.pioni.local"
+    return f"{clerk_id}@{PLACEHOLDER_EMAIL_DOMAIN}"
+
+
+def is_placeholder_email(email: str | None) -> bool:
+    return bool(email) and email.endswith(f"@{PLACEHOLDER_EMAIL_DOMAIN}")
 
 
 async def _get_user(session: AsyncSession, clerk_id: str) -> UserORM | None:
@@ -45,10 +52,36 @@ async def _get_default_portfolio(
     return (await session.execute(stmt)).scalar_one_or_none()
 
 
+async def _sync_identity(
+    session: AsyncSession, user: UserORM, identity: Identity,
+) -> UserORM:
+    updates: dict[str, str] = {}
+    if identity.email and identity.email != user.email:
+        updates["email"] = identity.email
+    if identity.username and identity.username != user.username:
+        updates["username"] = identity.username
+    if not updates:
+        return user
+    previous = {field: getattr(user, field) for field in updates}
+    try:
+        # A nested transaction keeps a unique-constraint clash (same address already claimed by
+        # another account) from poisoning the caller's transaction.
+        async with session.begin_nested():
+            for field, value in updates.items():
+                setattr(user, field, value)
+    except IntegrityError:
+        for field, value in previous.items():
+            setattr(user, field, value)
+        logger.warning(
+            "identity sync rejected", extra={"clerk_id": identity.clerk_id},
+        )
+    return user
+
+
 async def get_or_create_user(session: AsyncSession, identity: Identity) -> UserORM:
     existing = await _get_user(session, identity.clerk_id)
     if existing is not None:
-        return existing
+        return await _sync_identity(session, existing, identity)
     user = UserORM(
         clerk_id=identity.clerk_id,
         email=identity.email or _fallback_email(identity.clerk_id),
