@@ -2,10 +2,7 @@ import { useEffect, useRef } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { useLocation } from "react-router-dom";
 import { useListOrdersQuery } from "../orders/ordersApi";
-import {
-  useGetMyPositionsQuery,
-  useGetMyTradesQuery,
-} from "../portfolio/portfolioApi";
+import { useGetMyPositionsQuery } from "../portfolio/portfolioApi";
 import {
   useGetMyOnboardingQuery,
   usePatchMyOnboardingMutation,
@@ -21,10 +18,6 @@ export function useChecklistAutoDetect() {
   const [patch] = usePatchMyOnboardingMutation();
   const patching = useRef(false);
 
-  const { data: trades } = useGetMyTradesQuery(
-    { limit: 1 },
-    { skip: !isSignedIn || Boolean(onboarding?.checklist_first_trade) },
-  );
   const { data: positions } = useGetMyPositionsQuery(
     { openOnly: true },
     { skip: !isSignedIn || Boolean(onboarding?.checklist_view_position) },
@@ -39,9 +32,6 @@ export function useChecklistAutoDetect() {
     const body: OnboardingPatch = {};
     if (!onboarding.checklist_tour && onboarding.tour_completed) {
       body.checklist_tour = true;
-    }
-    if (!onboarding.checklist_first_trade && trades && trades.length > 0) {
-      body.checklist_first_trade = true;
     }
     if (
       !onboarding.checklist_view_position &&
@@ -69,7 +59,6 @@ export function useChecklistAutoDetect() {
   }, [
     isSignedIn,
     onboarding,
-    trades,
     positions,
     orders,
     pathname,

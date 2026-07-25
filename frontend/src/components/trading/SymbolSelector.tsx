@@ -1,28 +1,15 @@
 import { memo } from "react";
 import { useGetPricesQuery } from "../../features/market/marketApi";
+import { MARKET_CATALOG } from "../../features/markets/catalog";
 
 const PRICE_REFRESH_MS = 30_000;
 
-export const SYMBOLS = [
-  { symbol: "BTCUSDT", label: "BTC" },
-  { symbol: "ETHUSDT", label: "ETH" },
-  { symbol: "SOLUSDT", label: "SOL" },
-  { symbol: "XRPUSDT", label: "XRP" },
-  { symbol: "ADAUSDT", label: "ADA" },
-  { symbol: "DOGEUSDT", label: "DOGE" },
-  { symbol: "LTCUSDT", label: "LTC" },
-  { symbol: "LINKUSDT", label: "LINK" },
-  { symbol: "AVAXUSDT", label: "AVAX" },
-  { symbol: "DOTUSDT", label: "DOT" },
-  { symbol: "APTUSDT", label: "APT" },
-  { symbol: "ATOMUSDT", label: "ATOM" },
-  { symbol: "BCHUSDT", label: "BCH" },
-  { symbol: "POLUSDT", label: "POL" },
-  { symbol: "XLMUSDT", label: "XLM" },
-  { symbol: "ARBUSDT", label: "ARB" },
-] as const;
+export const SYMBOLS = MARKET_CATALOG.map(({ symbol, label }) => ({
+  symbol,
+  label,
+}));
 
-export type TradingSymbol = (typeof SYMBOLS)[number]["symbol"];
+export type TradingSymbol = (typeof MARKET_CATALOG)[number]["symbol"];
 
 interface SymbolSelectorProps {
   selected: string;

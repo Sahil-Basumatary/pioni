@@ -16,13 +16,16 @@ def redis_max_connections() -> int:
     return int(os.getenv("REDIS_MAX_CONNECTIONS", "10"))
 
 
+DEFAULT_SYMBOLS = (
+    "BTCUSDT,ETHUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,"
+    "LTCUSDT,LINKUSDT,AVAXUSDT,DOTUSDT,APTUSDT,ATOMUSDT,"
+    "BCHUSDT,POLUSDT,XLMUSDT,ARBUSDT,"
+    "ALGOUSDT,INJUSDT,TIAUSDT,FLOWUSDT,XTZUSDT"
+)
+
+
 def trading_symbols() -> list[str]:
-    raw = os.getenv(
-        "TRADING_SYMBOLS",
-        "BTCUSDT,ETHUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,"
-        "LTCUSDT,LINKUSDT,AVAXUSDT,DOTUSDT,APTUSDT,ATOMUSDT,"
-        "BCHUSDT,POLUSDT,XLMUSDT,ARBUSDT",
-    )
+    raw = os.getenv("TRADING_SYMBOLS", DEFAULT_SYMBOLS)
     return [s.strip().upper() for s in raw.split(",") if s.strip()]
 
 

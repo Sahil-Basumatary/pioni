@@ -21,7 +21,8 @@ def trading_symbols() -> list[str]:
         "TRADING_SYMBOLS",
         "BTCUSDT,ETHUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,"
         "LTCUSDT,LINKUSDT,AVAXUSDT,DOTUSDT,APTUSDT,ATOMUSDT,"
-        "BCHUSDT,POLUSDT,XLMUSDT,ARBUSDT",
+        "BCHUSDT,POLUSDT,XLMUSDT,ARBUSDT,"
+        "ALGOUSDT,INJUSDT,TIAUSDT,FLOWUSDT,XTZUSDT",
     )
     return [s.strip().upper() for s in raw.split(",") if s.strip()]
 

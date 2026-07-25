@@ -117,6 +117,7 @@ class BinanceWSClient:
                     ping_interval=20,
                     ping_timeout=10,
                     close_timeout=5,
+                    proxy=None,
                 ) as ws:
                     self._ws = ws
                     self._reconnect_delay = INITIAL_RECONNECT_DELAY

@@ -1,0 +1,57 @@
+.pioni-celebrate-overlay {
+  animation: pioniCelebrateFade 0.28s ease both;
+}
+
+.pioni-celebrate-card {
+  animation: pioniCelebrateIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pioni-celebrate-burst {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.pioni-celebrate-piece {
+  position: absolute;
+  top: -12px;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  opacity: 0.95;
+  animation-name: pioniCelebrateFall;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
+
+@keyframes pioniCelebrateFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pioniCelebrateIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pioniCelebrateFall {
+  0% {
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--dx), 110vh, 0) rotate(720deg);
+    opacity: 0.15;
+  }
+}

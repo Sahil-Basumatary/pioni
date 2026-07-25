@@ -136,6 +136,46 @@ export const MARKET_CATALOG: MarketMeta[] = [
     marginLeverage: 5,
     futuresLeverage: 25,
   },
+  {
+    symbol: "ALGOUSDT",
+    label: "ALGO",
+    name: "Algorand",
+    category: "Layer 1",
+    marginLeverage: 5,
+    futuresLeverage: 25,
+  },
+  {
+    symbol: "INJUSDT",
+    label: "INJ",
+    name: "Injective",
+    category: "Infrastructure",
+    marginLeverage: 5,
+    futuresLeverage: 25,
+  },
+  {
+    symbol: "TIAUSDT",
+    label: "TIA",
+    name: "Celestia",
+    category: "Layer 1",
+    marginLeverage: 5,
+    futuresLeverage: 25,
+  },
+  {
+    symbol: "FLOWUSDT",
+    label: "FLOW",
+    name: "Flow",
+    category: "Layer 1",
+    marginLeverage: 5,
+    futuresLeverage: 25,
+  },
+  {
+    symbol: "XTZUSDT",
+    label: "XTZ",
+    name: "Tezos",
+    category: "Layer 1",
+    marginLeverage: 5,
+    futuresLeverage: 25,
+  },
 ];
 
 export const MARKET_SYMBOLS = MARKET_CATALOG.map((m) => m.symbol);
