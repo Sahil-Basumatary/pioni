@@ -1,4 +1,7 @@
-import type { PortfolioTrade } from "../portfolio/portfolioApi";
+import type {
+  PortfolioLedgerEntry,
+  PortfolioTrade,
+} from "../portfolio/portfolioApi";
 import { baseAsset } from "../../components/shell/activityFormat";
 
 export type HistoryScope = "main" | "earn" | "otc";
@@ -54,10 +57,44 @@ const ASSET_NAME: Record<string, string> = {
   USD: "US Dollar",
 };
 
+const ENTRY_TYPE_LABEL: Record<string, string> = {
+  trade_buy: "Trade buy",
+  trade_sell: "Trade sell",
+};
+
+function signedAmount(n: number, ticker: string): string {
+  if (!Number.isFinite(n) || n === 0) return `0 ${ticker}`;
+  const sign = n > 0 ? "" : "−";
+  return `${sign}${Math.abs(n)} ${ticker}`;
+}
+
+export function rowsFromLedgerEntries(entries: PortfolioLedgerEntry[]): LedgerRow[] {
+  return entries.map((entry) => {
+    const amount = Number(entry.amount);
+    const fee = Number(entry.fee);
+    const balance = Number(entry.balance_after);
+    return {
+      id: entry.id,
+      type: ENTRY_TYPE_LABEL[entry.entry_type] ?? entry.entry_type,
+      wallet: entry.wallet,
+      asset: entry.asset || ASSET_NAME[entry.ticker] || entry.ticker,
+      ticker: entry.ticker,
+      amount: signedAmount(amount, entry.ticker),
+      fee:
+        entry.ticker === "USD"
+          ? `${Number.isFinite(fee) ? fee : entry.fee} USD`
+          : "—",
+      balance: Number.isFinite(balance)
+        ? `${balance} ${entry.ticker}`
+        : `— ${entry.ticker}`,
+      at: entry.executed_at,
+    };
+  });
+}
+
 /**
- * Every fill moves two balances, so one trade becomes two ledger rows. Deposits and
- * withdrawals are not implemented, so fills are currently the only source of ledger activity.
- * Balance stays "—" until a running ledger balance is available from the portfolio service.
+ * Fallback when ledger rows are not yet available for older fills. Balance stays "—"
+ * because only the portfolio ledger table stores balance_after.
  */
 export function ledgerFromTrades(trades: PortfolioTrade[]): LedgerRow[] {
   return trades.flatMap((trade) => {

@@ -31,6 +31,7 @@ from portfolio.schemas import (
     ApiKeyCreatedResponse,
     ApiKeyResponse,
     DailyPnlPointResponse,
+    LedgerEntryResponse,
     NotificationPrefsPatch,
     NotificationPrefsResponse,
     OnboardingPatch,
@@ -329,6 +330,29 @@ async def list_trades(
     stmt = stmt.order_by(TradeORM.executed_at.desc()).limit(limit).offset(offset)
     rows = (await session.execute(stmt)).scalars().all()
     return [TradeResponse.model_validate(r) for r in rows]
+
+
+@router.get(
+    "/portfolios/{portfolio_id}/ledger",
+    response_model=list[LedgerEntryResponse],
+)
+async def list_ledger(
+    portfolio_id: uuid.UUID,
+    ticker: str | None = Query(None),
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    session: AsyncSession = Depends(get_db),
+) -> list[LedgerEntryResponse]:
+    stmt = select(LedgerEntryORM).where(LedgerEntryORM.portfolio_id == portfolio_id)
+    if ticker:
+        stmt = stmt.where(LedgerEntryORM.ticker == ticker.upper())
+    stmt = (
+        stmt.order_by(LedgerEntryORM.executed_at.desc(), LedgerEntryORM.id.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    rows = (await session.execute(stmt)).scalars().all()
+    return [LedgerEntryResponse.model_validate(r) for r in rows]
 
 
 @router.get(

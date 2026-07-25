@@ -19,8 +19,7 @@ me_router = APIRouter(prefix="/me", tags=["me"])
 _client: httpx.AsyncClient | None = None
 _portfolio_id_cache = TTLCache(portfolio_cache_ttl())
 _REDIS_KEY_PREFIX = "gw:portfolio_id:"
-# Holds strong references to fire-and-forget backfill tasks so the event loop cannot garbage
-# collect them mid-flight; entries remove themselves on completion.
+# Strong references keep fire-and-forget tasks from being garbage collected mid-flight.
 _background_tasks: set[asyncio.Task] = set()
 
 
@@ -255,8 +254,7 @@ async def patch_my_notification_prefs(
 
 
 async def _proxy_portfolio_get(path: str, params: dict | None = None):
-    # The portfolio service exposes these by portfolio_id in the path and trusts the private
-    # network, so no identity headers are needed once the gateway has resolved ownership.
+    # Ownership is already resolved here, and the portfolio service trusts the private network.
     client = await _get_client()
     try:
         resp = await client.get(path, params=params)
@@ -311,6 +309,22 @@ async def my_trades(
         params["symbol"] = symbol
     return await _proxy_portfolio_get(
         f"/portfolios/{portfolio_id}/trades", params=params,
+    )
+
+
+@me_router.get("/ledger")
+async def my_ledger(
+    ctx: AuthContext = Depends(require_auth),
+    ticker: str | None = Query(None),
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+):
+    portfolio_id = await resolve_portfolio_id(ctx)
+    params: dict = {"limit": limit, "offset": offset}
+    if ticker:
+        params["ticker"] = ticker
+    return await _proxy_portfolio_get(
+        f"/portfolios/{portfolio_id}/ledger", params=params,
     )
 
 

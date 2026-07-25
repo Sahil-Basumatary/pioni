@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
-import type { PortfolioTrade } from "../portfolio/portfolioApi";
+import type {
+  PortfolioLedgerEntry,
+  PortfolioTrade,
+} from "../portfolio/portfolioApi";
 import {
   filtersForSection,
   ledgerFromTrades,
+  rowsFromLedgerEntries,
   sectionsForScope,
 } from "./historyContent";
 
@@ -21,6 +25,54 @@ function trade(overrides: Partial<PortfolioTrade> = {}): PortfolioTrade {
   };
 }
 
+function entry(
+  overrides: Partial<PortfolioLedgerEntry> = {},
+): PortfolioLedgerEntry {
+  return {
+    id: "l1",
+    portfolio_id: "p1",
+    trade_id: "t1",
+    entry_type: "trade_buy",
+    wallet: "Spot",
+    asset: "Bitcoin",
+    ticker: "BTC",
+    amount: "0.5",
+    fee: "0",
+    balance_after: "0.5",
+    executed_at: "2026-07-01T10:00:00Z",
+    ...overrides,
+  };
+}
+
+describe("rowsFromLedgerEntries", () => {
+  it("formats balance_after into the Balance column", () => {
+    const rows = rowsFromLedgerEntries([
+      entry(),
+      entry({
+        id: "l2",
+        asset: "US Dollar",
+        ticker: "USD",
+        amount: "-30000",
+        fee: "1.25",
+        balance_after: "69998.75",
+      }),
+    ]);
+    expect(rows[0]).toMatchObject({
+      type: "Trade buy",
+      ticker: "BTC",
+      amount: "0.5 BTC",
+      fee: "—",
+      balance: "0.5 BTC",
+    });
+    expect(rows[1]).toMatchObject({
+      ticker: "USD",
+      amount: "−30000 USD",
+      fee: "1.25 USD",
+      balance: "69998.75 USD",
+    });
+  });
+});
+
 describe("ledgerFromTrades", () => {
   it("splits a buy into an asset credit and a cash debit", () => {
     const rows = ledgerFromTrades([trade()]);
@@ -37,7 +89,6 @@ describe("ledgerFromTrades", () => {
       asset: "US Dollar",
       ticker: "USD",
       amount: "−30000 USD",
-      balance: "—",
     });
   });
 

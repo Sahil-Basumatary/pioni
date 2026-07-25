@@ -45,6 +45,21 @@ class TradeResponse(BaseModel):
     executed_at: datetime
 
 
+class LedgerEntryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    portfolio_id: uuid.UUID
+    trade_id: uuid.UUID | None
+    entry_type: str
+    wallet: str
+    asset: str
+    ticker: str
+    amount: Decimal
+    fee: Decimal
+    balance_after: Decimal
+    executed_at: datetime
+
+
 class PortfolioSummaryResponse(BaseModel):
     model_config = ConfigDict(frozen=True)
     portfolio: PortfolioResponse

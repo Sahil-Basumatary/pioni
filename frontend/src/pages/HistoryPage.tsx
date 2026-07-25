@@ -3,6 +3,7 @@ import { useAuth } from "@clerk/clerk-react";
 import { ArrowTopRightIcon, ChevronDownSmallIcon } from "../components/shell/shellIcons";
 import { baseAsset } from "../components/shell/activityFormat";
 import {
+  useGetMyLedgerQuery,
   useGetMyPositionsQuery,
   useGetMyTradesQuery,
   type PortfolioPosition,
@@ -19,9 +20,11 @@ import {
   TRADE_COLUMNS,
   filtersForSection,
   ledgerFromTrades,
+  rowsFromLedgerEntries,
   sectionsForScope,
   type HistoryScope,
   type HistorySection,
+  type LedgerRow,
 } from "../features/history/historyContent";
 
 const TRADE_FETCH_LIMIT = 100;
@@ -65,6 +68,10 @@ export default function HistoryPage() {
         (activeSection !== "ledger" && activeSection !== "trades"),
     },
   );
+  const ledger = useGetMyLedgerQuery(
+    { limit: TRADE_FETCH_LIMIT },
+    { skip: !isSignedIn || !mainScope || activeSection !== "ledger" },
+  );
   const orders = useListOrdersQuery(
     { limit: TRADE_FETCH_LIMIT },
     { skip: !isSignedIn || !mainScope || activeSection !== "orders" },
@@ -73,6 +80,46 @@ export default function HistoryPage() {
     { openOnly: false },
     { skip: !isSignedIn || !mainScope || activeSection !== "positions" },
   );
+
+  const ledgerFallback = useMemo(() => {
+    if (ledger.data && ledger.data.length > 0) return null;
+    if (!trades.data?.length) return null;
+    return ledgerFromTrades(trades.data);
+  }, [ledger.data, trades.data]);
+
+  const ledgerQuery = useMemo(() => {
+    if (ledger.data && ledger.data.length > 0) {
+      return {
+        data: rowsFromLedgerEntries(ledger.data),
+        isLoading: ledger.isLoading,
+        isError: ledger.isError,
+        refetch: ledger.refetch,
+      };
+    }
+    if (ledgerFallback) {
+      return {
+        data: ledgerFallback,
+        isLoading: ledger.isLoading || trades.isLoading,
+        isError: ledger.isError && trades.isError,
+        refetch: () => {
+          void ledger.refetch();
+          void trades.refetch();
+        },
+      };
+    }
+    return {
+      data: ledger.data ? rowsFromLedgerEntries(ledger.data) : undefined,
+      isLoading: ledger.isLoading || trades.isLoading,
+      isError: ledger.isError,
+      refetch: ledger.refetch,
+    };
+  }, [ledger, ledgerFallback, trades]);
+
+  const filterValues = useMemo(
+    () => Object.fromEntries(filters.map((f) => [f, ""])),
+    [filters],
+  );
+  const mergedFilters = { ...filterValues, ...filterState };
 
   if (!isSignedIn) {
     return <SignedOutUnlock size="page" showLogo />;
@@ -84,12 +131,6 @@ export default function HistoryPage() {
     const nextSections = sectionsForScope(next);
     if (!nextSections.includes(section)) setSection(nextSections[0]);
   };
-
-  const filterValues = useMemo(
-    () => Object.fromEntries(filters.map((f) => [f, ""])),
-    [filters],
-  );
-  const mergedFilters = { ...filterValues, ...filterState };
 
   return (
     <div className="mx-auto flex w-full max-w-[1750px] flex-col items-center gap-2 px-2 py-2">
@@ -192,10 +233,10 @@ export default function HistoryPage() {
             body={`${scope === "earn" ? "Earn" : "OTC"} runs on simulated desks that do not post to your ledger yet.`}
           />
         ) : activeSection === "ledger" ? (
-          <SectionPanel query={trades} empty={<TeachingEmpty id="history_ledger" size="panel" />}>
-            {(rows: PortfolioTrade[]) => (
+          <SectionPanel query={ledgerQuery} empty={<TeachingEmpty id="history_ledger" size="panel" />}>
+            {(rows: LedgerRow[]) => (
               <LedgerTable
-                trades={rows}
+                rows={rows}
                 assetQuery={mergedFilters.Assets ?? ""}
                 typeQuery={mergedFilters.Types ?? ""}
               />
@@ -322,23 +363,23 @@ function NoMatch({ span }: { span: number }) {
 }
 
 function LedgerTable({
-  trades,
+  rows,
   assetQuery,
   typeQuery,
 }: {
-  trades: PortfolioTrade[];
+  rows: LedgerRow[];
   assetQuery: string;
   typeQuery: string;
 }) {
-  const rows = ledgerFromTrades(trades).filter(
+  const filtered = rows.filter(
     (r) => matches(r.asset, assetQuery) && matches(r.type, typeQuery),
   );
   return (
     <TableShell columns={LEDGER_COLUMNS} minWidth="min-w-[840px]">
-      {!rows.length ? (
+      {!filtered.length ? (
         <NoMatch span={LEDGER_COLUMNS.length} />
       ) : (
-        rows.map((row) => (
+        filtered.map((row) => (
           <tr key={row.id} className="border-b border-[var(--card-border)] last:border-b-0">
             <td className="px-4 py-3 font-medium">{row.type}</td>
             <td className="px-4 py-3 text-[var(--text-muted)]">{row.wallet}</td>

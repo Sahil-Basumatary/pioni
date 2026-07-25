@@ -24,6 +24,20 @@ export interface PortfolioTrade {
   executed_at: string;
 }
 
+export interface PortfolioLedgerEntry {
+  id: string;
+  portfolio_id: string;
+  trade_id: string | null;
+  entry_type: string;
+  wallet: string;
+  asset: string;
+  ticker: string;
+  amount: string;
+  fee: string;
+  balance_after: string;
+  executed_at: string;
+}
+
 export interface PortfolioPosition {
   id: string;
   portfolio_id: string;
@@ -55,7 +69,7 @@ export interface PnlChartPoint {
 export const portfolioApi = createApi({
   reducerPath: "portfolioApi",
   baseQuery: gatewayBaseQuery(),
-  tagTypes: ["Portfolio", "Trades", "Summary", "PnlChart"],
+  tagTypes: ["Portfolio", "Trades", "Ledger", "Summary", "PnlChart"],
   endpoints: (builder) => ({
     getMyPortfolio: builder.query<Portfolio, void>({
       query: () => "/me/portfolio",
@@ -85,6 +99,19 @@ export const portfolioApi = createApi({
       }),
       providesTags: ["Trades"],
     }),
+    getMyLedger: builder.query<
+      PortfolioLedgerEntry[],
+      { limit?: number; ticker?: string } | void
+    >({
+      query: (args) => ({
+        url: "/me/ledger",
+        params: {
+          limit: args?.limit ?? 100,
+          ...(args?.ticker ? { ticker: args.ticker } : {}),
+        },
+      }),
+      providesTags: ["Ledger"],
+    }),
     getMyPositions: builder.query<PortfolioPosition[], { openOnly?: boolean } | void>({
       query: (args) => ({
         url: "/me/positions",
@@ -94,7 +121,7 @@ export const portfolioApi = createApi({
     }),
     resetPortfolio: builder.mutation<Portfolio, void>({
       query: () => ({ url: "/me/portfolio/reset", method: "POST" }),
-      invalidatesTags: ["Portfolio", "Trades", "Summary", "PnlChart"],
+      invalidatesTags: ["Portfolio", "Trades", "Ledger", "Summary", "PnlChart"],
     }),
   }),
 });
@@ -104,6 +131,7 @@ export const {
   useGetMySummaryQuery,
   useGetMyPnlChartQuery,
   useGetMyTradesQuery,
+  useGetMyLedgerQuery,
   useGetMyPositionsQuery,
   useResetPortfolioMutation,
   useLazyGetMyPortfolioQuery,
