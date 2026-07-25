@@ -1,5 +1,7 @@
-import { PAPER_USD_BALANCE, PAPER_USD_PRICE } from "../convert/convertQuote";
 import type { PortfolioTrade } from "../portfolio/portfolioApi";
+
+const PAPER_USD_BALANCE = 10_000;
+const PAPER_BTC_MID_PRICE = 64_500;
 
 export type PaperActivityItem =
   | { kind: "fill"; id: string; trade: PortfolioTrade }
@@ -89,4 +91,4 @@ export const PAPER_HOME_ACTIVITY: PaperActivityItem[] = [
 ];
 
 export const PAPER_HOME_CASH = PAPER_USD_BALANCE;
-export const PAPER_BTC_MID = PAPER_USD_PRICE.BTC;
+export const PAPER_BTC_MID = PAPER_BTC_MID_PRICE;

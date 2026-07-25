@@ -38,31 +38,20 @@ export const CONVERT_ASSETS: ConvertAsset[] = [
   },
 ];
 
-/** Paper mid prices in USD for simulated convert quotes. */
-export const PAPER_USD_PRICE: Record<string, number> = {
-  USD: 1,
-  BTC: 64_500,
-  ETH: 3_150,
-  SOL: 145,
-  XRP: 0.55,
-};
-
-export const PAPER_USD_BALANCE = 10_000;
-
+/** Returns null when either leg has no live price, so the caller can block the quote. */
 export function quoteReceive(
-  fromSymbol: string,
-  toSymbol: string,
   fromAmount: number,
-): number {
-  if (!Number.isFinite(fromAmount) || fromAmount <= 0) return 0;
-  const fromUsd = PAPER_USD_PRICE[fromSymbol] ?? 0;
-  const toUsd = PAPER_USD_PRICE[toSymbol] ?? 0;
-  if (fromUsd <= 0 || toUsd <= 0) return 0;
-  return (fromAmount * fromUsd) / toUsd;
+  fromUsdPrice: number | null,
+  toUsdPrice: number | null,
+): number | null {
+  if (!Number.isFinite(fromAmount) || fromAmount <= 0) return null;
+  if (fromUsdPrice == null || toUsdPrice == null) return null;
+  if (fromUsdPrice <= 0 || toUsdPrice <= 0) return null;
+  return (fromAmount * fromUsdPrice) / toUsdPrice;
 }
 
-export function formatConvertAmount(n: number, symbol: string): string {
-  if (!Number.isFinite(n) || n === 0) return "";
+export function formatConvertAmount(n: number | null, symbol: string): string {
+  if (n == null || !Number.isFinite(n) || n === 0) return "";
   const digits = symbol === "USD" ? 2 : n < 1 ? 8 : 6;
   return n.toLocaleString("en-US", {
     minimumFractionDigits: 0,
