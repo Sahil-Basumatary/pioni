@@ -49,8 +49,8 @@ async def test_reset_restores_balance_and_clears_state():
     result = await reset_portfolio(portfolio.id, session=session)
     assert portfolio.cash_balance == Decimal("100000")
     assert result.cash_balance == Decimal("100000")
-    # Trades, positions and snapshots are each purged.
-    assert len(session.executed) == 3
+    # Trades, ledger rows, positions and snapshots are each purged.
+    assert len(session.executed) == 4
     assert session.flushed is True
     assert portfolio in session.refreshed
 

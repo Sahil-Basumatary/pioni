@@ -7,6 +7,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from common import (
     get_db,
+    LedgerEntry as LedgerEntryORM,
     Portfolio as PortfolioORM,
     PortfolioSnapshot as PortfolioSnapshotORM,
     Position as PositionORM,
@@ -57,8 +58,8 @@ def get_repository(
 
 
 def get_price_cache(request: Request) -> PriceCache:
-    # Lifespan attaches a cache; tests that hit the router without lifespan get a fresh
-    # empty one which makes /summary degrade gracefully to cost-basis valuations.
+    # Without lifespan (in tests) this returns an empty cache, degrading /summary to
+    # cost-basis valuations rather than failing.
     cache = getattr(request.app.state, "price_cache", None)
     return cache if cache is not None else PriceCache()
 
@@ -68,8 +69,7 @@ def current_identity(
     x_user_email: str | None = Header(default=None),
     x_user_name: str | None = Header(default=None),
 ) -> Identity:
-    # The gateway performs edge auth and forwards the verified identity over the private
-    # network. This service is never publicly exposed, so it trusts these headers.
+    # Trusted because the gateway does edge auth and this service is never publicly exposed.
     if not x_clerk_id:
         raise HTTPException(
             status_code=401,
@@ -259,15 +259,16 @@ async def reset_portfolio(
     portfolio_id: uuid.UUID,
     session: AsyncSession = Depends(get_db),
 ) -> PortfolioResponse:
-    # A practice account must be restartable: wipe holdings, fills and the equity-curve history,
-    # then restore the original virtual balance. Open orders are deliberately left alone — they
-    # are live resting orders held in the orders service's in-memory book, and are cleared via
-    # the cancel path (with the open-orders UI) to avoid book-vs-DB drift.
+    # Open orders are deliberately left alone: they live in the orders service's in-memory
+    # book and must be cleared through the cancel path to avoid book-vs-DB drift.
     portfolio = await session.get(PortfolioORM, portfolio_id, with_for_update=True)
     if portfolio is None:
         raise _not_found(portfolio_id)
     await session.execute(
         delete(TradeORM).where(TradeORM.portfolio_id == portfolio_id),
+    )
+    await session.execute(
+        delete(LedgerEntryORM).where(LedgerEntryORM.portfolio_id == portfolio_id),
     )
     await session.execute(
         delete(PositionORM).where(PositionORM.portfolio_id == portfolio_id),

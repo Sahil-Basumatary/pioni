@@ -4,6 +4,7 @@ import logging
 import uuid
 from collections import deque
 from dataclasses import dataclass
+from datetime import datetime
 from decimal import Decimal
 from typing import Any
 import redis.asyncio as aioredis
@@ -18,6 +19,7 @@ from common import (
 )
 from portfolio.domain import PortfolioState, PositionState
 from portfolio.events import TradeExecutedEvent
+from portfolio.ledger import legs_for_fill
 from portfolio.repository import PortfolioNotFoundError, PortfolioRepository
 from portfolio.state import apply_fill_to_portfolio
 
@@ -40,8 +42,7 @@ class _PortfolioUpdate:
 
 
 class _BoundedDedupCache:
-    # In-process LRU set sized for short-window redelivery. RabbitMQ retries usually arrive
-    # within seconds; persistent cross-restart idempotency is a follow-up concern.
+    # Sized for short-window redelivery only; cross-restart idempotency is not handled.
     def __init__(self, maxlen: int = DEDUP_CACHE_SIZE) -> None:
         self._maxlen = maxlen
         self._set: set[uuid.UUID] = set()
@@ -126,9 +127,10 @@ class TradeConsumer:
                 updates.append(await self._apply_side(
                     repo, event.portfolio_id, event.symbol, event.side,
                     event.quantity, event.price, event.fee,
+                    trade_id=event.trade_id,
+                    executed_at=event.timestamp,
                 ))
-                # Maker side: event only carries the taker's portfolio. We look up the
-                # maker's order to find its portfolio and apply the symmetric fill.
+                # The event carries only the taker's portfolio, so the maker's is looked up.
                 maker_order = await session.get(Order, event.maker_order_id)
                 if maker_order is not None:
                     maker_side = (
@@ -137,14 +139,15 @@ class TradeConsumer:
                     updates.append(await self._apply_side(
                         repo, maker_order.portfolio_id, event.symbol, maker_side,
                         event.quantity, event.price, event.fee,
+                        trade_id=event.trade_id,
+                        executed_at=event.timestamp,
                     ))
                 else:
                     logger.warning(
                         "maker order not found, taker side applied only",
                         extra={"maker_order_id": str(event.maker_order_id)},
                     )
-        # Publish only after the DB transaction commits — clients should never see an update
-        # for a trade we then failed to persist.
+        # Publish after commit so clients never see a trade that then failed to persist.
         for update in updates:
             await self._publish(update)
 
@@ -157,6 +160,9 @@ class TradeConsumer:
         qty: Decimal,
         price: Decimal,
         fee: Decimal,
+        *,
+        trade_id: uuid.UUID,
+        executed_at: datetime,
     ) -> _PortfolioUpdate:
         portfolio = await repo.get_portfolio(portfolio_id, for_update=True)
         position = await repo.get_or_create_position(
@@ -167,6 +173,20 @@ class TradeConsumer:
         )
         await repo.save_portfolio(new_portfolio)
         await repo.save_position(new_position)
+        await repo.insert_ledger_legs(
+            portfolio_id=portfolio_id,
+            trade_id=trade_id,
+            executed_at=executed_at,
+            legs=legs_for_fill(
+                side=side,
+                symbol=symbol,
+                quantity=qty,
+                price=price,
+                fee=fee,
+                cash_balance_after=new_portfolio.cash_balance,
+                asset_balance_after=new_position.quantity,
+            ),
+        )
         return _build_update(new_portfolio, new_position, realized_delta)
 
     async def _publish(self, update: _PortfolioUpdate) -> None:

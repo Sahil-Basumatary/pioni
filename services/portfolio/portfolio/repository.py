@@ -5,10 +5,12 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from common import OrderSide
+from common import LedgerEntry as LedgerEntryORM
 from common import Portfolio as PortfolioORM
 from common import Position as PositionORM
 from common import Trade as TradeORM
 from portfolio.domain import PortfolioState, PositionState
+from portfolio.ledger import LedgerLeg
 
 
 class PortfolioNotFoundError(LookupError):
@@ -58,8 +60,7 @@ class PortfolioRepository:
         )
         if existing is not None:
             return existing
-        # Lazy creation: the first fill on a new symbol initialises the row instead of
-        # forcing every consumer to pre-create empty positions on portfolio creation.
+        # Created on first fill so portfolios do not carry a row per tradable symbol.
         new_orm = PositionORM(
             portfolio_id=portfolio_id,
             symbol=symbol,
@@ -112,6 +113,28 @@ class PortfolioRepository:
             fee=fee,
             executed_at=executed_at,
         ))
+
+    async def insert_ledger_legs(
+        self,
+        *,
+        portfolio_id: uuid.UUID,
+        trade_id: uuid.UUID | None,
+        executed_at: datetime,
+        legs: tuple[LedgerLeg, ...] | list[LedgerLeg],
+    ) -> None:
+        for leg in legs:
+            self._session.add(LedgerEntryORM(
+                portfolio_id=portfolio_id,
+                trade_id=trade_id,
+                entry_type=leg.entry_type,
+                wallet=leg.wallet,
+                asset=leg.asset,
+                ticker=leg.ticker,
+                amount=leg.amount,
+                fee=leg.fee,
+                balance_after=leg.balance_after,
+                executed_at=executed_at,
+            ))
 
 
 def _to_portfolio_state(row: PortfolioORM) -> PortfolioState:

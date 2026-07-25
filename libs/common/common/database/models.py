@@ -264,12 +264,41 @@ class Position(UUIDMixin, TimestampMixin, Base):
     portfolio: Mapped[Portfolio] = relationship(back_populates="positions")
 
 
+class LedgerEntry(UUIDMixin, Base):
+    __tablename__ = "ledger_entries"
+    __table_args__ = (
+        Index(
+            "ix_ledger_entries_portfolio_executed",
+            "portfolio_id",
+            "executed_at",
+        ),
+    )
+    portfolio_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("portfolios.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    # Not a FK: orders may persist a different trades.id than the event's trade_id.
+    trade_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True, index=True,
+    )
+    entry_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    wallet: Mapped[str] = mapped_column(String(32), nullable=False, default="Spot")
+    asset: Mapped[str] = mapped_column(String(64), nullable=False)
+    ticker: Mapped[str] = mapped_column(String(16), nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(20, 8), nullable=False)
+    fee: Mapped[Decimal] = mapped_column(Numeric(20, 8), nullable=False, default=0)
+    balance_after: Mapped[Decimal] = mapped_column(Numeric(20, 8), nullable=False)
+    executed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+
 class PortfolioSnapshot(UUIDMixin, Base):
-    # Append-only time series. Risk metrics (Sharpe, drawdown, VaR) read this directly.
-    # No relationship back to Portfolio: keeps queries explicit by portfolio_id and avoids
-    # accidentally lazy-loading thousands of snapshots when iterating Portfolio.snapshots.
-    # If write volume ever forces it, the (portfolio_id, snapshot_at) composite index makes
-    # this table a clean candidate for TimescaleDB hypertable conversion later.
+    # No relationship back to Portfolio on purpose: iterating Portfolio.snapshots would
+    # lazy-load thousands of rows.
     __tablename__ = "portfolio_snapshots"
     __table_args__ = (
         Index(

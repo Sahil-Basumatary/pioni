@@ -18,6 +18,7 @@ from common.database.models import (
     Order,
     Trade,
     Position,
+    LedgerEntry,
     PortfolioSnapshot,
 )
 
@@ -41,5 +42,6 @@ __all__ = [
     "Order",
     "Trade",
     "Position",
+    "LedgerEntry",
     "PortfolioSnapshot",
 ]
