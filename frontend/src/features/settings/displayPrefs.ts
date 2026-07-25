@@ -108,7 +108,11 @@ export function formatPrefLimitPrice(
 ): string {
   if (!Number.isFinite(n) || n <= 0) return "";
   if (decimals !== "auto") {
-    return n.toFixed(Number(decimals)).replace(/\.?0+$/, "");
+    const rounded = n.toFixed(Number(decimals)).replace(/\.?0+$/, "");
+    // A sub-cent asset rounds to "0" at low precision, which is not a submittable price.
+    // Fall through to full precision rather than pre-filling the ticket with zero.
+    if (Number(rounded) > 0) return rounded;
+    return String(n);
   }
   if (n >= 100) return n.toFixed(1).replace(/\.0$/, "");
   if (n >= 1) return String(Number(n.toFixed(4)));

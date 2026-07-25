@@ -1,6 +1,5 @@
 import type { PriceLevel } from "../orders/ordersApi";
 
-/** BTC/USD-style ticks — matches the reference grouping menu. */
 export const GROUPINGS = [0.1, 0.5, 1, 2.5, 5, 10, 25, 50, 100] as const;
 
 export function formatGroupStep(step: number): string {
@@ -22,17 +21,21 @@ export function groupLevels(
   side: "bid" | "ask",
 ): PriceLevel[] {
   if (!levels.length || step <= 0) return levels;
-  const buckets = new Map<number, number>();
+  const buckets = new Map<number, { qty: number; orders: number }>();
   for (const level of levels) {
     const price = Number(level.price);
     const qty = Number(level.total_quantity);
     if (!Number.isFinite(price) || !Number.isFinite(qty)) continue;
     const key = bucketKey(price, step, side);
-    buckets.set(key, (buckets.get(key) ?? 0) + qty);
+    const bucket = buckets.get(key) ?? { qty: 0, orders: 0 };
+    bucket.qty += qty;
+    bucket.orders += level.order_count;
+    buckets.set(key, bucket);
   }
-  const grouped = [...buckets.entries()].map(([price, total_quantity]) => ({
+  const grouped = [...buckets.entries()].map(([price, bucket]) => ({
     price: String(price),
-    total_quantity: String(total_quantity),
+    total_quantity: String(bucket.qty),
+    order_count: bucket.orders,
   }));
   grouped.sort((a, b) =>
     side === "ask" ? Number(a.price) - Number(b.price) : Number(b.price) - Number(a.price),
@@ -42,7 +45,7 @@ export function groupLevels(
 
 export type DepthLevel = PriceLevel & { depthPct: number; cumQty: number };
 
-/** Cumulative depth from the touch — bars + TOTAL column grow away from mid. */
+/** Cumulative depth accumulates away from the touch, so bars and TOTAL grow outward from mid. */
 export function withCumulativeDepth(
   levels: PriceLevel[],
   fromMidFirst: boolean,

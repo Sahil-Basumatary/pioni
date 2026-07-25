@@ -16,6 +16,11 @@ describe("formatPrefLimitPrice", () => {
     expect(formatPrefLimitPrice(65146.321, "2")).toBe("65146.32");
     expect(formatPrefLimitPrice(1.2, "4")).toBe("1.2");
   });
+
+  it("keeps full precision when the pref would round a price to zero", () => {
+    expect(formatPrefLimitPrice(0.00002650, "2")).toBe("0.0000265");
+    expect(formatPrefLimitPrice(0.0026, "2")).toBe("0.0026");
+  });
 });
 
 describe("displayPrefs trading fields", () => {
