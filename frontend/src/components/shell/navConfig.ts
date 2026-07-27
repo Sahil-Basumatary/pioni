@@ -1,13 +1,15 @@
+import type { ShellMessageKey } from "../../features/i18n/shellCatalog";
+
 export type NavLinkItem = {
   kind: "link";
   id: string;
-  label: string;
+  labelKey: ShellMessageKey;
   to: string;
 };
 
 export type NavGroupChild = {
   id: string;
-  label: string;
+  labelKey: ShellMessageKey;
   to: string;
   badge?: string;
 };
@@ -15,32 +17,32 @@ export type NavGroupChild = {
 export type NavGroupItem = {
   kind: "group";
   id: string;
-  label: string;
+  labelKey: ShellMessageKey;
   children: NavGroupChild[];
 };
 
 export type NavItem = NavLinkItem | NavGroupItem;
 
 export const PRODUCT_NAV: NavItem[] = [
-  { kind: "link", id: "home", label: "Home", to: "/home" },
+  { kind: "link", id: "home", labelKey: "navHome", to: "/home" },
   {
     kind: "group",
     id: "trade",
-    label: "Trade",
+    labelKey: "navTrade",
     children: [
-      { id: "spot", label: "Spot", to: "/trading" },
-      { id: "margin", label: "Margin", to: "/trade/margin", badge: "10x" },
-      { id: "futures", label: "Futures", to: "/trade/futures" },
-      { id: "prop", label: "Prop", to: "/trade/prop" },
+      { id: "spot", labelKey: "navSpot", to: "/trading" },
+      { id: "margin", labelKey: "navMargin", to: "/trade/margin", badge: "10x" },
+      { id: "futures", labelKey: "navFutures", to: "/trade/futures" },
+      { id: "prop", labelKey: "navProp", to: "/trade/prop" },
     ],
   },
-  { kind: "link", id: "markets", label: "Markets", to: "/markets" },
-  { kind: "link", id: "analytics", label: "Analytics", to: "/analytics" },
-  { kind: "link", id: "yield", label: "Yield", to: "/yield" },
-  { kind: "link", id: "earn", label: "Earn", to: "/earn" },
-  { kind: "link", id: "history", label: "History", to: "/history" },
-  { kind: "link", id: "otc", label: "OTC", to: "/otc" },
-  { kind: "link", id: "sentiment", label: "Sentiment", to: "/sentiment" },
+  { kind: "link", id: "markets", labelKey: "navMarkets", to: "/markets" },
+  { kind: "link", id: "analytics", labelKey: "navAnalytics", to: "/analytics" },
+  { kind: "link", id: "yield", labelKey: "navYield", to: "/yield" },
+  { kind: "link", id: "earn", labelKey: "navEarn", to: "/earn" },
+  { kind: "link", id: "history", labelKey: "navHistory", to: "/history" },
+  { kind: "link", id: "otc", labelKey: "navOtc", to: "/otc" },
+  { kind: "link", id: "sentiment", labelKey: "navSentiment", to: "/sentiment" },
 ];
 
 /** Home is account-only, so guests never see it in product chrome. */

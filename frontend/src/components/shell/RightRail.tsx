@@ -5,6 +5,7 @@ import NotificationsPanel from "./NotificationsPanel";
 import FavoritesRailPanel from "./FavoritesRailPanel";
 import { AppSwitcherMenu } from "./AppSwitcher";
 import { useSettings } from "../../features/settings/settingsContext";
+import { useLanguage } from "../../features/auth/LanguageProvider";
 import {
   BellIcon,
   BookIcon,
@@ -25,6 +26,7 @@ export default function RightRail() {
   const navigate = useNavigate();
   const { isSignedIn } = useAuth();
   const { openSettings } = useSettings();
+  const { t } = useLanguage();
   const { open: checklistOpen, toggle: toggleChecklist, setOpen: setChecklistOpen } =
     useChecklistUi();
   const { data: onboarding, isLoading: onboardingLoading } =
@@ -66,10 +68,10 @@ export default function RightRail() {
         <div className="fixed bottom-14 right-11 z-[56] w-[300px] md:right-12">
           <div className="overflow-hidden rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between border-b border-[var(--card-border)] px-3 py-2">
-              <p className="text-sm font-medium text-[var(--text-primary)]">Apps</p>
+              <p className="text-sm font-medium text-[var(--text-primary)]">{t("apps")}</p>
               <button
                 type="button"
-                aria-label="Close Apps"
+                aria-label={`${t("apps")}`}
                 onClick={() => setTab(null)}
                 className="rail-icon rounded-lg p-1 text-[var(--text-muted)] hover:bg-black/[0.04] hover:text-[var(--text-primary)]"
               >
@@ -89,7 +91,7 @@ export default function RightRail() {
       >
         {isSignedIn ? (
           <RailIconButton
-            label="User settings"
+            label={t("accountSettings")}
             onClick={() => {
               setTab(null);
               openSettings("account");
@@ -141,7 +143,7 @@ export default function RightRail() {
             <BookIcon className="h-6 w-6" />
           </RailIconButton>
           <RailIconButton
-            label="App switcher"
+            label={t("appSwitcher")}
             active={tab === "apps"}
             onClick={() => toggle("apps")}
           >

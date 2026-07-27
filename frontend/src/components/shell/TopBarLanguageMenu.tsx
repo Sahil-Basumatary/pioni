@@ -8,7 +8,7 @@ import {
 import { useLanguage } from "../../features/auth/LanguageProvider";
 
 export default function TopBarLanguageMenu() {
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0, maxHeight: 430 });
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -64,7 +64,7 @@ export default function TopBarLanguageMenu() {
       <button
         ref={btnRef}
         type="button"
-        aria-label="Select language"
+        aria-label={t("selectLanguage")}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listId}
@@ -79,7 +79,7 @@ export default function TopBarLanguageMenu() {
             ref={menuRef}
             id={listId}
             role="listbox"
-            aria-label="Select language"
+            aria-label={t("selectLanguage")}
             style={{
               top: pos.top,
               left: pos.left,

@@ -8,6 +8,7 @@ import TopBarLanguageMenu from "./TopBarLanguageMenu";
 import { useMarketSearch } from "../../features/markets/MarketSearchContext";
 import { useConvert } from "../../features/convert/ConvertContext";
 import { useSettings } from "../../features/settings/settingsContext";
+import { useLanguage } from "../../features/auth/LanguageProvider";
 import { ConvertIcon, DepositIcon, SearchIcon, UserIcon } from "./shellIcons";
 import { SIGN_IN_PATH, SIGN_UP_PATH } from "../../features/auth/authRoutes";
 
@@ -15,6 +16,7 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
   const { openSearch } = useMarketSearch();
   const { openConvert } = useConvert();
   const { openSettings } = useSettings();
+  const { t } = useLanguage();
 
   if (compact) {
     return (
@@ -49,13 +51,12 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
             <SignedIn>
               <button
                 type="button"
-                aria-label="Account settings"
+                aria-label={t("accountSettings")}
                 onClick={() => openSettings("account")}
                 className="rail-icon flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-primary)] hover:bg-black/[0.04]"
               >
                 <UserIcon className="h-6 w-6" />
               </button>
-              {/* No right rail on compact, so keep the app switcher reachable */}
               <AppSwitcher />
             </SignedIn>
             <SignedOut>
@@ -88,7 +89,7 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
           className="rail-icon ml-2 hidden min-w-0 flex-1 items-center gap-2 rounded-full border border-[var(--card-border)] bg-[var(--bg)] px-3 py-1.5 text-left text-sm text-[var(--text-muted)] hover:border-[var(--accent)] sm:flex md:max-w-sm"
         >
           <SearchIcon className="h-3.5 w-3.5 shrink-0 text-[var(--text-muted)]" />
-          <span className="truncate">Search for a market</span>
+          <span className="truncate">{t("searchForMarket")}</span>
           <kbd className="ml-auto rounded-md border border-[var(--card-border)] bg-[var(--card-bg)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--text-muted)]">
             ⌘K
           </kbd>
@@ -101,7 +102,7 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
               className="hidden items-center gap-1.5 rounded-lg border border-[var(--card-border)] bg-transparent px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg)] sm:inline-flex"
             >
               <DepositIcon className="h-4 w-4" />
-              Deposit
+              {t("deposit")}
             </Link>
             <button
               type="button"
@@ -109,7 +110,7 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
               className="hidden items-center gap-1.5 rounded-lg border border-[var(--card-border)] bg-transparent px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg)] md:inline-flex"
             >
               <ConvertIcon className="h-4 w-4" />
-              Convert
+              {t("convert")}
             </button>
             <span data-tour="balance">
               <BalanceChip />
@@ -127,19 +128,20 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
 }
 
 function AuthButtons() {
+  const { t } = useLanguage();
   return (
     <div className="relative z-[60] flex items-center gap-1">
       <Link
         to={SIGN_IN_PATH}
         className="rounded-full px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:bg-black/[0.04]"
       >
-        Sign in
+        {t("signIn")}
       </Link>
       <Link
         to={SIGN_UP_PATH}
         className="rounded-full bg-[var(--accent)] px-3.5 py-1.5 text-sm font-medium text-white hover:bg-[var(--accent-soft)]"
       >
-        Sign up
+        {t("signUp")}
       </Link>
     </div>
   );

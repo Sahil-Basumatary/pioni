@@ -9,53 +9,56 @@ import {
   visibleProductNav,
   type NavItem,
 } from "./navConfig";
+import type { ShellMessageKey } from "../../features/i18n/shellCatalog";
+import { useLanguage } from "../../features/auth/LanguageProvider";
 
 type MenuPos = { top: number; left: number };
 
-type FlatLink = { id: string; label: string; to: string };
+type FlatLink = { id: string; labelKey: ShellMessageKey; to: string };
 
 function flattenNav(items: NavItem[]): FlatLink[] {
   const out: FlatLink[] = [];
   for (const item of items) {
     if (item.kind === "link") {
-      out.push({ id: item.id, label: item.label, to: item.to });
+      out.push({ id: item.id, labelKey: item.labelKey, to: item.to });
       continue;
     }
     out.push({
       id: item.id,
-      label: item.label,
+      labelKey: item.labelKey,
       to: groupDefaultTo(item),
     });
     const prop = item.children.find((child) => child.id === "prop");
     if (prop) {
-      out.push({ id: prop.id, label: prop.label, to: prop.to });
+      out.push({ id: prop.id, labelKey: prop.labelKey, to: prop.to });
     }
   }
   return out;
 }
 
-export function resolveCompactNavLabel(
+export function resolveCompactNavLabelKey(
   pathname: string,
   isSignedIn: boolean,
-): string {
+): ShellMessageKey {
   for (const item of visibleProductNav(isSignedIn)) {
     if (item.kind === "link" && isPathActive(pathname, item.to)) {
-      return item.label;
+      return item.labelKey;
     }
     if (item.kind === "group" && groupContainsPath(item, pathname)) {
       const prop = item.children.find((child) => child.id === "prop");
-      if (prop && isPathActive(pathname, prop.to)) return prop.label;
-      return item.label;
+      if (prop && isPathActive(pathname, prop.to)) return prop.labelKey;
+      return item.labelKey;
     }
   }
-  if (pathname.startsWith("/otc")) return "OTC";
-  if (pathname.startsWith("/deposit")) return isSignedIn ? "Home" : "Trade";
-  return isSignedIn ? "Home" : "Trade";
+  if (pathname.startsWith("/otc")) return "navOtc";
+  if (pathname.startsWith("/deposit")) return isSignedIn ? "navHome" : "navTrade";
+  return isSignedIn ? "navHome" : "navTrade";
 }
 
 export default function ProductSwitcher() {
   const location = useLocation();
   const { isSignedIn } = useAuth();
+  const { t } = useLanguage();
   const menuId = useId();
   const btnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -66,7 +69,8 @@ export default function ProductSwitcher() {
     () => flattenNav(visibleProductNav(signedIn)),
     [signedIn],
   );
-  const label = resolveCompactNavLabel(location.pathname, signedIn);
+  const labelKey = resolveCompactNavLabelKey(location.pathname, signedIn);
+  const label = t(labelKey);
 
   function placeMenu() {
     const btn = btnRef.current;
@@ -152,23 +156,26 @@ export default function ProductSwitcher() {
             style={{ top: pos.top, left: pos.left }}
             className="fixed z-[80] min-w-[180px] rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-1 shadow-[var(--shadow-card)]"
           >
-            {menuLinks.map((item) => (
-              <NavLink
-                key={item.id}
-                to={item.to}
-                role="menuitem"
-                onClick={() => setOpen(false)}
-                className={({ isActive }) =>
-                  `flex items-center rounded-lg px-3 py-2 text-sm transition-colors ${
-                    isActive || label === item.label
-                      ? "bg-[var(--bg)] font-medium text-[var(--text-primary)]"
-                      : "text-[var(--text-muted)] hover:bg-[var(--bg)] hover:text-[var(--text-primary)]"
-                  }`
-                }
-              >
-                {item.label}
-              </NavLink>
-            ))}
+            {menuLinks.map((item) => {
+              const itemLabel = t(item.labelKey);
+              return (
+                <NavLink
+                  key={item.id}
+                  to={item.to}
+                  role="menuitem"
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center rounded-lg px-3 py-2 text-sm transition-colors ${
+                      isActive || label === itemLabel
+                        ? "bg-[var(--bg)] font-medium text-[var(--text-primary)]"
+                        : "text-[var(--text-muted)] hover:bg-[var(--bg)] hover:text-[var(--text-primary)]"
+                    }`
+                  }
+                >
+                  {itemLabel}
+                </NavLink>
+              );
+            })}
           </div>,
           document.body,
         )}

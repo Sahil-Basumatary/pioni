@@ -8,10 +8,19 @@ import {
   type LayoutPresetId,
 } from "../../features/trading/layoutStorage";
 import { LayoutGrid4Icon } from "./shellIcons";
+import { useLanguage } from "../../features/auth/LanguageProvider";
+import type { ShellMessageKey } from "../../features/i18n/shellCatalog";
 
 const TRADE_PATHS = new Set(["/trading", "/trade/margin", "/trade/futures"]);
 
+const LAYOUT_LABEL_KEYS: Record<LayoutPresetId, ShellMessageKey> = {
+  classic: "layoutClassic",
+  advanced: "layoutAdvanced",
+  terminal: "layoutTerminal",
+};
+
 export default function LayoutsMenu() {
+  const { t } = useLanguage();
   const menuId = useId();
   const btnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -74,7 +83,7 @@ export default function LayoutsMenu() {
       <button
         ref={btnRef}
         type="button"
-        aria-label="Layouts"
+        aria-label={t("layouts")}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}
@@ -82,7 +91,7 @@ export default function LayoutsMenu() {
         className="rail-icon hidden h-8 items-center gap-1 rounded-lg px-2 text-sm text-[var(--text-muted)] hover:bg-[var(--bg)] hover:text-[var(--text-primary)] md:inline-flex"
       >
         <LayoutGrid4Icon className="h-4 w-4" />
-        {LAYOUT_PRESETS[active].label}
+        {t(LAYOUT_LABEL_KEYS[active])}
       </button>
       {open &&
         createPortal(
@@ -94,7 +103,7 @@ export default function LayoutsMenu() {
             className="fixed z-[80] w-[220px] rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-1 shadow-[var(--shadow-card)]"
           >
             <p className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
-              Layouts
+              {t("layouts")}
             </p>
             {(Object.keys(LAYOUT_PRESETS) as LayoutPresetId[]).map((id) => (
               <button
@@ -108,8 +117,10 @@ export default function LayoutsMenu() {
                     : "text-[var(--text-muted)] hover:bg-black/[0.04] hover:text-[var(--text-primary)]"
                 }`}
               >
-                {LAYOUT_PRESETS[id].label}
-                {active === id ? <span className="text-[10px]">Active</span> : null}
+                {t(LAYOUT_LABEL_KEYS[id])}
+                {active === id ? (
+                  <span className="text-[10px]">{t("layoutActive")}</span>
+                ) : null}
               </button>
             ))}
             <div className="my-1 border-t border-[var(--card-border)]" />
@@ -119,7 +130,7 @@ export default function LayoutsMenu() {
               onClick={() => choose("advanced")}
               className="rail-icon flex w-full rounded-lg px-3 py-2 text-left text-sm text-[var(--text-muted)] hover:bg-black/[0.04] hover:text-[var(--text-primary)]"
             >
-              Reset layout
+              {t("layoutReset")}
             </button>
           </div>,
           document.body,

@@ -2,14 +2,16 @@ import { NavLink } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 import { visibleProductNav } from "./navConfig";
 import TradeMenu from "./TradeMenu";
+import { useLanguage } from "../../features/auth/LanguageProvider";
 
 export default function ProductNav() {
   const { isSignedIn } = useAuth();
+  const { t } = useLanguage();
   const items = visibleProductNav(Boolean(isSignedIn));
 
   return (
     <nav
-      aria-label="Products"
+      aria-label={t("productsNav")}
       className="border-b border-[var(--card-border)] bg-[var(--card-bg)]"
     >
       <div className="mx-auto flex max-w-[1750px] items-center gap-1 overflow-x-auto px-2 py-1.5">
@@ -29,7 +31,7 @@ export default function ProductNav() {
                 }`
               }
             >
-              {item.label}
+              {t(item.labelKey)}
             </NavLink>
           ),
         )}

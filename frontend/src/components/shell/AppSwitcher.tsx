@@ -1,49 +1,51 @@
+import { Link, useLocation } from "react-router-dom";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link, useLocation } from "react-router-dom";
 import { DotsIcon } from "./shellIcons";
+import { useLanguage } from "../../features/auth/LanguageProvider";
+import type { ShellMessageKey } from "../../features/i18n/shellCatalog";
 
-export type AppEntry =
+type AppEntry =
   | {
       id: string;
-      title: string;
-      description: string;
+      titleKey: ShellMessageKey;
+      descriptionKey: ShellMessageKey;
       kind: "external";
       href: string;
     }
   | {
       id: string;
-      title: string;
-      description: string;
+      titleKey: ShellMessageKey;
+      descriptionKey: ShellMessageKey;
       kind: "internal";
       href: string;
     }
   | {
       id: string;
-      title: string;
-      description: string;
+      titleKey: ShellMessageKey;
+      descriptionKey: ShellMessageKey;
       kind: "soon";
     };
 
-export const APP_ENTRIES: AppEntry[] = [
+const APP_ENTRIES: AppEntry[] = [
   {
     id: "marketing",
-    title: "Pioni",
-    description: "Explore markets and get started",
+    titleKey: "appPioni",
+    descriptionKey: "appPioniDesc",
     kind: "external",
     href: "https://pioni.ai",
   },
   {
     id: "trade",
-    title: "Paper trading",
-    description: "Spot, margin, yield, and futures",
+    titleKey: "appPaperTrading",
+    descriptionKey: "appPaperTradingDesc",
     kind: "internal",
     href: "/trading",
   },
   {
     id: "desktop",
-    title: "Desktop",
-    description: "Coming soon",
+    titleKey: "appDesktop",
+    descriptionKey: "appComingSoon",
     kind: "soon",
   },
 ];
@@ -55,6 +57,7 @@ export function AppSwitcherMenu({
   onNavigate?: () => void;
   className?: string;
 }) {
+  const { t } = useLanguage();
   return (
     <div role="menu" className={className}>
       {APP_ENTRIES.map((entry) => {
@@ -73,10 +76,10 @@ export function AppSwitcherMenu({
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-medium text-[var(--text-primary)]">
-                {entry.title}
+                {t(entry.titleKey)}
               </span>
               <span className="block text-xs text-[var(--text-muted)]">
-                {entry.description}
+                {t(entry.descriptionKey)}
               </span>
             </span>
           </>
@@ -128,6 +131,7 @@ export function AppSwitcherMenu({
 }
 
 export default function AppSwitcher() {
+  const { t } = useLanguage();
   const menuId = useId();
   const btnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -182,7 +186,7 @@ export default function AppSwitcher() {
       <button
         ref={btnRef}
         type="button"
-        aria-label="App switcher"
+        aria-label={t("appSwitcher")}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}

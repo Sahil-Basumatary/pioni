@@ -13,12 +13,12 @@ import {
   writeRegionalPrefs,
   type AppLanguage,
 } from "../settings/regionalPrefs";
-import { authMessage, type AuthMessageKey } from "./authCatalog";
+import { translate, type MessageKey } from "../i18n/translate";
 
 type LanguageContextValue = {
   language: AppLanguage;
   setLanguage: (language: AppLanguage) => void;
-  t: (key: AuthMessageKey, vars?: Record<string, string>) => string;
+  t: (key: MessageKey, vars?: Record<string, string>) => string;
 };
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
@@ -54,8 +54,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const t = useCallback(
-    (key: AuthMessageKey, vars?: Record<string, string>) =>
-      authMessage(language, key, vars),
+    (key: MessageKey, vars?: Record<string, string>) =>
+      translate(language, key, vars),
     [language],
   );
 

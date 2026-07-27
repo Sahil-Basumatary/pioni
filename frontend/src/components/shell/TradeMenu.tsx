@@ -7,6 +7,7 @@ import {
   isPathActive,
   type NavGroupItem,
 } from "./navConfig";
+import { useLanguage } from "../../features/auth/LanguageProvider";
 
 type MenuPos = { top: number; left: number };
 
@@ -17,6 +18,7 @@ export default function TradeMenu({
   item: NavGroupItem;
   variant?: "nav" | "topbar";
 }) {
+  const { t } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
   const menuId = useId();
@@ -108,7 +110,7 @@ export default function TradeMenu({
               }`
         }
       >
-        {item.label}
+        {t(item.labelKey)}
         <svg
           aria-hidden="true"
           viewBox="0 0 12 12"
@@ -147,7 +149,7 @@ export default function TradeMenu({
                   }`
                 }
               >
-                <span>{child.label}</span>
+                <span>{t(child.labelKey)}</span>
                 {child.badge && (
                   <span className="rounded-md bg-[var(--bg)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
                     {child.badge}
