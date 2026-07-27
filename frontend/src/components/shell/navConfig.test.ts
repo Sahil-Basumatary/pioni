@@ -4,6 +4,7 @@ import {
   groupContainsPath,
   groupDefaultTo,
   isPathActive,
+  visibleProductNav,
   type NavGroupItem,
 } from "./navConfig";
 
@@ -18,6 +19,11 @@ describe("navConfig", () => {
       "futures",
       "prop",
     ]);
+  });
+
+  it("hides Home from product nav while signed out", () => {
+    expect(visibleProductNav(true).some((item) => item.id === "home")).toBe(true);
+    expect(visibleProductNav(false).some((item) => item.id === "home")).toBe(false);
   });
 
   it("marks nested trade routes as active for the Trade group", () => {

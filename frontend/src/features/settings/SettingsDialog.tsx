@@ -362,7 +362,7 @@ function AccountSection() {
           type="button"
           onClick={() => {
             closeSettings();
-            void clerk.signOut({ redirectUrl: "/home" });
+            void clerk.signOut({ redirectUrl: "/trading" });
           }}
           className="rounded-[6px] px-3 py-1.5 text-sm font-medium text-[#787774] hover:bg-[rgba(42,28,0,0.045)] hover:text-[#2C2C2B]"
         >

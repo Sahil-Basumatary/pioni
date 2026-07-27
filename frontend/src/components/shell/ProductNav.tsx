@@ -1,15 +1,19 @@
 import { NavLink } from "react-router-dom";
-import { PRODUCT_NAV } from "./navConfig";
+import { useAuth } from "@clerk/clerk-react";
+import { visibleProductNav } from "./navConfig";
 import TradeMenu from "./TradeMenu";
 
 export default function ProductNav() {
+  const { isSignedIn } = useAuth();
+  const items = visibleProductNav(Boolean(isSignedIn));
+
   return (
     <nav
       aria-label="Products"
       className="border-b border-[var(--card-border)] bg-[var(--card-bg)]"
     >
       <div className="mx-auto flex max-w-[1750px] items-center gap-1 overflow-x-auto px-2 py-1.5">
-        {PRODUCT_NAV.map((item) =>
+        {items.map((item) =>
           item.kind === "group" ? (
             <TradeMenu key={item.id} item={item} />
           ) : (

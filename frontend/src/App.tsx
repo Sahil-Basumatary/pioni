@@ -6,6 +6,7 @@ import {
   Navigate,
   Outlet,
 } from "react-router-dom";
+import { useAuth } from "@clerk/clerk-react";
 import AppShell from "./components/shell/AppShell";
 import ComingSoonPage from "./pages/ComingSoonPage";
 import { LanguageProvider } from "./features/auth/LanguageProvider";
@@ -54,7 +55,13 @@ function RouteFallback() {
 }
 
 function StartRedirect() {
-  return <Navigate to={startPagePath()} replace />;
+  const { isSignedIn, isLoaded } = useAuth();
+  if (!isLoaded) return null;
+  const path = startPagePath();
+  if (!isSignedIn && path === "/home") {
+    return <Navigate to="/trading" replace />;
+  }
+  return <Navigate to={path} replace />;
 }
 
 function ShellLayout() {

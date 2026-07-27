@@ -24,7 +24,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ClerkProvider
       publishableKey={PUBLISHABLE_KEY}
-      afterSignOutUrl="/home"
+      afterSignOutUrl="/trading"
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
       appearance={clerkAppearance}

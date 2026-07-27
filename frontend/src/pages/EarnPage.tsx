@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@clerk/clerk-react";
 import {
   ArrowTopRightIcon,
   ChevronDownSmallIcon,
@@ -10,6 +11,7 @@ import {
   FilterIcon,
   SettingsSliderHorizontalIcon,
 } from "../components/shell/shellIcons";
+import SignedOutUnlock from "../features/auth/SignedOutUnlock";
 import {
   BUY_ASSETS,
   EARN_PAYOUTS,
@@ -70,6 +72,7 @@ function UsdAmount({
 }
 
 export default function EarnPage() {
+  const { isSignedIn } = useAuth();
   const [autoEarn, setAutoEarn] = useState(false);
   const [readyTab, setReadyTab] = useState<ReadyTab>("ready");
   const [bottomTab, setBottomTab] = useState<BottomTab>("payouts");
@@ -78,6 +81,14 @@ export default function EarnPage() {
   const earnPct = autoEarn ? 100 : EARN_SUMMARY.autoEarnPct;
   const readyCount = READY_ASSETS.length;
   const buyCount = BUY_ASSETS.length;
+
+  if (!isSignedIn) {
+    return (
+      <div className="mx-auto flex w-full max-w-[1750px] flex-col">
+        <SignedOutUnlock size="page" showLogo />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-[1320px] flex-col gap-2 px-2 pb-16 pt-1 text-[var(--text-primary)]">

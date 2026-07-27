@@ -43,6 +43,12 @@ export const PRODUCT_NAV: NavItem[] = [
   { kind: "link", id: "sentiment", label: "Sentiment", to: "/sentiment" },
 ];
 
+/** Home is account-only, so guests never see it in product chrome. */
+export function visibleProductNav(isSignedIn: boolean): NavItem[] {
+  if (isSignedIn) return PRODUCT_NAV;
+  return PRODUCT_NAV.filter((item) => item.id !== "home");
+}
+
 export function isPathActive(pathname: string, to: string): boolean {
   return pathname === to || pathname.startsWith(`${to}/`);
 }

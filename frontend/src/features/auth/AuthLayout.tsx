@@ -26,7 +26,7 @@ export default function AuthLayout({
     <div className="flex min-h-dvh flex-col bg-[#F6F5F9] text-[#101114]">
       <header className="flex h-12 shrink-0 items-center justify-between px-4">
         <div className="flex items-center gap-3">
-          <Link to="/home" className="flex items-center">
+          <Link to="/trading" className="flex items-center">
             <img src="/logo.svg" alt="Pioni" className="h-7" />
           </Link>
           {backTo && !backAboveCard ? (

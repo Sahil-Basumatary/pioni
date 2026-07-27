@@ -1,11 +1,12 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { NavLink, useLocation } from "react-router-dom";
+import { useAuth } from "@clerk/clerk-react";
 import {
-  PRODUCT_NAV,
   groupContainsPath,
   groupDefaultTo,
   isPathActive,
+  visibleProductNav,
   type NavItem,
 } from "./navConfig";
 
@@ -33,8 +34,11 @@ function flattenNav(items: NavItem[]): FlatLink[] {
   return out;
 }
 
-export function resolveCompactNavLabel(pathname: string): string {
-  for (const item of PRODUCT_NAV) {
+export function resolveCompactNavLabel(
+  pathname: string,
+  isSignedIn: boolean,
+): string {
+  for (const item of visibleProductNav(isSignedIn)) {
     if (item.kind === "link" && isPathActive(pathname, item.to)) {
       return item.label;
     }
@@ -45,20 +49,24 @@ export function resolveCompactNavLabel(pathname: string): string {
     }
   }
   if (pathname.startsWith("/otc")) return "OTC";
-  if (pathname.startsWith("/deposit")) return "Home";
-  return "Home";
+  if (pathname.startsWith("/deposit")) return isSignedIn ? "Home" : "Trade";
+  return isSignedIn ? "Home" : "Trade";
 }
-
-const MENU_LINKS = flattenNav(PRODUCT_NAV);
 
 export default function ProductSwitcher() {
   const location = useLocation();
+  const { isSignedIn } = useAuth();
   const menuId = useId();
   const btnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<MenuPos>({ top: 0, left: 0 });
-  const label = resolveCompactNavLabel(location.pathname);
+  const signedIn = Boolean(isSignedIn);
+  const menuLinks = useMemo(
+    () => flattenNav(visibleProductNav(signedIn)),
+    [signedIn],
+  );
+  const label = resolveCompactNavLabel(location.pathname, signedIn);
 
   function placeMenu() {
     const btn = btnRef.current;
@@ -144,7 +152,7 @@ export default function ProductSwitcher() {
             style={{ top: pos.top, left: pos.left }}
             className="fixed z-[80] min-w-[180px] rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-1 shadow-[var(--shadow-card)]"
           >
-            {MENU_LINKS.map((item) => (
+            {menuLinks.map((item) => (
               <NavLink
                 key={item.id}
                 to={item.to}

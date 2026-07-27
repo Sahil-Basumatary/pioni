@@ -157,8 +157,8 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
       : null;
 
   return (
-    <div className="my-2 flex min-h-8 w-full items-center justify-between gap-1 px-2">
-      <div className="flex items-center gap-3">
+    <div className="flex min-h-8 w-full min-w-0 items-center justify-between gap-2">
+      <div className="flex shrink-0 items-center gap-3">
         <button
           type="button"
           onClick={openSearch}

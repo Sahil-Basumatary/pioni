@@ -1,10 +1,10 @@
 import { useState } from "react";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 import {
   useGetMyPnlChartQuery,
   useGetMySummaryQuery,
 } from "../features/portfolio/portfolioApi";
-import SignedOutUnlock from "../features/auth/SignedOutUnlock";
 import HomeActivity from "../features/home/HomeActivity";
 import HomeHoldingsPanel from "../features/home/HomeHoldingsPanel";
 import HomeMarketsStrip from "../features/home/HomeMarketsStrip";
@@ -15,7 +15,7 @@ import TotalValueCard, {
 } from "../features/home/TotalValueCard";
 
 export default function HomePage() {
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
   const [range, setRange] = useState<ChartRange>("1M");
   const days = RANGE_DAYS[range];
   const {
@@ -27,13 +27,8 @@ export default function HomePage() {
     { skip: !isSignedIn },
   );
 
-  if (!isSignedIn) {
-    return (
-      <div className="mx-auto flex w-full max-w-[1750px] flex-col">
-        <SignedOutUnlock size="page" showLogo />
-      </div>
-    );
-  }
+  if (!isLoaded) return null;
+  if (!isSignedIn) return <Navigate to="/trading" replace />;
 
   const totalValue =
     summary?.total_value != null ? Number(summary.total_value) : null;

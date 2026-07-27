@@ -292,7 +292,7 @@ export default function AccountSecurity() {
       closeDeleteConfirm();
       closeSettings();
       toast("Account deleted");
-      await clerk.signOut({ redirectUrl: "/home" });
+      await clerk.signOut({ redirectUrl: "/trading" });
     } catch (err) {
       toast(clerkMessage(err));
     } finally {

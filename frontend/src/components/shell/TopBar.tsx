@@ -22,9 +22,16 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
       >
         <div className="flex h-12 w-full items-center justify-between gap-0 overflow-hidden px-2 ps-4">
           <div className="flex h-full min-w-0 grow items-center gap-3">
-            <NavLink to="/home" className="flex shrink-0 items-center gap-1.5 p-1">
-              <img src="/logo.svg" alt="Pioni" className="h-5" />
-            </NavLink>
+            <SignedIn>
+              <NavLink to="/home" className="flex shrink-0 items-center gap-1.5 p-1">
+                <img src="/logo.svg" alt="Pioni" className="h-5" />
+              </NavLink>
+            </SignedIn>
+            <SignedOut>
+              <NavLink to="/trading" className="flex shrink-0 items-center gap-1.5 p-1">
+                <img src="/logo.svg" alt="Pioni" className="h-5" />
+              </NavLink>
+            </SignedOut>
             <ProductSwitcher />
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -61,9 +68,16 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
   return (
     <header className="border-b border-[var(--card-border)] bg-[var(--card-bg)]/90 backdrop-blur-lg">
       <div className="mx-auto flex h-14 w-full max-w-[1750px] items-center gap-3 px-2">
-        <NavLink to="/home" className="flex shrink-0 items-center">
-          <img src="/logo.svg" alt="Pioni" className="h-9" />
-        </NavLink>
+        <SignedIn>
+          <NavLink to="/home" className="flex shrink-0 items-center">
+            <img src="/logo.svg" alt="Pioni" className="h-9" />
+          </NavLink>
+        </SignedIn>
+        <SignedOut>
+          <NavLink to="/trading" className="flex shrink-0 items-center">
+            <img src="/logo.svg" alt="Pioni" className="h-9" />
+          </NavLink>
+        </SignedOut>
         <button
           type="button"
           onClick={openSearch}

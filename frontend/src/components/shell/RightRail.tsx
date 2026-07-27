@@ -67,7 +67,9 @@ export default function RightRail() {
         <div className="fixed bottom-14 right-11 z-[56] w-56 md:right-12">
           <SideCard title="Apps" onClose={() => setTab(null)}>
             <nav className="flex flex-col gap-0.5 p-2">
-              <AppLink to="/home" label="Home" onClick={() => setTab(null)} />
+              {isSignedIn ? (
+                <AppLink to="/home" label="Home" onClick={() => setTab(null)} />
+              ) : null}
               <AppLink to="/trading" label="Trade" onClick={() => setTab(null)} />
               <AppLink to="/markets" label="Markets" onClick={() => setTab(null)} />
               <AppLink to="/yield" label="Yield" onClick={() => setTab(null)} />

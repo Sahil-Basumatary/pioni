@@ -66,15 +66,16 @@ describe("TopBar auth chrome", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("opens account settings from compact chrome when signed in", () => {
-    auth.signedIn = true;
+  it("sends signed-out logo clicks to Trade", () => {
+    auth.signedIn = false;
     render(
       <MemoryRouter>
-        <TopBar compact />
+        <TopBar />
       </MemoryRouter>,
     );
-    expect(
-      screen.getByRole("button", { name: "Account settings" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Pioni" })).toHaveAttribute(
+      "href",
+      "/trading",
+    );
   });
 });
