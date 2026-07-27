@@ -7,7 +7,7 @@ import {
   readLayoutPreset,
   type LayoutPresetId,
 } from "../../features/trading/layoutStorage";
-import { LayoutAddIcon } from "./shellIcons";
+import { LayoutGrid4Icon } from "./shellIcons";
 
 const TRADE_PATHS = new Set(["/trading", "/trade/margin", "/trade/futures"]);
 
@@ -17,6 +17,7 @@ export default function LayoutsMenu() {
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const onTrade = TRADE_PATHS.has(pathname);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<LayoutPresetId>(() => readLayoutPreset());
   const [pos, setPos] = useState({ top: 0, left: 0 });
@@ -53,6 +54,10 @@ export default function LayoutsMenu() {
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!onTrade) setOpen(false);
+  }, [onTrade]);
+
   function choose(id: LayoutPresetId) {
     applyLayoutPreset(id);
     setActive(id);
@@ -61,6 +66,8 @@ export default function LayoutsMenu() {
       navigate("/trading");
     }
   }
+
+  if (!onTrade) return null;
 
   return (
     <>
@@ -72,9 +79,10 @@ export default function LayoutsMenu() {
         aria-expanded={open}
         aria-controls={menuId}
         onClick={() => setOpen((v) => !v)}
-        className="rail-icon hidden h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg)] hover:text-[var(--text-primary)] md:inline-flex"
+        className="rail-icon hidden h-8 items-center gap-1 rounded-lg px-2 text-sm text-[var(--text-muted)] hover:bg-[var(--bg)] hover:text-[var(--text-primary)] md:inline-flex"
       >
-        <LayoutAddIcon className="h-5 w-5" />
+        <LayoutGrid4Icon className="h-4 w-4" />
+        {LAYOUT_PRESETS[active].label}
       </button>
       {open &&
         createPortal(

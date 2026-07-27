@@ -1,8 +1,10 @@
 import { Link, NavLink } from "react-router-dom";
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
+import AppSwitcher from "./AppSwitcher";
 import BalanceChip from "./BalanceChip";
 import LayoutsMenu from "./LayoutsMenu";
 import ProductSwitcher from "./ProductSwitcher";
+import TopBarLanguageMenu from "./TopBarLanguageMenu";
 import { useMarketSearch } from "../../features/markets/MarketSearchContext";
 import { useConvert } from "../../features/convert/ConvertContext";
 import { useSettings } from "../../features/settings/settingsContext";
@@ -34,7 +36,7 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
             </SignedOut>
             <ProductSwitcher />
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1">
             <div
               data-tour="balance"
               className="inline-flex items-center rounded-lg bg-black/[0.06] px-2.5 py-1.5 text-sm font-medium tabular-nums text-[var(--text-primary)]"
@@ -44,9 +46,8 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
                 <span aria-hidden="true">-</span>
               </SignedOut>
             </div>
+            <TopBarLanguageMenu />
             <SignedIn>
-              {/* The right rail is desktop-only, so this is the sole route to settings
-                  and sign-out on a small screen. */}
               <button
                 type="button"
                 aria-label="Account settings"
@@ -59,6 +60,7 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
             <SignedOut>
               <AuthButtons />
             </SignedOut>
+            <AppSwitcher />
           </div>
         </div>
       </header>
@@ -111,9 +113,11 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
               <BalanceChip />
             </span>
           </SignedIn>
+          <TopBarLanguageMenu />
           <SignedOut>
             <AuthButtons />
           </SignedOut>
+          <AppSwitcher />
         </div>
       </div>
     </header>
