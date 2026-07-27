@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import NotificationsPanel from "./NotificationsPanel";
 import FavoritesRailPanel from "./FavoritesRailPanel";
-import { useConvert } from "../../features/convert/ConvertContext";
+import { AppSwitcherMenu } from "./AppSwitcher";
 import { useSettings } from "../../features/settings/settingsContext";
 import {
   BellIcon,
@@ -24,7 +24,6 @@ export default function RightRail() {
   const [tab, setTab] = useState<RailTab>(null);
   const navigate = useNavigate();
   const { isSignedIn } = useAuth();
-  const { openConvert } = useConvert();
   const { openSettings } = useSettings();
   const { open: checklistOpen, toggle: toggleChecklist, setOpen: setChecklistOpen } =
     useChecklistUi();
@@ -64,27 +63,24 @@ export default function RightRail() {
         </div>
       )}
       {tab === "apps" && (
-        <div className="fixed bottom-14 right-11 z-[56] w-56 md:right-12">
-          <SideCard title="Apps" onClose={() => setTab(null)}>
-            <nav className="flex flex-col gap-0.5 p-2">
-              {isSignedIn ? (
-                <AppLink to="/home" label="Home" onClick={() => setTab(null)} />
-              ) : null}
-              <AppLink to="/trading" label="Trade" onClick={() => setTab(null)} />
-              <AppLink to="/markets" label="Markets" onClick={() => setTab(null)} />
-              <AppLink to="/yield" label="Yield" onClick={() => setTab(null)} />
+        <div className="fixed bottom-14 right-11 z-[56] w-[300px] md:right-12">
+          <div className="overflow-hidden rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-[var(--shadow-card)]">
+            <div className="flex items-center justify-between border-b border-[var(--card-border)] px-3 py-2">
+              <p className="text-sm font-medium text-[var(--text-primary)]">Apps</p>
               <button
                 type="button"
-                onClick={() => {
-                  setTab(null);
-                  openConvert();
-                }}
-                className="rounded-lg px-3 py-2 text-left text-sm text-[var(--text-primary)] hover:bg-black/[0.04]"
+                aria-label="Close Apps"
+                onClick={() => setTab(null)}
+                className="rail-icon rounded-lg p-1 text-[var(--text-muted)] hover:bg-black/[0.04] hover:text-[var(--text-primary)]"
               >
-                Convert
+                <CloseIcon className="h-4 w-4" />
               </button>
-            </nav>
-          </SideCard>
+            </div>
+            <AppSwitcherMenu
+              className="p-1"
+              onNavigate={() => setTab(null)}
+            />
+          </div>
         </div>
       )}
       <aside
@@ -210,25 +206,5 @@ function SideCard({
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
     </div>
-  );
-}
-
-function AppLink({
-  to,
-  label,
-  onClick,
-}: {
-  to: string;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <Link
-      to={to}
-      onClick={onClick}
-      className="rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-black/[0.04]"
-    >
-      {label}
-    </Link>
   );
 }

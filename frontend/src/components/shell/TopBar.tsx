@@ -46,7 +46,6 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
                 <span aria-hidden="true">-</span>
               </SignedOut>
             </div>
-            <TopBarLanguageMenu />
             <SignedIn>
               <button
                 type="button"
@@ -56,11 +55,14 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
               >
                 <UserIcon className="h-6 w-6" />
               </button>
+              {/* No right rail on compact, so keep the app switcher reachable */}
+              <AppSwitcher />
             </SignedIn>
             <SignedOut>
+              <TopBarLanguageMenu />
               <AuthButtons />
+              <AppSwitcher />
             </SignedOut>
-            <AppSwitcher />
           </div>
         </div>
       </header>
@@ -113,11 +115,11 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
               <BalanceChip />
             </span>
           </SignedIn>
-          <TopBarLanguageMenu />
           <SignedOut>
+            <TopBarLanguageMenu />
             <AuthButtons />
+            <AppSwitcher />
           </SignedOut>
-          <AppSwitcher />
         </div>
       </div>
     </header>

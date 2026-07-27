@@ -96,7 +96,7 @@ describe("TopBar auth chrome", () => {
     );
   });
 
-  it("shows deposit and convert while signed in", () => {
+  it("shows deposit convert and balance chrome while signed in", () => {
     auth.signedIn = true;
     renderTopBar();
     expect(screen.getByRole("link", { name: /Deposit/i })).toHaveAttribute(
@@ -104,7 +104,7 @@ describe("TopBar auth chrome", () => {
       "/deposit",
     );
     expect(screen.getByRole("button", { name: /Convert/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Select language" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "App switcher" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Select language" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "App switcher" })).not.toBeInTheDocument();
   });
 });
