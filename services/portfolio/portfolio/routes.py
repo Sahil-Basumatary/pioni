@@ -16,6 +16,7 @@ from common import (
 from portfolio.api_keys import create_api_key, list_active_api_keys, revoke_api_key
 from portfolio.charts import SnapshotValue, build_daily_pnl_chart
 from portfolio.email_notify import order_email_copy, send_resend_email
+from portfolio.ledger_backfill import ensure_portfolio_ledger
 from portfolio.notification_prefs import (
     apply_notification_prefs_patch,
     get_or_create_notification_prefs,
@@ -407,6 +408,8 @@ async def list_ledger(
     offset: int = Query(0, ge=0),
     session: AsyncSession = Depends(get_db),
 ) -> list[LedgerEntryResponse]:
+    # Old fills predate ledger writes; History Balance needs real balance_after rows.
+    await ensure_portfolio_ledger(session, portfolio_id)
     stmt = select(LedgerEntryORM).where(LedgerEntryORM.portfolio_id == portfolio_id)
     if ticker:
         stmt = stmt.where(LedgerEntryORM.ticker == ticker.upper())
