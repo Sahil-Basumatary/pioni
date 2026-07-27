@@ -3,7 +3,7 @@ import uuid
 from datetime import date, datetime
 from decimal import Decimal
 from pydantic import BaseModel, ConfigDict
-from common import OrderSide
+from common import OrderSide, PriceAlertCondition, PriceAlertStatus
 
 
 class PortfolioResponse(BaseModel):
@@ -162,3 +162,29 @@ class OrderEmailNotifyRequest(BaseModel):
     symbol: str
     status: str
     side: str | None = None
+
+
+class PriceAlertResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    symbol: str
+    condition: PriceAlertCondition
+    target_price: Decimal
+    status: PriceAlertStatus
+    triggered_at: datetime | None = None
+    cancelled_at: datetime | None = None
+    trigger_price: Decimal | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class PriceAlertCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    symbol: str
+    condition: str
+    target_price: Decimal
+
+
+class PriceAlertTrigger(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    price: Decimal

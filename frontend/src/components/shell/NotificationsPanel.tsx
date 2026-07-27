@@ -5,6 +5,13 @@ import { ActivityFillRow } from "../../features/home/ActivityFillRow";
 import SignedOutUnlock from "../../features/auth/SignedOutUnlock";
 import TeachingEmpty from "../../features/onboarding/TeachingEmpty";
 import { useSettings } from "../../features/settings/settingsContext";
+import { useAlertCreate } from "../../features/trading/AlertCreateContext";
+import {
+  formatAlertCondition,
+  formatAlertPair,
+  formatAlertPrice,
+} from "../../features/trading/alertFormat";
+import { useListPriceAlertsQuery } from "../../features/trading/alertsApi";
 import { CloseIcon, BellIcon } from "./shellIcons";
 
 type InboxTab = "inbox" | "alerts";
@@ -12,10 +19,20 @@ type InboxTab = "inbox" | "alerts";
 export default function NotificationsPanel({ onClose }: { onClose: () => void }) {
   const { isSignedIn } = useAuth();
   const { openSettings } = useSettings();
+  const { openCreateAlert } = useAlertCreate();
   const [tab, setTab] = useState<InboxTab>("inbox");
   const { data, isLoading, isError, refetch } = useGetMyTradesQuery(
     { limit: 30 },
     { skip: !isSignedIn || tab !== "inbox" },
+  );
+  const {
+    data: alerts = [],
+    isLoading: alertsLoading,
+    isError: alertsError,
+    refetch: refetchAlerts,
+  } = useListPriceAlertsQuery(
+    { tab: "history" },
+    { skip: !isSignedIn || tab !== "alerts" },
   );
 
   return (
@@ -51,19 +68,87 @@ export default function NotificationsPanel({ onClose }: { onClose: () => void })
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
         {tab === "alerts" ? (
-          <div className="flex flex-col items-center gap-4 px-6 py-12 text-center">
-            <TeachingEmpty id="notifications_alerts" size="panel" />
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                openSettings("notifications");
-              }}
-              className="rounded-xl bg-[var(--accent)] px-3.5 py-2 text-sm font-medium text-white"
-            >
-              Open notification settings
-            </button>
-          </div>
+          !isSignedIn ? (
+            <div className="flex flex-col items-center justify-center px-8 py-20">
+              <SignedOutUnlock size="panel" />
+            </div>
+          ) : alertsLoading ? (
+            <div className="flex flex-col items-center justify-center gap-3 px-8 py-20 text-center">
+              <p className="text-base font-medium text-[var(--text-primary)]">Loading…</p>
+              <p className="text-sm text-[var(--text-muted)]">Fetching your alerts.</p>
+            </div>
+          ) : alertsError ? (
+            <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
+              <p className="text-sm text-[var(--text-muted)]">Couldn’t load alerts.</p>
+              <button
+                type="button"
+                onClick={() => void refetchAlerts()}
+                className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-medium text-white"
+              >
+                Retry
+              </button>
+            </div>
+          ) : alerts.length === 0 ? (
+            <div className="flex flex-col items-center gap-4 px-6 py-12 text-center">
+              <TeachingEmpty id="notifications_alerts" size="panel" />
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  openCreateAlert();
+                }}
+                className="rounded-xl bg-[var(--accent)] px-3.5 py-2 text-sm font-medium text-white"
+              >
+                Create alert
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <ul className="flex list-none flex-col">
+                {alerts.map((alert) => (
+                  <li
+                    key={alert.id}
+                    className="flex items-center justify-between gap-2 border-b border-[rgba(104,107,130,0.12)] px-2 py-2.5"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-[var(--text-primary)]">
+                        {formatAlertPair(alert.symbol)}
+                      </p>
+                      <p className="truncate text-xs text-[rgb(104,107,130)]">
+                        {formatAlertCondition(alert.condition)}{" "}
+                        {formatAlertPrice(alert.target_price)}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-[rgb(104,107,130)]">
+                      {alert.status === "TRIGGERED" ? "Triggered" : "Cancelled"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex flex-wrap justify-center gap-2 px-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    openCreateAlert();
+                  }}
+                  className="rounded-xl bg-[var(--accent)] px-3.5 py-2 text-sm font-medium text-white"
+                >
+                  Create alert
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    openSettings("notifications");
+                  }}
+                  className="rounded-xl bg-[rgba(104,107,130,0.08)] px-3.5 py-2 text-sm font-medium text-[var(--text-primary)]"
+                >
+                  Notification settings
+                </button>
+              </div>
+            </div>
+          )
         ) : !isSignedIn ? (
           <div className="flex flex-col items-center justify-center px-8 py-20">
             <SignedOutUnlock size="panel" />

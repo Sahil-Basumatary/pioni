@@ -891,7 +891,7 @@ function NotificationsSection() {
       <section className="border-t border-[rgba(42,28,0,0.07)] pt-6">
         <h3 className="text-base font-semibold text-[#2C2C2B]">Inbox</h3>
         <p className="mt-1 text-sm text-[#787774]">
-          Recent fills stay in the right-rail inbox. Price alerts are coming later.
+          Recent fills stay in the right-rail inbox. Price alerts live on Trade under Alerts.
         </p>
         <p className="mt-3 text-sm text-[#787774]">
           Fill sound is managed in Preferences under Trading.

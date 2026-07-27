@@ -4,6 +4,7 @@ import { useLiveMarketTrade } from "../market/liveMarketStore";
 import { getMarketMeta } from "../markets/catalog";
 import { useMarketSearch } from "../markets/MarketSearchContext";
 import { useConvert } from "../convert/ConvertContext";
+import { useAlertCreate } from "../trading/AlertCreateContext";
 import {
   BellIcon,
   ConvertIcon,
@@ -95,6 +96,7 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
   const trade = useLiveMarketTrade(symbol);
   const { favorites, toggleFav, openSearch } = useMarketSearch();
   const { openConvert } = useConvert();
+  const { openCreateAlert } = useAlertCreate();
   const { data: book } = useGetOrderBookQuery(
     { symbol, depth: 1 },
     { pollingInterval: 5_000 },
@@ -200,6 +202,7 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
         <button
           type="button"
           aria-label="Create alert"
+          onClick={() => openCreateAlert(symbol)}
           className="rail-icon flex h-4 w-4 items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)]"
         >
           <BellIcon className="h-4 w-4" />

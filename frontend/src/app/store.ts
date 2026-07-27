@@ -9,6 +9,7 @@ import { ordersApi } from "../features/orders/ordersApi";
 import { onboardingApi } from "../features/onboarding/onboardingApi";
 import { apiKeysApi } from "../features/settings/apiKeysApi";
 import { notificationPrefsApi } from "../features/settings/notificationPrefsApi";
+import { alertsApi } from "../features/trading/alertsApi";
 
 const rootReducer = combineReducers({
   instrument: instrumentReducer,
@@ -20,6 +21,7 @@ const rootReducer = combineReducers({
   [onboardingApi.reducerPath]: onboardingApi.reducer,
   [apiKeysApi.reducerPath]: apiKeysApi.reducer,
   [notificationPrefsApi.reducerPath]: notificationPrefsApi.reducer,
+  [alertsApi.reducerPath]: alertsApi.reducer,
 });
 
 export function setupStore(preloadedState?: Partial<RootState>) {
@@ -33,6 +35,7 @@ export function setupStore(preloadedState?: Partial<RootState>) {
         onboardingApi.middleware,
         apiKeysApi.middleware,
         notificationPrefsApi.middleware,
+        alertsApi.middleware,
       ),
     preloadedState,
   });

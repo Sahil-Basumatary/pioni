@@ -27,6 +27,7 @@ import ContentWindow, {
   type ContentTab,
 } from "../features/trading/ContentWindow";
 import AlertsPanel from "../features/trading/AlertsPanel";
+import { useAlertCreate } from "../features/trading/AlertCreateContext";
 import ComingSoonBody from "../features/trading/ComingSoonBody";
 import DepthChartPanel from "../features/trading/DepthChartPanel";
 import ResizeHandle from "../features/trading/ResizeHandle";
@@ -124,6 +125,7 @@ export default function TradingPage({
   const status = useAppSelector(selectMarketStatus);
   const { isSignedIn } = useAuth();
   const compact = useCompactShell();
+  const { openCreateAlert } = useAlertCreate();
   const { subscribe, unsubscribe, registerKlineHandler } = useMarketSocket();
   const chartRef = useRef<CandlestickChartHandle>(null);
   const prevSymbolRef = useRef<string | null>(null);
@@ -292,7 +294,10 @@ export default function TradingPage({
           symbol={symbol}
           venue={venue}
           compact
-          onCreateAlert={() => setMobileTab("alerts")}
+          onCreateAlert={() => {
+            setMobileTab("alerts");
+            openCreateAlert(symbol);
+          }}
         />
         <div className="grid min-h-0 flex-1 grid-rows-[auto_1fr] overflow-hidden">
           <MobileTradeTabs
@@ -320,6 +325,7 @@ export default function TradingPage({
             setMaximized(null);
             setTicketTab("alerts");
             setStubTitle((s) => ({ ...s, ticket: null }));
+            openCreateAlert(symbol);
           }}
         />
       )}

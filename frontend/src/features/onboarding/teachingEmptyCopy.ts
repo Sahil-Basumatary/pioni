@@ -90,7 +90,7 @@ export const TEACHING_EMPTY: Record<TeachingEmptyId, TeachingEmptyEntry> = {
   },
   notifications_alerts: {
     title: "No alerts yet",
-    body: "Price and order alerts will show here once you create them. For now, watch fills in Updates.",
+    body: "Price alerts you create on Trade show here once they trigger. Create one from the Alerts tab.",
     actionLabel: null,
     action: null,
   },

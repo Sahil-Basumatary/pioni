@@ -253,6 +253,66 @@ async def patch_my_notification_prefs(
     return await patch_my_notification_prefs_upstream(ctx, body)
 
 
+async def _proxy_me_with_identity(
+    method: str,
+    path: str,
+    ctx: AuthContext,
+    *,
+    params: dict | None = None,
+    json: dict | None = None,
+):
+    client = await _get_client()
+    try:
+        resp = await client.request(
+            method,
+            path,
+            headers=await _identity_headers(ctx),
+            params=params,
+            json=json,
+        )
+    except httpx.RequestError as e:
+        logger.error("portfolio service unreachable", extra={"error": str(e)})
+        raise _unavailable() from None
+    if resp.status_code >= 400:
+        raise HTTPException(status_code=resp.status_code, detail=resp.json())
+    if resp.status_code == 204 or not resp.content:
+        return None
+    return resp.json()
+
+
+@me_router.get("/alerts")
+async def my_alerts(
+    ctx: AuthContext = Depends(require_auth),
+    tab: str = Query("active"),
+    symbol: str | None = Query(None),
+):
+    params: dict = {"tab": tab}
+    if symbol:
+        params["symbol"] = symbol
+    return await _proxy_me_with_identity("GET", "/me/alerts", ctx, params=params)
+
+
+@me_router.post("/alerts", status_code=201)
+async def create_my_alert(body: dict, ctx: AuthContext = Depends(require_auth)):
+    return await _proxy_me_with_identity("POST", "/me/alerts", ctx, json=body)
+
+
+@me_router.delete("/alerts/{alert_id}")
+async def cancel_my_alert(alert_id: str, ctx: AuthContext = Depends(require_auth)):
+    return await _proxy_me_with_identity("DELETE", f"/me/alerts/{alert_id}", ctx)
+
+
+@me_router.post("/alerts/{alert_id}/trigger")
+async def trigger_my_alert(
+    alert_id: str,
+    body: dict,
+    ctx: AuthContext = Depends(require_auth),
+):
+    return await _proxy_me_with_identity(
+        "POST", f"/me/alerts/{alert_id}/trigger", ctx, json=body,
+    )
+
+
 async def _proxy_portfolio_get(path: str, params: dict | None = None):
     # Ownership is already resolved here, and the portfolio service trusts the private network.
     client = await _get_client()

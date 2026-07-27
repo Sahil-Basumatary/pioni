@@ -64,6 +64,7 @@ class User(UUIDMixin, TimestampMixin, Base):
     notification_prefs: Mapped[UserNotificationPrefs | None] = relationship(
         back_populates="user", uselist=False,
     )
+    price_alerts: Mapped[list[PriceAlert]] = relationship(back_populates="user")
 
 class UserOnboarding(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "user_onboarding"
@@ -152,6 +153,53 @@ class UserNotificationPrefs(UUIDMixin, TimestampMixin, Base):
     rejections: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     placements: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     user: Mapped[User] = relationship(back_populates="notification_prefs")
+
+
+class PriceAlertCondition(str, enum.Enum):
+    ABOVE = "ABOVE"
+    BELOW = "BELOW"
+
+
+class PriceAlertStatus(str, enum.Enum):
+    ACTIVE = "ACTIVE"
+    TRIGGERED = "TRIGGERED"
+    CANCELLED = "CANCELLED"
+
+
+class PriceAlert(UUIDMixin, TimestampMixin, Base):
+    __tablename__ = "price_alerts"
+    __table_args__ = (
+        Index("ix_price_alerts_user_status", "user_id", "status"),
+        Index("ix_price_alerts_user_symbol", "user_id", "symbol"),
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    symbol: Mapped[str] = mapped_column(String(20), nullable=False)
+    condition: Mapped[PriceAlertCondition] = mapped_column(
+        Enum(PriceAlertCondition, name="price_alert_condition"),
+        nullable=False,
+    )
+    target_price: Mapped[Decimal] = mapped_column(Numeric(20, 8), nullable=False)
+    status: Mapped[PriceAlertStatus] = mapped_column(
+        Enum(PriceAlertStatus, name="price_alert_status"),
+        nullable=False,
+        default=PriceAlertStatus.ACTIVE,
+        index=True,
+    )
+    triggered_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
+    cancelled_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
+    trigger_price: Mapped[Decimal | None] = mapped_column(
+        Numeric(20, 8), nullable=True,
+    )
+    user: Mapped[User] = relationship(back_populates="price_alerts")
 
 
 class Portfolio(UUIDMixin, TimestampMixin, Base):

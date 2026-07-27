@@ -23,6 +23,12 @@ from portfolio.notification_prefs import (
     should_email_status,
 )
 from portfolio.onboarding import apply_onboarding_patch, get_or_create_onboarding
+from portfolio.price_alerts import (
+    cancel_price_alert,
+    create_price_alert,
+    list_price_alerts,
+    trigger_price_alert,
+)
 from portfolio.price_cache import PriceCache
 from portfolio.provisioning import Identity, get_or_create_portfolio
 from portfolio.repository import PortfolioRepository
@@ -40,6 +46,9 @@ from portfolio.schemas import (
     PortfolioResponse,
     PortfolioSummaryResponse,
     PositionResponse,
+    PriceAlertCreate,
+    PriceAlertResponse,
+    PriceAlertTrigger,
     TradeResponse,
 )
 from portfolio.settings import starting_balance
@@ -201,6 +210,61 @@ async def patch_my_notification_prefs(
         await session.flush()
         await session.refresh(row)
     return NotificationPrefsResponse.model_validate(row)
+
+
+@router.get("/me/alerts", response_model=list[PriceAlertResponse])
+async def get_my_alerts(
+    tab: str = Query(default="active"),
+    symbol: str | None = Query(default=None),
+    identity: Identity = Depends(current_identity),
+    session: AsyncSession = Depends(get_db),
+) -> list[PriceAlertResponse]:
+    if tab not in ("active", "history"):
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "INVALID_TAB", "message": "tab must be active or history"},
+        )
+    rows = await list_price_alerts(session, identity, tab=tab, symbol=symbol)
+    return [PriceAlertResponse.model_validate(row) for row in rows]
+
+
+@router.post("/me/alerts", response_model=PriceAlertResponse, status_code=201)
+async def create_my_alert(
+    body: PriceAlertCreate,
+    identity: Identity = Depends(current_identity),
+    session: AsyncSession = Depends(get_db),
+) -> PriceAlertResponse:
+    row = await create_price_alert(
+        session,
+        identity,
+        symbol=body.symbol,
+        condition=body.condition,
+        target_price=body.target_price,
+    )
+    return PriceAlertResponse.model_validate(row)
+
+
+@router.delete("/me/alerts/{alert_id}", response_model=PriceAlertResponse)
+async def cancel_my_alert(
+    alert_id: uuid.UUID,
+    identity: Identity = Depends(current_identity),
+    session: AsyncSession = Depends(get_db),
+) -> PriceAlertResponse:
+    row = await cancel_price_alert(session, identity, alert_id)
+    return PriceAlertResponse.model_validate(row)
+
+
+@router.post("/me/alerts/{alert_id}/trigger", response_model=PriceAlertResponse)
+async def trigger_my_alert(
+    alert_id: uuid.UUID,
+    body: PriceAlertTrigger,
+    identity: Identity = Depends(current_identity),
+    session: AsyncSession = Depends(get_db),
+) -> PriceAlertResponse:
+    row = await trigger_price_alert(
+        session, identity, alert_id, price=body.price,
+    )
+    return PriceAlertResponse.model_validate(row)
 
 
 @router.post("/internal/notify/order-email")

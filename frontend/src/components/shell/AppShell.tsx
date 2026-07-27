@@ -17,6 +17,9 @@ import WelcomeCard from "../../features/onboarding/WelcomeCard";
 import FirstTradeCelebration from "../../features/onboarding/FirstTradeCelebration";
 import { ChecklistProvider } from "../../features/onboarding/ChecklistContext";
 import GettingStartedChecklist from "../../features/onboarding/GettingStartedChecklist";
+import { AlertCreateProvider } from "../../features/trading/AlertCreateContext";
+import CreateAlertDialog from "../../features/trading/CreateAlertDialog";
+import PriceAlertWatcher from "../../features/trading/PriceAlertWatcher";
 import { useCompactShell } from "../../hooks/useCompactShell";
 import GetAppBanner from "./GetAppBanner";
 import ProductNav from "./ProductNav";
@@ -60,6 +63,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     <MarketSocketProvider>
       <MarketSearchProvider>
         <ConvertProvider>
+          <AlertCreateProvider>
           <SettingsProvider>
             <OrderStatusSocketProvider>
               <TourProvider>
@@ -87,6 +91,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   <LastPathTracker />
                   <MarketSearchPalette />
                   <ConvertDialog />
+                  <CreateAlertDialog />
+                  <PriceAlertWatcher />
                   <SettingsDialog />
                   <WelcomeCard />
                   <FirstTradeCelebration />
@@ -97,6 +103,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
               </TourProvider>
             </OrderStatusSocketProvider>
           </SettingsProvider>
+          </AlertCreateProvider>
         </ConvertProvider>
       </MarketSearchProvider>
     </MarketSocketProvider>
