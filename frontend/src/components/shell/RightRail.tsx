@@ -47,7 +47,7 @@ export default function RightRail() {
       {tab && (
         <button
           type="button"
-          aria-label="Dismiss panel"
+          aria-label={t("dismissPanel")}
           className="rail-icon fixed inset-0 z-[55] bg-black/20"
           onClick={() => setTab(null)}
         />
@@ -59,7 +59,7 @@ export default function RightRail() {
       )}
       {tab === "favorites" && (
         <div className="fixed inset-y-2 right-11 z-[56] flex w-[min(360px,calc(100vw-3.5rem))] flex-col md:right-12">
-          <SideCard title="Favorites" onClose={() => setTab(null)}>
+          <SideCard title={t("favorites")} onClose={() => setTab(null)}>
             <FavoritesRailPanel onClose={() => setTab(null)} />
           </SideCard>
         </div>
@@ -71,7 +71,7 @@ export default function RightRail() {
               <p className="text-sm font-medium text-[var(--text-primary)]">{t("apps")}</p>
               <button
                 type="button"
-                aria-label={`${t("apps")}`}
+                aria-label={t("closeNamed", { name: t("apps") })}
                 onClick={() => setTab(null)}
                 className="rail-icon rounded-lg p-1 text-[var(--text-muted)] hover:bg-black/[0.04] hover:text-[var(--text-primary)]"
               >
@@ -86,7 +86,7 @@ export default function RightRail() {
         </div>
       )}
       <aside
-        aria-label="Shortcuts"
+        aria-label={t("shortcuts")}
         className="relative z-[57] me-2 flex h-full w-8 shrink-0 flex-col items-center gap-2 py-2"
       >
         {isSignedIn ? (
@@ -101,14 +101,14 @@ export default function RightRail() {
           </RailIconButton>
         ) : null}
         <RailIconButton
-          label="Show notifications"
+          label={t("showNotifications")}
           active={tab === "notifications"}
           onClick={() => toggle("notifications")}
         >
           <BellIcon className="h-6 w-6" />
         </RailIconButton>
         <RailIconButton
-          label="Show favorites"
+          label={t("showFavorites")}
           active={tab === "favorites"}
           onClick={() => toggle("favorites")}
         >
@@ -116,7 +116,7 @@ export default function RightRail() {
         </RailIconButton>
         {showChecklist ? (
           <RailIconButton
-            label="Getting started"
+            label={t("gettingStarted")}
             active={checklistOpen}
             onClick={() => {
               setTab(null);
@@ -128,7 +128,7 @@ export default function RightRail() {
         ) : null}
         <div className="mt-auto flex flex-col items-center gap-2">
           <RailIconButton
-            label="Help"
+            label={t("help")}
             onClick={() => {
               window.location.href =
                 "mailto:sahil@sahilbasumatary.dev?subject=Pioni%20support";
@@ -137,7 +137,7 @@ export default function RightRail() {
             <QuestionMarkCircleIcon className="h-6 w-6" />
           </RailIconButton>
           <RailIconButton
-            label="Learn center"
+            label={t("learnCenter")}
             onClick={() => navigate("/terms")}
           >
             <BookIcon className="h-6 w-6" />
@@ -193,13 +193,14 @@ function SideCard({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-[0px_4px_40px_rgba(0,0,0,0.12)]">
       <div className="flex h-11 shrink-0 items-center justify-between px-4">
         <span className="text-sm font-medium text-[var(--text-muted)]">{title}</span>
         <button
           type="button"
-          aria-label={`Close ${title}`}
+          aria-label={t("closeNamed", { name: title })}
           onClick={onClose}
           className="rail-icon flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)]"
         >

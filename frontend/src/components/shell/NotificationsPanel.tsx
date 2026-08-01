@@ -12,11 +12,13 @@ import {
   formatAlertPrice,
 } from "../../features/trading/alertFormat";
 import { useListPriceAlertsQuery } from "../../features/trading/alertsApi";
+import { useLanguage } from "../../features/auth/LanguageProvider";
 import { CloseIcon, BellIcon } from "./shellIcons";
 
 type InboxTab = "inbox" | "alerts";
 
 export default function NotificationsPanel({ onClose }: { onClose: () => void }) {
+  const { t } = useLanguage();
   const { isSignedIn } = useAuth();
   const { openSettings } = useSettings();
   const { openCreateAlert } = useAlertCreate();
@@ -38,14 +40,16 @@ export default function NotificationsPanel({ onClose }: { onClose: () => void })
   return (
     <div
       role="dialog"
-      aria-label="Notifications"
+      aria-label={t("notifications")}
       className="flex h-full w-full max-w-[450px] flex-col overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-[0px_4px_40px_rgba(0,0,0,0.12)]"
     >
       <div className="flex h-11 shrink-0 items-center justify-between gap-2 px-4">
-        <span className="text-sm font-medium text-[var(--text-muted)]">Notifications</span>
+        <span className="text-sm font-medium text-[var(--text-muted)]">
+          {t("notifications")}
+        </span>
         <button
           type="button"
-          aria-label="Close notifications"
+          aria-label={t("closeNotifications")}
           onClick={onClose}
           className="rail-icon flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)]"
         >
@@ -54,13 +58,13 @@ export default function NotificationsPanel({ onClose }: { onClose: () => void })
       </div>
       <div className="flex shrink-0 gap-0 px-4 pb-3">
         <TabChip
-          label="Inbox"
+          label={t("inbox")}
           active={tab === "inbox"}
           onClick={() => setTab("inbox")}
           side="start"
         />
         <TabChip
-          label="Manage alerts"
+          label={t("manageAlerts")}
           active={tab === "alerts"}
           onClick={() => setTab("alerts")}
           side="end"
@@ -74,8 +78,10 @@ export default function NotificationsPanel({ onClose }: { onClose: () => void })
             </div>
           ) : alertsLoading ? (
             <div className="flex flex-col items-center justify-center gap-3 px-8 py-20 text-center">
-              <p className="text-base font-medium text-[var(--text-primary)]">Loading…</p>
-              <p className="text-sm text-[var(--text-muted)]">Fetching your alerts.</p>
+              <p className="text-base font-medium text-[var(--text-primary)]">
+                {t("loading")}
+              </p>
+              <p className="text-sm text-[var(--text-muted)]">{t("fetchingAlerts")}</p>
             </div>
           ) : alertsError ? (
             <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
@@ -120,7 +126,9 @@ export default function NotificationsPanel({ onClose }: { onClose: () => void })
                       </p>
                     </div>
                     <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-[rgb(104,107,130)]">
-                      {alert.status === "TRIGGERED" ? "Triggered" : "Cancelled"}
+                      {alert.status === "TRIGGERED"
+                        ? t("alertTriggered")
+                        : t("alertCancelled")}
                     </span>
                   </li>
                 ))}
@@ -155,7 +163,9 @@ export default function NotificationsPanel({ onClose }: { onClose: () => void })
           </div>
         ) : isLoading ? (
           <div className="flex flex-col items-center justify-center gap-3 px-8 py-20 text-center">
-            <p className="text-base font-medium text-[var(--text-primary)]">Loading…</p>
+            <p className="text-base font-medium text-[var(--text-primary)]">
+              {t("loading")}
+            </p>
             <p className="text-sm text-[var(--text-muted)]">Fetching your recent fills.</p>
           </div>
         ) : isError ? (

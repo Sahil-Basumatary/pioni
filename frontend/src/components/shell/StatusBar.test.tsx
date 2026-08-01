@@ -5,6 +5,7 @@ import { Provider } from "react-redux";
 import { MemoryRouter } from "react-router-dom";
 import { configureStore } from "@reduxjs/toolkit";
 import StatusBar from "./StatusBar";
+import { LanguageProvider } from "../../features/auth/LanguageProvider";
 import marketReducer from "../../features/market/marketSlice";
 import instrumentReducer from "../../features/instrument/instrumentSlice";
 
@@ -72,7 +73,9 @@ function renderBar(status: "connected" | "connecting" | "disconnected") {
   return render(
     <Provider store={store}>
       <MemoryRouter>
-        <StatusBar />
+        <LanguageProvider>
+          <StatusBar />
+        </LanguageProvider>
       </MemoryRouter>
     </Provider>,
   );

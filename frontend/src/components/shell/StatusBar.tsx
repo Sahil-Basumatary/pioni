@@ -20,6 +20,8 @@ import {
   useMarketRows,
   type MarketRow,
 } from "../../features/markets/useMarketRows";
+import { useLanguage } from "../../features/auth/LanguageProvider";
+import type { StatusShellMessageKey } from "../../features/i18n/shellStatusCatalog";
 import { formatUsd } from "../../utils/formatters";
 import type { ConnectionStatus } from "../../hooks/useMarketWebSocket";
 import {
@@ -36,35 +38,40 @@ const STATUS_DOT: Record<ConnectionStatus, string> = {
   disconnected: "bg-red-500",
 };
 
-const STATUS_LABEL: Record<ConnectionStatus, string> = {
-  connected: "Online",
-  connecting: "Connecting",
-  disconnected: "Offline",
+const STATUS_LABEL_KEY: Record<ConnectionStatus, StatusShellMessageKey> = {
+  connected: "statusOnline",
+  connecting: "statusConnecting",
+  disconnected: "statusOffline",
 };
 
 type TickerType = "Favorites" | "Gainers" | "Top Traded" | "Losers" | "New";
 
 const TICKER_TYPES: {
   id: TickerType;
+  labelKey: StatusShellMessageKey;
   Icon: ComponentType<{ className?: string }>;
 }[] = [
-  { id: "Favorites", Icon: StarIcon },
-  { id: "Gainers", Icon: LineChartUpIcon },
-  { id: "Top Traded", Icon: PercentageIcon },
-  { id: "Losers", Icon: LineChartDownIcon },
-  { id: "New", Icon: RocketIcon },
+  { id: "Favorites", labelKey: "tickerFavorites", Icon: StarIcon },
+  { id: "Gainers", labelKey: "tickerGainers", Icon: LineChartUpIcon },
+  { id: "Top Traded", labelKey: "tickerTopTraded", Icon: PercentageIcon },
+  { id: "Losers", labelKey: "tickerLosers", Icon: LineChartDownIcon },
+  { id: "New", labelKey: "tickerNew", Icon: RocketIcon },
 ];
 
 type MenuPos = { top: number; left: number };
 
 export default function StatusBar() {
+  const { t } = useLanguage();
   const status = useAppSelector(selectMarketStatus);
   const { favorites } = useMarketSearch();
   const { rows } = useMarketRows(30_000);
   const [tickerType, setTickerType] = useState<TickerType>("Favorites");
   const [showChangePct, setShowChangePct] = useState(true);
   const [showPrice, setShowPrice] = useState(true);
-  const ActiveIcon = TICKER_TYPES.find((t) => t.id === tickerType)?.Icon ?? StarIcon;
+  const activeType = TICKER_TYPES.find((item) => item.id === tickerType);
+  const ActiveIcon = activeType?.Icon ?? StarIcon;
+  const statusLabel = t(STATUS_LABEL_KEY[status]);
+  const tickerLabel = t(activeType?.labelKey ?? "tickerFavorites");
 
   const tickers = useMemo(() => {
     if (tickerType === "New") return [];
@@ -85,7 +92,7 @@ export default function StatusBar() {
         <button
           type="button"
           className="rail-icon inline-flex h-7 shrink-0 items-center gap-1.5 rounded-lg bg-emerald-500/15 px-2 text-[11px] font-medium text-emerald-700"
-          aria-label={STATUS_LABEL[status]}
+          aria-label={statusLabel}
         >
           <span
             className={`inline-block h-1.5 w-1.5 rounded-full ${STATUS_DOT[status]} ${
@@ -93,10 +100,10 @@ export default function StatusBar() {
             }`}
             aria-hidden="true"
           />
-          {STATUS_LABEL[status]}
+          {statusLabel}
         </button>
         <TickerTypeChip
-          label={tickerType}
+          label={tickerLabel}
           Icon={ActiveIcon}
           tickerType={tickerType}
           onSelectType={setTickerType}
@@ -115,13 +122,13 @@ export default function StatusBar() {
             />
           ))}
           {tickerType === "New" && (
-            <span className="truncate text-[11px]">New listings will show up here.</span>
+            <span className="truncate text-[11px]">{t("newListingsHint")}</span>
           )}
           {tickerType === "Favorites" && tickers.length === 0 && (
-            <span className="truncate text-[11px]">Star markets to pin them here.</span>
+            <span className="truncate text-[11px]">{t("starMarketsHint")}</span>
           )}
           <span className="ml-2 hidden shrink-0 truncate text-[11px] md:inline">
-            Paper trading only — simulated funds, not real money.
+            {t("paperDisclaimer")}
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-3">
@@ -129,25 +136,25 @@ export default function StatusBar() {
             href="mailto:sahil@sahilbasumatary.dev?subject=Pioni%20feedback"
             className="hidden transition-colors hover:text-[var(--text-primary)] sm:inline"
           >
-            Share feedback
+            {t("shareFeedback")}
           </a>
           <a
             href="mailto:sahil@sahilbasumatary.dev?subject=Pioni%20support"
             className="hidden transition-colors hover:text-[var(--text-primary)] md:inline"
           >
-            Chat with us
+            {t("chatWithUs")}
           </a>
           <NavLink
             to="/privacy"
             className="transition-colors hover:text-[var(--text-primary)]"
           >
-            Privacy
+            {t("privacy")}
           </NavLink>
           <NavLink
             to="/terms"
             className="transition-colors hover:text-[var(--text-primary)]"
           >
-            Terms
+            {t("terms")}
           </NavLink>
         </div>
       </div>
@@ -174,6 +181,7 @@ function TickerTypeChip({
   onToggleChangePct: () => void;
   onTogglePrice: () => void;
 }) {
+  const { t } = useLanguage();
   const menuId = useId();
   const btnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -241,9 +249,9 @@ function TickerTypeChip({
             className="fixed z-[80] min-w-[200px] rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-1 shadow-[var(--shadow-card)]"
           >
             <p className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
-              Ticker type
+              {t("tickerType")}
             </p>
-            {TICKER_TYPES.map(({ id, Icon: TypeIcon }) => (
+            {TICKER_TYPES.map(({ id, labelKey, Icon: TypeIcon }) => (
               <button
                 key={id}
                 type="button"
@@ -259,15 +267,15 @@ function TickerTypeChip({
                 }`}
               >
                 <TypeIcon className="h-4 w-4" />
-                {id}
+                {t(labelKey)}
               </button>
             ))}
             <div className="my-1 border-t border-[var(--card-border)]" />
             <p className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
-              Settings
+              {t("tickerMenuSettings")}
             </p>
             <label className="rail-icon flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-black/[0.04]">
-              <span>24H Change %</span>
+              <span>{t("tickerChangePct")}</span>
               <input
                 type="checkbox"
                 checked={showChangePct}
@@ -276,7 +284,7 @@ function TickerTypeChip({
               />
             </label>
             <label className="rail-icon flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-black/[0.04]">
-              <span>Price</span>
+              <span>{t("tickerPrice")}</span>
               <input
                 type="checkbox"
                 checked={showPrice}
