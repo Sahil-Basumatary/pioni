@@ -24,13 +24,25 @@ import {
   type TradeChromeMessageKey,
   TRADE_CHROME_CATALOG,
 } from "./shellTradeChromeCatalog";
+import {
+  glossaryMessage,
+  type GlossaryMessageKey,
+  GLOSSARY_CATALOG,
+} from "./glossaryCatalog";
+import {
+  settingsMessage,
+  type SettingsMessageKey,
+  SETTINGS_CATALOG,
+} from "./settingsCatalog";
 
 export type MessageKey =
   | AuthMessageKey
   | ShellMessageKey
   | StatusShellMessageKey
   | TradeShellMessageKey
-  | TradeChromeMessageKey;
+  | TradeChromeMessageKey
+  | GlossaryMessageKey
+  | SettingsMessageKey;
 
 const AUTH_KEYS = new Set<string>(Object.keys(AUTH_CATALOG["en-US"]));
 const SHELL_KEYS = new Set<string>(Object.keys(SHELL_CATALOG["en-US"]));
@@ -39,6 +51,8 @@ const TRADE_KEYS = new Set<string>(Object.keys(TRADE_SHELL_CATALOG["en-US"]));
 const TRADE_CHROME_KEYS = new Set<string>(
   Object.keys(TRADE_CHROME_CATALOG["en-US"]),
 );
+const GLOSSARY_KEYS = new Set<string>(Object.keys(GLOSSARY_CATALOG["en-US"]));
+const SETTINGS_KEYS = new Set<string>(Object.keys(SETTINGS_CATALOG["en-US"]));
 
 export function translate(
   language: AppLanguage,
@@ -60,6 +74,12 @@ export function translate(
   if (TRADE_CHROME_KEYS.has(key)) {
     return tradeChromeMessage(language, key as TradeChromeMessageKey, vars);
   }
+  if (GLOSSARY_KEYS.has(key)) {
+    return glossaryMessage(language, key as GlossaryMessageKey, vars);
+  }
+  if (SETTINGS_KEYS.has(key)) {
+    return settingsMessage(language, key as SettingsMessageKey, vars);
+  }
   return String(key);
 }
 
@@ -69,4 +89,6 @@ export type {
   StatusShellMessageKey,
   TradeShellMessageKey,
   TradeChromeMessageKey,
+  GlossaryMessageKey,
+  SettingsMessageKey,
 };

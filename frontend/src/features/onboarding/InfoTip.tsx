@@ -2,6 +2,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { GLOSSARY, type GlossaryTermId } from "./glossary";
 import { readDisplayPrefs } from "../settings/displayPrefs";
+import { useLanguage } from "../auth/LanguageProvider";
 
 type Placement = "top" | "bottom";
 
@@ -61,6 +62,7 @@ export default function InfoTip({
   className = "",
   placement = "top",
 }: InfoTipProps) {
+  const { t } = useLanguage();
   const entry = GLOSSARY[term];
   const tipsEnabled = readDisplayPrefs().showInfoTips;
   const [open, setOpen] = useState(false);
@@ -69,7 +71,9 @@ export default function InfoTip({
   const tipRef = useRef<HTMLSpanElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tipId = useId();
-  const title = label ?? entry.title;
+  const glossaryTitle = t(entry.titleKey);
+  const glossaryBody = t(entry.bodyKey);
+  const title = label ?? glossaryTitle;
   const hoverMode = prefersHover();
 
   function clearCloseTimer() {
@@ -121,7 +125,7 @@ export default function InfoTip({
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
     };
-  }, [open, placement, title, entry.body, tipsEnabled]);
+  }, [open, placement, title, glossaryBody, tipsEnabled]);
 
   useEffect(() => {
     if (!open || !tipsEnabled) return;
@@ -204,10 +208,10 @@ export default function InfoTip({
               className="whitespace-normal break-words rounded-xl border border-[var(--card-border)] bg-white p-3 text-left font-normal normal-case tracking-normal shadow-[0_8px_28px_rgba(0,0,0,0.14)]"
             >
               <span className="block text-xs font-medium normal-case tracking-normal text-[var(--text-primary)]">
-                {entry.title}
+                {glossaryTitle}
               </span>
               <span className="mt-1 block text-xs font-normal leading-relaxed tracking-normal text-[rgb(72,75,94)] normal-case">
-                {entry.body}
+                {glossaryBody}
               </span>
             </span>,
             document.body,

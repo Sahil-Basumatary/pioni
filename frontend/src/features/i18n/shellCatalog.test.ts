@@ -13,6 +13,14 @@ import {
   TRADE_CHROME_CATALOG,
   tradeChromeMessage,
 } from "./shellTradeChromeCatalog";
+import {
+  GLOSSARY_CATALOG,
+  glossaryMessage,
+} from "./glossaryCatalog";
+import {
+  SETTINGS_CATALOG,
+  settingsMessage,
+} from "./settingsCatalog";
 import { translate } from "./translate";
 
 describe("shell i18n catalog", () => {
@@ -26,6 +34,10 @@ describe("shell i18n catalog", () => {
       expect(tradeShellMessage(opt.value, "tradeBuy")).toBeTruthy();
       expect(TRADE_CHROME_CATALOG[opt.value]).toBeTruthy();
       expect(tradeChromeMessage(opt.value, "tradePaneOrderForm")).toBeTruthy();
+      expect(GLOSSARY_CATALOG[opt.value]).toBeTruthy();
+      expect(glossaryMessage(opt.value, "glossarySpreadTitle")).toBeTruthy();
+      expect(SETTINGS_CATALOG[opt.value]).toBeTruthy();
+      expect(settingsMessage(opt.value, "settingsTitle")).toBeTruthy();
     }
   });
 
@@ -39,6 +51,9 @@ describe("shell i18n catalog", () => {
     expect(translate("de-DE", "tradeBuy")).toBe("Kaufen");
     expect(translate("zh-CN", "tradeBook")).toBe("盘口");
     expect(translate("de-DE", "tradePaneOrderForm")).toBe("Orderformular");
+    expect(translate("de-DE", "tradeOrderCanceled")).toBe("Order storniert");
+    expect(translate("zh-CN", "glossarySpreadTitle")).toBe("价差");
+    expect(translate("de-DE", "settingsTitle")).toBe("Einstellungen");
   });
 
   it("still resolves auth keys", () => {

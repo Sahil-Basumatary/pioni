@@ -1,6 +1,11 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import InfoTip, { placeInfoTip } from "./InfoTip";
+import { LanguageProvider } from "../auth/LanguageProvider";
+
+function renderTip(ui: React.ReactElement) {
+  return render(<LanguageProvider>{ui}</LanguageProvider>);
+}
 
 describe("placeInfoTip", () => {
   const tip = { width: 240, height: 80 };
@@ -47,7 +52,7 @@ describe("InfoTip", () => {
 
   it("opens on hover for fine pointers", () => {
     vi.useFakeTimers();
-    render(<InfoTip term="spread" />);
+    renderTip(<InfoTip term="spread" />);
     expect(screen.queryByRole("tooltip")).toBeNull();
     fireEvent.mouseEnter(screen.getByRole("button", { name: "Spread" }).parentElement!);
     expect(screen.getByRole("tooltip")).toHaveTextContent(/gap between/i);
@@ -59,7 +64,7 @@ describe("InfoTip", () => {
   });
 
   it("opens on focus and closes on Escape", () => {
-    render(<InfoTip term="limit_order" label="Limit" />);
+    renderTip(<InfoTip term="limit_order" label="Limit" />);
     const trigger = screen.getByRole("button", { name: "Limit" });
     fireEvent.focus(trigger);
     expect(screen.getByRole("tooltip")).toBeTruthy();
@@ -68,7 +73,7 @@ describe("InfoTip", () => {
   });
 
   it("portals the tip to document.body so panes cannot clip it", () => {
-    render(
+    renderTip(
       <div style={{ overflow: "hidden", width: 40, height: 20 }}>
         <InfoTip term="spread" />
       </div>,
