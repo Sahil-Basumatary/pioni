@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { readFavorites, toggleFavorite, writeFavorites } from "./favorites";
+import {
+  mergeFavorites,
+  normalizeFavorites,
+  readFavorites,
+  toggleFavorite,
+  writeFavorites,
+} from "./favorites";
 
 describe("favorites", () => {
   beforeEach(() => {
@@ -11,8 +17,30 @@ describe("favorites", () => {
     expect(toggleFavorite("btcusdt", ["BTCUSDT"])).toEqual([]);
   });
 
+  it("ignores unknown symbols on toggle", () => {
+    expect(toggleFavorite("NOTAREAL", ["BTCUSDT"])).toEqual(["BTCUSDT"]);
+  });
+
+  it("normalizes case dedupe and catalog filter", () => {
+    expect(
+      normalizeFavorites(["btcusdt", "BTCUSDT", "NOPE", 12, "ETHUSDT"]),
+    ).toEqual(["BTCUSDT", "ETHUSDT"]);
+  });
+
+  it("merges server then local order", () => {
+    expect(mergeFavorites(["ETHUSDT"], ["BTCUSDT", "ETHUSDT"])).toEqual([
+      "ETHUSDT",
+      "BTCUSDT",
+    ]);
+  });
+
   it("persists favorites", () => {
     writeFavorites(["ETHUSDT"]);
     expect(readFavorites()).toEqual(["ETHUSDT"]);
+  });
+
+  it("drops corrupt storage", () => {
+    localStorage.setItem("pioni.marketFavorites", "{not-json");
+    expect(readFavorites()).toEqual([]);
   });
 });

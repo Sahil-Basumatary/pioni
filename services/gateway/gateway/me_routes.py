@@ -253,6 +253,47 @@ async def patch_my_notification_prefs(
     return await patch_my_notification_prefs_upstream(ctx, body)
 
 
+async def fetch_my_favorites(ctx: AuthContext) -> dict:
+    client = await _get_client()
+    try:
+        resp = await client.get(
+            "/me/favorites",
+            headers=await _identity_headers(ctx),
+        )
+    except httpx.RequestError as e:
+        logger.error("portfolio service unreachable", extra={"error": str(e)})
+        raise _unavailable() from None
+    if resp.status_code >= 400:
+        raise HTTPException(status_code=resp.status_code, detail=resp.json())
+    return resp.json()
+
+
+async def put_my_favorites_upstream(ctx: AuthContext, body: dict) -> dict:
+    client = await _get_client()
+    try:
+        resp = await client.put(
+            "/me/favorites",
+            headers=await _identity_headers(ctx),
+            json=body,
+        )
+    except httpx.RequestError as e:
+        logger.error("portfolio service unreachable", extra={"error": str(e)})
+        raise _unavailable() from None
+    if resp.status_code >= 400:
+        raise HTTPException(status_code=resp.status_code, detail=resp.json())
+    return resp.json()
+
+
+@me_router.get("/favorites")
+async def my_favorites(ctx: AuthContext = Depends(require_auth)):
+    return await fetch_my_favorites(ctx)
+
+
+@me_router.put("/favorites")
+async def put_my_favorites(body: dict, ctx: AuthContext = Depends(require_auth)):
+    return await put_my_favorites_upstream(ctx, body)
+
+
 async def _proxy_me_with_identity(
     method: str,
     path: str,

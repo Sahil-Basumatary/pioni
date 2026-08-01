@@ -17,6 +17,10 @@ from portfolio.api_keys import create_api_key, list_active_api_keys, revoke_api_
 from portfolio.charts import SnapshotValue, build_daily_pnl_chart
 from portfolio.email_notify import order_email_copy, send_resend_email
 from portfolio.ledger_backfill import ensure_portfolio_ledger
+from portfolio.market_favorites import (
+    get_or_create_market_favorites,
+    set_market_favorites,
+)
 from portfolio.notification_prefs import (
     apply_notification_prefs_patch,
     get_or_create_notification_prefs,
@@ -38,6 +42,8 @@ from portfolio.schemas import (
     ApiKeyCreatedResponse,
     ApiKeyResponse,
     DailyPnlPointResponse,
+    FavoritesPut,
+    FavoritesResponse,
     LedgerEntryResponse,
     NotificationPrefsPatch,
     NotificationPrefsResponse,
@@ -211,6 +217,25 @@ async def patch_my_notification_prefs(
         await session.flush()
         await session.refresh(row)
     return NotificationPrefsResponse.model_validate(row)
+
+
+@router.get("/me/favorites", response_model=FavoritesResponse)
+async def get_my_favorites(
+    identity: Identity = Depends(current_identity),
+    session: AsyncSession = Depends(get_db),
+) -> FavoritesResponse:
+    row = await get_or_create_market_favorites(session, identity)
+    return FavoritesResponse(symbols=list(row.symbols or []))
+
+
+@router.put("/me/favorites", response_model=FavoritesResponse)
+async def put_my_favorites(
+    body: FavoritesPut,
+    identity: Identity = Depends(current_identity),
+    session: AsyncSession = Depends(get_db),
+) -> FavoritesResponse:
+    row = await set_market_favorites(session, identity, body.symbols)
+    return FavoritesResponse(symbols=list(row.symbols or []))
 
 
 @router.get("/me/alerts", response_model=list[PriceAlertResponse])

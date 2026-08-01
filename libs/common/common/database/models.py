@@ -15,7 +15,7 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from common.database.base import Base, UUIDMixin, TimestampMixin
 
 
@@ -62,6 +62,9 @@ class User(UUIDMixin, TimestampMixin, Base):
     )
     api_keys: Mapped[list[PaperApiKey]] = relationship(back_populates="user")
     notification_prefs: Mapped[UserNotificationPrefs | None] = relationship(
+        back_populates="user", uselist=False,
+    )
+    market_favorites: Mapped[UserMarketFavorites | None] = relationship(
         back_populates="user", uselist=False,
     )
     price_alerts: Mapped[list[PriceAlert]] = relationship(back_populates="user")
@@ -153,6 +156,21 @@ class UserNotificationPrefs(UUIDMixin, TimestampMixin, Base):
     rejections: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     placements: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     user: Mapped[User] = relationship(back_populates="notification_prefs")
+
+
+class UserMarketFavorites(UUIDMixin, TimestampMixin, Base):
+    __tablename__ = "user_market_favorites"
+    __table_args__ = (
+        UniqueConstraint("user_id", name="uq_user_market_favorites_user_id"),
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    symbols: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    user: Mapped[User] = relationship(back_populates="market_favorites")
 
 
 class PriceAlertCondition(str, enum.Enum):

@@ -1,4 +1,5 @@
 import { useMemo, useState, type ComponentType } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   LineChartDownIcon,
   LineChartUpIcon,
@@ -6,6 +7,8 @@ import {
   RocketIcon,
   StarIcon,
 } from "../../components/shell/shellIcons";
+import { useAppDispatch } from "../../app/hooks";
+import { symbolSelected } from "../instrument/instrumentSlice";
 import { useMarketSearch } from "../markets/MarketSearchContext";
 import MarketsTable from "../markets/MarketsTable";
 import {
@@ -34,6 +37,8 @@ export default function HomeMarketsStrip() {
   const [tab, setTab] = useState<Tab>("Top Traded");
   const { favorites, toggleFav } = useMarketSearch();
   const { rows } = useMarketRows();
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const sort: MarketSort =
     tab === "Gainers" ? "gainers" : tab === "Losers" ? "losers" : "volume";
@@ -43,6 +48,12 @@ export default function HomeMarketsStrip() {
     const filtered = filterMarketRows(rows, "", tab === "Favorites", favorites);
     return sortMarketRows(filtered, sort).slice(0, 6);
   }, [rows, tab, favorites, sort]);
+
+  function selectMarket(symbol: string) {
+    const row = visible.find((r) => r.symbol === symbol);
+    dispatch(symbolSelected(row?.tradeSymbol ?? symbol));
+    navigate("/trading");
+  }
 
   return (
     <section className="overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-[var(--shadow-card)]">
@@ -81,6 +92,7 @@ export default function HomeMarketsStrip() {
             variant="compact"
             favorites={favorites}
             onToggleFavorite={toggleFav}
+            onSelect={selectMarket}
             emptyMessage={
               tab === "Favorites"
                 ? "Star markets from Trade to pin them here."

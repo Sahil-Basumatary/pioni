@@ -156,6 +156,16 @@ class NotificationPrefsPatch(BaseModel):
     placements: bool | None = None
 
 
+class FavoritesResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    symbols: list[str]
+
+
+class FavoritesPut(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    symbols: list[str]
+
+
 class OrderEmailNotifyRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     portfolio_id: uuid.UUID
