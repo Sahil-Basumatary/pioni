@@ -53,6 +53,10 @@ describe("MarketingPage", () => {
       "/sign-in",
     );
     expect(screen.getAllByText(/Simulated funds only/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByAltText("Pioni paper trading desk")).toHaveAttribute(
+      "src",
+      "/marketing/hero.webp",
+    );
     expect(screen.getByLabelText("Markets now")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /Practice the desk/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /Built like a trading desk/i })).toBeInTheDocument();
