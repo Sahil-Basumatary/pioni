@@ -5,6 +5,10 @@ import {
   STATUS_SHELL_CATALOG,
   statusShellMessage,
 } from "./shellStatusCatalog";
+import {
+  TRADE_SHELL_CATALOG,
+  tradeShellMessage,
+} from "./shellTradeCatalog";
 import { translate } from "./translate";
 
 describe("shell i18n catalog", () => {
@@ -14,6 +18,8 @@ describe("shell i18n catalog", () => {
       expect(shellMessage(opt.value, "navTrade")).toBeTruthy();
       expect(STATUS_SHELL_CATALOG[opt.value]).toBeTruthy();
       expect(statusShellMessage(opt.value, "statusOnline")).toBeTruthy();
+      expect(TRADE_SHELL_CATALOG[opt.value]).toBeTruthy();
+      expect(tradeShellMessage(opt.value, "tradeBuy")).toBeTruthy();
     }
   });
 
@@ -22,6 +28,10 @@ describe("shell i18n catalog", () => {
     expect(translate("zh-CN", "navMarkets")).toBe("市场");
     expect(translate("de-DE", "statusOnline")).toBe("Online");
     expect(translate("zh-CN", "notifications")).toBe("通知");
+    expect(translate("de-DE", "retry")).toBe("Erneut versuchen");
+    expect(translate("zh-CN", "createAlert")).toBe("创建提醒");
+    expect(translate("de-DE", "tradeBuy")).toBe("Kaufen");
+    expect(translate("zh-CN", "tradeBook")).toBe("盘口");
   });
 
   it("still resolves auth keys", () => {

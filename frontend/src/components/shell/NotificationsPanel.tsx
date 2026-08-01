@@ -85,13 +85,13 @@ export default function NotificationsPanel({ onClose }: { onClose: () => void })
             </div>
           ) : alertsError ? (
             <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
-              <p className="text-sm text-[var(--text-muted)]">Couldn’t load alerts.</p>
+              <p className="text-sm text-[var(--text-muted)]">{t("couldntLoadAlerts")}</p>
               <button
                 type="button"
                 onClick={() => void refetchAlerts()}
                 className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-medium text-white"
               >
-                Retry
+                {t("retry")}
               </button>
             </div>
           ) : alerts.length === 0 ? (
@@ -105,7 +105,7 @@ export default function NotificationsPanel({ onClose }: { onClose: () => void })
                 }}
                 className="rounded-xl bg-[var(--accent)] px-3.5 py-2 text-sm font-medium text-white"
               >
-                Create alert
+                {t("createAlert")}
               </button>
             </div>
           ) : (
@@ -142,7 +142,7 @@ export default function NotificationsPanel({ onClose }: { onClose: () => void })
                   }}
                   className="rounded-xl bg-[var(--accent)] px-3.5 py-2 text-sm font-medium text-white"
                 >
-                  Create alert
+                  {t("createAlert")}
                 </button>
                 <button
                   type="button"
@@ -152,7 +152,7 @@ export default function NotificationsPanel({ onClose }: { onClose: () => void })
                   }}
                   className="rounded-xl bg-[rgba(104,107,130,0.08)] px-3.5 py-2 text-sm font-medium text-[var(--text-primary)]"
                 >
-                  Notification settings
+                  {t("notificationSettings")}
                 </button>
               </div>
             </div>
@@ -166,17 +166,17 @@ export default function NotificationsPanel({ onClose }: { onClose: () => void })
             <p className="text-base font-medium text-[var(--text-primary)]">
               {t("loading")}
             </p>
-            <p className="text-sm text-[var(--text-muted)]">Fetching your recent fills.</p>
+            <p className="text-sm text-[var(--text-muted)]">{t("fetchingFills")}</p>
           </div>
         ) : isError ? (
           <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
-            <p className="text-sm text-[var(--text-muted)]">Couldn’t load inbox.</p>
+            <p className="text-sm text-[var(--text-muted)]">{t("couldntLoadInbox")}</p>
             <button
               type="button"
               onClick={() => refetch()}
               className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-medium text-white"
             >
-              Retry
+              {t("retry")}
             </button>
           </div>
         ) : !data?.length ? (
