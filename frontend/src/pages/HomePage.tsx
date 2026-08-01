@@ -28,7 +28,7 @@ export default function HomePage() {
   );
 
   if (!isLoaded) return null;
-  if (!isSignedIn) return <Navigate to="/trading" replace />;
+  if (!isSignedIn) return <Navigate to="/" replace />;
 
   const totalValue =
     summary?.total_value != null ? Number(summary.total_value) : null;

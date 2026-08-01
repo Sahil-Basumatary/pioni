@@ -1,0 +1,43 @@
+.marketing-page {
+  background:
+    radial-gradient(1100px 480px at 18% -8%, rgba(255, 255, 255, 0.95), transparent 55%),
+    radial-gradient(900px 420px at 88% 8%, rgba(255, 255, 255, 0.55), transparent 50%),
+    linear-gradient(to bottom, #f8f8f8 0%, #f3f3f3 45%, #efefef 100%);
+}
+
+.marketing-hero-media {
+  width: 100%;
+}
+
+.marketing-hero-media__frame {
+  overflow: hidden;
+  border-radius: 1.25rem;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  box-shadow: var(--shadow-card);
+}
+
+.marketing-hero-media__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1200 / 760;
+  object-fit: cover;
+  object-position: top left;
+}
+
+.marketing-proof-mock {
+  min-height: 8.5rem;
+  border-radius: 0.9rem;
+  border: 1px solid var(--card-border);
+  background: linear-gradient(180deg, #fafafa 0%, #f4f4f4 100%);
+  padding: 1rem;
+  color: var(--text-primary);
+}
+
+.marketing-proof-mock__bar {
+  height: 0.55rem;
+  width: 38%;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+}

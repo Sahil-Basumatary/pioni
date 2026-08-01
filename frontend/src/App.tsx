@@ -10,6 +10,7 @@ import { useAuth } from "@clerk/clerk-react";
 import AppShell from "./components/shell/AppShell";
 import ComingSoonPage from "./pages/ComingSoonPage";
 import { LanguageProvider } from "./features/auth/LanguageProvider";
+import MarketingHeader from "./features/marketing/MarketingHeader";
 import { startPagePath } from "./features/settings/displayPrefs";
 import "./App.css";
 
@@ -31,6 +32,7 @@ const SignInPage = lazy(() => import("./pages/SignInPage"));
 const SignUpPage = lazy(() => import("./pages/SignUpPage"));
 const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
 const SsoCallbackPage = lazy(() => import("./pages/SsoCallbackPage"));
+const MarketingPage = lazy(() => import("./pages/MarketingPage"));
 
 function RouteFallback() {
   return (
@@ -57,11 +59,8 @@ function RouteFallback() {
 function StartRedirect() {
   const { isSignedIn, isLoaded } = useAuth();
   if (!isLoaded) return null;
-  const path = startPagePath();
-  if (!isSignedIn && path === "/home") {
-    return <Navigate to="/trading" replace />;
-  }
-  return <Navigate to={path} replace />;
+  if (!isSignedIn) return <Navigate to="/" replace />;
+  return <Navigate to={startPagePath()} replace />;
 }
 
 function ShellLayout() {
@@ -74,16 +73,34 @@ function ShellLayout() {
   );
 }
 
+function PublicLegalLayout() {
+  return (
+    <div className="min-h-dvh bg-[#F6F5F9] text-[var(--text-primary)]">
+      <MarketingHeader />
+      <div className="px-4 pb-16 pt-2 sm:px-6">
+        <Suspense fallback={<div className="min-h-[40vh]" aria-label="Loading" />}>
+          <Outlet />
+        </Suspense>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
     <LanguageProvider>
     <BrowserRouter>
       <Suspense fallback={<div className="min-h-dvh bg-[#F6F5F9]" aria-label="Loading" />}>
         <Routes>
+          <Route path="/" element={<MarketingPage />} />
           <Route path="/sign-in/*" element={<SignInPage />} />
           <Route path="/sign-up/*" element={<SignUpPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/sso-callback" element={<SsoCallbackPage />} />
+          <Route element={<PublicLegalLayout />}>
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+          </Route>
           <Route element={<ShellLayout />}>
             <Route path="/home" element={<HomePage />} />
             <Route path="/history" element={<HistoryPage />} />
@@ -113,8 +130,6 @@ function App() {
             <Route path="/sentiment" element={<SentimentPage />} />
             <Route path="/settings" element={<Navigate to="/settings/account" replace />} />
             <Route path="/settings/:section" element={<SettingsPage />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
-            <Route path="/terms" element={<TermsPage />} />
             <Route path="*" element={<StartRedirect />} />
           </Route>
         </Routes>

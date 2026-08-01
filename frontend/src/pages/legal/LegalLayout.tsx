@@ -14,7 +14,7 @@ export default function LegalLayout({ title, summary, children }: LegalLayoutPro
       <header className="mb-8">
         <div
           className="bg-black text-white"
-          style={{ width: "100vw", marginLeft: "calc(50% - 50vw)", marginTop: "-2.5rem" }}
+          style={{ width: "100vw", marginLeft: "calc(50% - 50vw)" }}
         >
           <div className="mx-auto max-w-[1320px] px-6 lg:px-12">
             <div className="mx-auto flex min-h-[300px] max-w-[980px] flex-col justify-center py-16">
