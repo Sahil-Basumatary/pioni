@@ -222,7 +222,7 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
           )}
         </button>
       </div>
-      <div className="flex min-w-0 grow items-center overflow-hidden">
+      <div className="flex min-w-0 grow items-center overflow-x-auto overflow-y-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {!collapsed && (
         <div className="flex flex-row items-center gap-6">
           <Metric
@@ -263,20 +263,20 @@ function AnalyticsHeader({ symbol }: { symbol: string }) {
           <Metric
             label="24H VOLUME"
             value={
-              <>
-                <span className="block">
+              <span className="flex flex-col gap-0.5">
+                <span>
                   {formatCompact(volumeBase)} {asset}
                 </span>
-                <span className="block text-[var(--text-muted)]">
+                <span className="text-[var(--text-muted)]">
                   {formatCompact(quoteVol)} USD
                 </span>
-              </>
+              </span>
             }
           />
           <Link
             to="/terms"
             title="Paper trading — no exchange fees"
-            className="flex h-8 flex-col justify-center gap-0.5 whitespace-nowrap outline-none hover:opacity-80"
+            className="flex min-h-8 flex-col justify-center gap-0.5 whitespace-nowrap outline-none hover:opacity-80"
           >
             <span className="text-[10px] font-semibold uppercase leading-none tracking-wide text-[rgb(104,107,130)]">
               FEES
@@ -328,7 +328,7 @@ function Metric({
   value: ReactNode;
 }) {
   return (
-    <div className="flex h-8 flex-col justify-center gap-0.5 whitespace-nowrap">
+    <div className="flex min-h-8 flex-col justify-center gap-0.5 whitespace-nowrap py-0.5">
       <span className="text-[10px] font-semibold uppercase leading-none tracking-wide text-[rgb(104,107,130)]">
         {label}
       </span>
