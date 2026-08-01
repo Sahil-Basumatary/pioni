@@ -2,8 +2,17 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
-load_dotenv(Path(__file__).resolve().parents[3] / ".env")
+def _load_dotenv_files() -> None:
+    # Cwd first (service-local), then nearest repo .env for `make` from services/*.
+    # Walk parents so Docker/Render (/app/...) never IndexError on parents[3].
+    load_dotenv()
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / ".env"
+        if candidate.is_file():
+            load_dotenv(candidate)
+            return
+
+_load_dotenv_files()
 
 BINANCE_WS_BASE = "wss://stream.binance.com:9443"
 
