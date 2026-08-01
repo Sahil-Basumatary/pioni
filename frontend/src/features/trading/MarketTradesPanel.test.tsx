@@ -5,6 +5,7 @@ import MarketTradesPanel, {
   tapeSide,
 } from "./MarketTradesPanel";
 import type { Trade } from "../../types/market";
+import { LanguageProvider } from "../auth/LanguageProvider";
 
 vi.mock("../market/liveMarketStore", () => ({
   useLiveMarketTrades: () =>
@@ -39,7 +40,7 @@ describe("MarketTradesPanel", () => {
         exchange: "binance",
         buyer_maker: false,
       }),
-    ).toBe("Buy");
+    ).toBe("buy");
     expect(
       tapeSide({
         symbol: "BTCUSDT",
@@ -49,7 +50,7 @@ describe("MarketTradesPanel", () => {
         exchange: "binance",
         buyer_maker: true,
       }),
-    ).toBe("Sell");
+    ).toBe("sell");
   });
 
   it("keeps small quantities at eight decimals", () => {
@@ -57,7 +58,11 @@ describe("MarketTradesPanel", () => {
   });
 
   it("renders Side Price Quantity Time columns", () => {
-    render(<MarketTradesPanel symbol="BTCUSDT" />);
+    render(
+      <LanguageProvider>
+        <MarketTradesPanel symbol="BTCUSDT" />
+      </LanguageProvider>,
+    );
     expect(screen.getByText("Side")).toBeTruthy();
     expect(screen.getByText("Price")).toBeTruthy();
     expect(screen.getByText("Quantity")).toBeTruthy();

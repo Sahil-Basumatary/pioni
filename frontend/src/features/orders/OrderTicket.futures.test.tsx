@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import { configureStore } from "@reduxjs/toolkit";
 import OrderTicket from "./OrderTicket";
 import instrumentReducer from "../instrument/instrumentSlice";
+import { LanguageProvider } from "../auth/LanguageProvider";
 
 vi.mock("@clerk/clerk-react", () => ({
   useAuth: () => ({ isSignedIn: true }),
@@ -32,7 +33,9 @@ function renderTicket(venue: "spot" | "margin" | "futures") {
   return render(
     <Provider store={store}>
       <MemoryRouter>
-        <OrderTicket venue={venue} />
+        <LanguageProvider>
+          <OrderTicket venue={venue} />
+        </LanguageProvider>
       </MemoryRouter>
     </Provider>,
   );

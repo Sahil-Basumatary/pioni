@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import { configureStore } from "@reduxjs/toolkit";
 import OrderTicket from "./OrderTicket";
 import instrumentReducer from "../instrument/instrumentSlice";
+import { LanguageProvider } from "../auth/LanguageProvider";
 
 const auth = vi.hoisted(() => ({ isSignedIn: true }));
 const openSignUp = vi.hoisted(() => vi.fn());
@@ -36,7 +37,9 @@ function renderTicket(venue: "spot" | "margin", signedIn = true) {
   return render(
     <Provider store={store}>
       <MemoryRouter>
-        <OrderTicket venue={venue} />
+        <LanguageProvider>
+          <OrderTicket venue={venue} />
+        </LanguageProvider>
       </MemoryRouter>
     </Provider>,
   );

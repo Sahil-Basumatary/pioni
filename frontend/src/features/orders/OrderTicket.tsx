@@ -26,6 +26,8 @@ import {
 } from "./ticketControls";
 import { readDisplayPrefs, formatPrefLimitPrice } from "../settings/displayPrefs";
 import { SIGN_UP_PATH } from "../auth/authRoutes";
+import { useLanguage } from "../auth/LanguageProvider";
+import type { TradeShellMessageKey } from "../i18n/shellTradeCatalog";
 
 function parseDecimal(raw: string): number {
   const cleaned = String(raw).replace(/,/g, "").trim();
@@ -37,10 +39,10 @@ function formatLimitPrice(n: number): string {
   return formatPrefLimitPrice(n);
 }
 
-function extractError(err: unknown): string {
+function extractError(err: unknown): string | null {
   const detail = (err as { data?: { detail?: { message?: string } } })?.data?.detail;
   if (detail?.message) return detail.message;
-  return "Something went wrong placing your order. Please try again.";
+  return null;
 }
 
 function formatQtyInput(n: number): string {
@@ -57,17 +59,20 @@ function formatTotalInput(n: number): string {
 type Feedback = { tone: "success" | "error"; message: string };
 type TimeInForce = "GTC" | "IOC";
 
-const ADVANCED_TYPES = [
-  { id: "stop-loss", label: "Stop loss" },
-  { id: "take-profit", label: "Take profit" },
-  { id: "trailing-stop", label: "Trailing stop" },
-] as const;
+const ADVANCED_TYPES: {
+  id: string;
+  labelKey: TradeShellMessageKey;
+}[] = [
+  { id: "stop-loss", labelKey: "tradeStopLoss" },
+  { id: "take-profit", labelKey: "tradeTakeProfit" },
+  { id: "trailing-stop", labelKey: "tradeTrailingStop" },
+];
 
 // FOK is not offered: the engine cancels an unfilled remainder but does not reject a partial
 // fill, which is IOC behaviour, not fill-or-kill.
-const TIF_OPTIONS: { id: TimeInForce; label: string }[] = [
-  { id: "GTC", label: "Good till canceled" },
-  { id: "IOC", label: "Immediate or cancel" },
+const TIF_OPTIONS: { id: TimeInForce; labelKey: TradeShellMessageKey }[] = [
+  { id: "GTC", labelKey: "tradeTifGtc" },
+  { id: "IOC", labelKey: "tradeTifIoc" },
 ];
 
 const MARGIN_LEVERAGE_OPTIONS = [2, 3, 4, 5, 10] as const;
@@ -84,6 +89,7 @@ export default function OrderTicket({
   const isFutures = venue === "futures";
   const isDeriv = isMargin || isFutures;
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const { isSignedIn } = useAuth();
   const symbol = useAppSelector(selectSymbol);
   const trade = useLiveMarketTrade(symbol);
@@ -136,12 +142,12 @@ export default function OrderTicket({
   const [leverage, setLeverage] = useState<number>(
     isFutures ? DEFAULT_FUTURES_LEVERAGE : DEFAULT_MARGIN_LEVERAGE,
   );
-  const [marginMode] = useState<"Cross" | "Isolated">("Cross");
   const [leverageOpen, setLeverageOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [tif, setTif] = useState<TimeInForce>("GTC");
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [advancedNote, setAdvancedNote] = useState<string | null>(null);
+  const [advancedNoteKey, setAdvancedNoteKey] =
+    useState<TradeShellMessageKey | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [submitOrder, { isLoading }] = useSubmitOrderMutation();
   const toast = useToast();
@@ -159,18 +165,16 @@ export default function OrderTicket({
   });
   const asset = baseAsset(symbol);
   const isBuy = side === "BUY";
-  const sideLabel = isDeriv
-    ? isBuy
-      ? "Long"
-      : "Short"
-    : isBuy
-      ? "Buy"
-      : "Sell";
   const submitLabel = isFutures
-    ? `${sideLabel} (${isBuy ? "buy" : "sell"}) ${asset}`
+    ? t(isBuy ? "tradeSubmitLongFutures" : "tradeSubmitShortFutures", {
+        asset,
+      })
     : isMargin
-      ? `${sideLabel} (${isBuy ? "buy" : "sell"}) ${asset}/USD (${leverage}x)`
-      : `${sideLabel} ${asset}/USD`;
+      ? t(isBuy ? "tradeSubmitLongMargin" : "tradeSubmitShortMargin", {
+          asset,
+          leverage: String(leverage),
+        })
+      : t(isBuy ? "tradeSubmitBuyAsset" : "tradeSubmitSellAsset", { asset });
   const tpSlDisabled = isMargin && !statusDeclared;
   const reduceOnlyLocked = isMargin && !statusDeclared;
   const leverageOptions = isFutures
@@ -202,8 +206,8 @@ export default function OrderTicket({
       : cashBalance == null
         ? "-%"
         : cashBalance >= requiredMargin
-          ? "Healthy"
-          : "At risk";
+          ? t("tradeHealthy")
+          : t("tradeAtRisk");
   const requiredMarginDisplay =
     requiredMargin == null
       ? isFutures
@@ -213,7 +217,9 @@ export default function OrderTicket({
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })} USD`;
-  const availableLabel = isFutures ? "Available balance" : "Available to trade";
+  const availableLabel = isFutures
+    ? t("tradeAvailableBalance")
+    : t("tradeAvailableToTrade");
   const relatedBalancePlain = isBuy
     ? cashBalance != null
       ? `${cashBalance.toLocaleString("en-US", {
@@ -321,7 +327,12 @@ export default function OrderTicket({
     const prefs = readDisplayPrefs();
     if (prefs.confirmOrders) {
       const ok = window.confirm(
-        `Submit ${side.toLowerCase()} ${orderType.toLowerCase()} order for ${quantity || "0"} ${asset}?`,
+        t("tradeConfirmSubmit", {
+          side: side.toLowerCase(),
+          orderType: orderType.toLowerCase(),
+          quantity: quantity || "0",
+          asset,
+        }),
       );
       if (!ok) return;
     }
@@ -352,7 +363,7 @@ export default function OrderTicket({
       setPostOnly(false);
       setReduceOnly(isDeriv);
     } catch (err) {
-      const message = extractError(err);
+      const message = extractError(err) ?? t("tradeOrderErrorFallback");
       setFeedback({ tone: "error", message });
       toast({ title: message, tone: "negative" });
     }
@@ -374,8 +385,7 @@ export default function OrderTicket({
       {isMargin && !statusDeclared && (
         <div className="flex flex-col gap-3 rounded-2xl bg-[rgba(104,107,130,0.04)] p-3">
           <p className="text-sm font-medium leading-5 text-[var(--text-primary)]">
-            Please declare your investor status to access margin extensions in fiat
-            or stablecoins.
+            {t("tradeDeclareStatusBlurb")}
           </p>
           <div className="flex gap-3">
             <button
@@ -383,14 +393,14 @@ export default function OrderTicket({
               onClick={() => setStatusDeclared(true)}
               className="inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-xl bg-black px-3 py-2 text-sm font-medium leading-5 text-white hover:bg-[rgb(32,32,32)]"
             >
-              Declare status
+              {t("tradeDeclareStatus")}
             </button>
             <button
               type="button"
               onClick={goSpot}
               className="rail-icon inline-flex h-9 shrink-0 items-center whitespace-nowrap !bg-[rgba(104,107,130,0.08)] px-3 py-2 text-sm font-medium leading-5 text-[var(--text-primary)] hover:!bg-[rgba(104,107,130,0.12)] rounded-xl"
             >
-              Trade spot instead
+              {t("tradeTradeSpotInstead")}
             </button>
           </div>
         </div>
@@ -398,9 +408,7 @@ export default function OrderTicket({
       {isFutures && !derivativesUnlocked && (
         <div className="flex flex-col gap-3 rounded-2xl bg-[rgba(104,107,130,0.04)] p-3">
           <p className="text-sm font-medium leading-5 text-[var(--text-primary)]">
-            Derivatives trading is restricted to professional clients. To be
-            categorized as a professional client, you must complete an assessment
-            and provide supporting documents.
+            {t("tradeDerivativesBlurb")}
           </p>
           <div className="flex gap-3">
             <button
@@ -408,14 +416,14 @@ export default function OrderTicket({
               onClick={() => setDerivativesUnlocked(true)}
               className="inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-xl bg-black px-3 py-2 text-sm font-medium leading-5 text-white hover:bg-[rgb(32,32,32)]"
             >
-              Unlock derivatives
+              {t("tradeUnlockDerivatives")}
             </button>
             <button
               type="button"
               onClick={goSpot}
               className="rail-icon inline-flex h-9 shrink-0 items-center whitespace-nowrap !bg-[rgba(104,107,130,0.08)] px-3 py-2 text-sm font-medium leading-5 text-[var(--text-primary)] hover:!bg-[rgba(104,107,130,0.12)] rounded-xl"
             >
-              Trade spot instead
+              {t("tradeTradeSpotInstead")}
             </button>
           </div>
         </div>
@@ -433,7 +441,7 @@ export default function OrderTicket({
                 : "!bg-transparent !text-[rgb(104,107,130)]"
             }`}
           >
-            {isDeriv ? "Long" : "Buy"}
+            {isDeriv ? t("tradeLong") : t("tradeBuy")}
           </button>
           <button
             type="button"
@@ -446,7 +454,7 @@ export default function OrderTicket({
                 : "!bg-transparent !text-[rgb(104,107,130)]"
             }`}
           >
-            {isDeriv ? "Short" : "Sell"}
+            {isDeriv ? t("tradeShort") : t("tradeSell")}
           </button>
         </div>
         {isFutures ? (
@@ -454,14 +462,14 @@ export default function OrderTicket({
             <div className="flex h-8 items-center rounded-xl bg-[rgba(148,151,169,0.08)] px-2">
               <button
                 type="button"
-                aria-label={`${marginMode} ${leverage}x`}
+                aria-label={t("tradeCrossNx", { leverage: String(leverage) })}
                 aria-haspopup="menu"
                 aria-expanded={leverageOpen}
                 aria-controls={leverageMenuId}
                 onClick={() => setLeverageOpen((v) => !v)}
                 className="rail-icon inline-flex items-center gap-0.5 text-xs font-medium leading-4 text-[rgb(72,75,94)]"
               >
-                {marginMode} {leverage}x
+                {t("tradeCrossNx", { leverage: String(leverage) })}
                 <ChevronDownSmallIcon className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -498,7 +506,7 @@ export default function OrderTicket({
               <input
                 type="checkbox"
                 role="switch"
-                aria-label="Enable margin"
+                aria-label={t("tradeEnableMargin")}
                 className="sr-only"
                 checked={isMargin}
                 onChange={(e) => {
@@ -520,7 +528,7 @@ export default function OrderTicket({
             </label>
             <button
               type="button"
-              aria-label={`Margin ${leverage}x`}
+              aria-label={t("tradeMarginNx", { leverage: String(leverage) })}
               aria-haspopup="menu"
               aria-expanded={leverageOpen}
               aria-controls={leverageMenuId}
@@ -536,7 +544,7 @@ export default function OrderTicket({
               }`}
               style={isMargin ? { color: "rgb(20, 158, 97)" } : undefined}
             >
-              Margin {leverage}x
+              {t("tradeMarginNx", { leverage: String(leverage) })}
               <ChevronDownSmallIcon className="h-3.5 w-3.5" />
             </button>
             {leverageOpen && isMargin && (
@@ -570,7 +578,7 @@ export default function OrderTicket({
       </div>
       <div className="relative flex items-center gap-3 text-xs font-medium" ref={advancedRef}>
         {(["LIMIT", "MARKET"] as const).map((type) => {
-          const active = orderType === type && !advancedNote;
+          const active = orderType === type && !advancedNoteKey;
           return (
             <button
               type="button"
@@ -579,7 +587,7 @@ export default function OrderTicket({
               key={type}
               onClick={() => {
                 setOrderType(type);
-                setAdvancedNote(null);
+                setAdvancedNoteKey(null);
               }}
               className={`rail-icon border-b border-transparent py-1.5 transition-colors ${
                 active
@@ -587,25 +595,25 @@ export default function OrderTicket({
                   : "text-[rgb(104,107,130)] hover:text-[var(--text-primary)]"
               }`}
             >
-              {type === "MARKET" ? "Market" : "Limit"}
+              {type === "MARKET" ? t("tradeMarket") : t("tradeLimit")}
             </button>
           );
         })}
         <button
           type="button"
           role="tab"
-          aria-label="Advanced"
+          aria-label={t("tradeAdvanced")}
           aria-haspopup="menu"
           aria-expanded={advancedOpen}
           aria-controls={advancedMenuId}
           onClick={() => setAdvancedOpen((v) => !v)}
           className={`rail-icon inline-flex items-center gap-0.5 border-b border-transparent py-1.5 transition-colors ${
-            advancedOpen || advancedNote
+            advancedOpen || advancedNoteKey
               ? "!border-[var(--text-primary)] text-[var(--text-primary)]"
               : "text-[rgb(104,107,130)] hover:text-[var(--text-primary)]"
           }`}
         >
-          Advanced
+          {t("tradeAdvanced")}
           <ChevronTiny open={advancedOpen} />
         </button>
         {advancedOpen && (
@@ -620,27 +628,27 @@ export default function OrderTicket({
                 type="button"
                 role="menuitem"
                 onClick={() => {
-                  setAdvancedNote(item.label);
+                  setAdvancedNoteKey(item.labelKey);
                   setAdvancedOpen(false);
                 }}
                 className="rail-icon flex w-full items-center justify-between px-3 py-2 text-left text-xs text-[var(--text-primary)] hover:bg-black/[0.04]"
               >
-                {item.label}
-                <span className="text-[10px] text-[var(--text-muted)]">Soon</span>
+                {t(item.labelKey)}
+                <span className="text-[10px] text-[var(--text-muted)]">{t("tradeSoon")}</span>
               </button>
             ))}
           </div>
         )}
       </div>
-      {advancedNote && (
+      {advancedNoteKey && (
         <p className="rounded-lg bg-black/[0.04] px-3 py-2 text-xs text-[var(--text-muted)]">
-          {advancedNote} orders are coming soon — use Limit or Market for now.
+          {t("tradeAdvancedSoon", { type: t(advancedNoteKey) })}
         </p>
       )}
       {orderType === "LIMIT" ? (
         <div className="flex flex-col gap-0.5">
           <Field
-            label="Limit price USD"
+            label={t("tradeLimitPriceUsd")}
             tip="limit_order"
             value={limitPrice}
             onChange={(v) => {
@@ -656,7 +664,7 @@ export default function OrderTicket({
           />
           <div className="flex gap-1">
             <Field
-              label={`Quantity ${asset}`}
+              label={t("tradeQuantityAsset", { asset })}
               value={quantity}
               onChange={(v) =>
                 syncFromQuantity(v, effectivePrice != null
@@ -667,7 +675,7 @@ export default function OrderTicket({
               radius="rounded-bl-xl rounded-tr-sm"
             />
             <Field
-              label="Total USD"
+              label={t("tradeTotalUsd")}
               value={total}
               onChange={(v) =>
                 syncFromTotal(v, effectivePrice != null
@@ -683,7 +691,7 @@ export default function OrderTicket({
       ) : (
         <div className="flex gap-1">
           <Field
-            label={`Quantity ${asset}`}
+            label={t("tradeQuantityAsset", { asset })}
             tip="market_order"
             value={quantity}
             onChange={(v) => syncFromQuantity(v, effectivePrice)}
@@ -691,7 +699,7 @@ export default function OrderTicket({
             radius="rounded-xl rounded-tr-sm rounded-br-sm"
           />
           <Field
-            label="Total USD"
+            label={t("tradeTotalUsd")}
             value={total}
             onChange={(v) => syncFromTotal(v, effectivePrice)}
             placeholder="0.00"
@@ -715,7 +723,7 @@ export default function OrderTicket({
             value={sizePct}
             onChange={(e) => applySizePct(Number(e.target.value))}
             className="ticket-size-slider relative z-[1]"
-            aria-label="Order size percent"
+            aria-label={t("tradeOrderSizePct")}
           />
         </div>
         <div className="relative mb-0.5 h-4">
@@ -736,8 +744,8 @@ export default function OrderTicket({
             <Link
               to="/deposit"
               className="rail-icon inline-flex h-4 w-4 items-center justify-center rounded-full border border-[rgba(104,107,130,0.32)] text-[11px] leading-none text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-              aria-label="Add funds"
-              title="Add funds"
+              aria-label={t("tradeAddFunds")}
+              title={t("tradeAddFunds")}
             >
               +
             </Link>
@@ -771,9 +779,9 @@ export default function OrderTicket({
             checked={tpSl}
             disabled={tpSlDisabled}
             onChange={setTpSl}
-            label="TP/SL"
+            label={t("tradeTpSl")}
           />
-          <InfoTip term="tp_sl" label="TP/SL" />
+          <InfoTip term="tp_sl" label={t("tradeTpSl")} />
         </div>
         <div
           className={`inline-flex items-center gap-2 text-xs ${
@@ -786,9 +794,9 @@ export default function OrderTicket({
             checked={postOnly}
             disabled={orderType !== "LIMIT"}
             onChange={setPostOnly}
-            label="Post only"
+            label={t("tradePostOnly")}
           />
-          <InfoTip term="post_only" label="Post only" />
+          <InfoTip term="post_only" label={t("tradePostOnly")} />
         </div>
         {(isMargin || isFutures) && (
           <div
@@ -802,25 +810,25 @@ export default function OrderTicket({
               checked={reduceOnly}
               disabled={reduceOnlyLocked}
               onChange={setReduceOnly}
-              label="Reduce only"
+              label={t("tradeReduceOnly")}
             />
-            <InfoTip term="reduce_only" label="Reduce only" />
+            <InfoTip term="reduce_only" label={t("tradeReduceOnly")} />
           </div>
         )}
       </div>
       {tpSl && !tpSlDisabled && (
         <p className="px-0.5 text-[11px] leading-4 text-[var(--text-muted)]">
-          TP/SL is display-only for now.
+          {t("tradeTpSlDisplayOnly")}
         </p>
       )}
       {postOnly && orderType === "LIMIT" && (
         <p className="px-0.5 text-[11px] leading-4 text-[var(--text-muted)]">
-          Post-only is display-only for now.
+          {t("tradePostOnlyDisplayOnly")}
         </p>
       )}
       {reduceOnly && !reduceOnlyLocked && (
         <p className="px-0.5 text-[11px] leading-4 text-[var(--text-muted)]">
-          Reduce-only is display-only for now.
+          {t("tradeReduceOnlyDisplayOnly")}
         </p>
       )}
       {!isSignedIn ? (
@@ -828,32 +836,36 @@ export default function OrderTicket({
           to={SIGN_UP_PATH}
           className="mt-auto flex h-10 min-h-10 w-full shrink-0 items-center justify-center rounded-xl bg-[rgba(104,107,130,0.08)] px-3 py-2.5 text-sm font-medium leading-5 text-[#101114] hover:bg-[rgba(104,107,130,0.12)]"
         >
-          Sign up to trade
+          {t("tradeSignUpToTrade")}
         </Link>
       ) : needsFunds ? (
         <Link
           to="/deposit"
           className="mt-auto flex h-9 min-h-9 shrink-0 items-center justify-center rounded-xl bg-black px-3 py-2 text-sm font-medium leading-5 text-white transition-colors hover:bg-[rgb(32,32,32)]"
         >
-          Add USD to trade
+          {t("tradeAddUsdToTrade")}
         </Link>
       ) : (
         <button
           type="button"
           onClick={handleSubmit}
           disabled={isLoading || !evaluation.canSubmit}
-          title={!evaluation.canSubmit ? evaluation.reason ?? undefined : undefined}
+          title={
+            !evaluation.canSubmit && evaluation.reasonKey
+              ? t(evaluation.reasonKey)
+              : undefined
+          }
           className={`mt-auto flex h-9 min-h-9 shrink-0 items-center justify-center rounded-xl px-3 py-2 text-sm font-medium leading-5 text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
             isBuy
               ? "!bg-[#08844f] hover:!bg-[#077043]"
               : "!bg-[#d11d45] hover:!bg-[#b9183c]"
           }`}
         >
-          {isLoading ? "Placing…" : submitLabel}
+          {isLoading ? t("tradePlacing") : submitLabel}
         </button>
       )}
-      {isSignedIn && !evaluation.canSubmit && evaluation.reason ? (
-        <p className="text-xs text-[rgb(104,107,130)]">{evaluation.reason}</p>
+      {isSignedIn && !evaluation.canSubmit && evaluation.reasonKey ? (
+        <p className="text-xs text-[rgb(104,107,130)]">{t(evaluation.reasonKey)}</p>
       ) : null}
       <div className="min-w-0">
         <button
@@ -862,7 +874,7 @@ export default function OrderTicket({
           onClick={() => setDetailsOpen((v) => !v)}
           className="rail-icon flex w-full items-center py-2 text-left text-xs font-medium text-[rgb(104,107,130)] hover:opacity-80"
         >
-          Order details
+          {t("tradeOrderDetails")}
           <span className="ms-auto flex shrink-0 items-center text-[var(--text-muted)]">
             <ChevronTiny open={detailsOpen} />
           </span>
@@ -872,20 +884,20 @@ export default function OrderTicket({
             {isDeriv && (
               <>
                 <DetailRow
-                  label="Required margin"
+                  label={t("tradeRequiredMargin")}
                   value={requiredMarginDisplay}
                   tip="required_margin"
                 />
                 {isMargin && (
                   <DetailRow
-                    label="Margin health"
+                    label={t("tradeMarginHealth")}
                     value={marginHealth}
                     tip="margin_health"
                   />
                 )}
                 {isFutures && (
                   <DetailRow
-                    label="Est. liquidation"
+                    label={t("tradeEstLiquidation")}
                     value="—"
                     tip="liquidation"
                   />
@@ -893,23 +905,23 @@ export default function OrderTicket({
               </>
             )}
             <div className="flex min-w-0 items-center justify-between gap-2 text-xs">
-              <InfoTip term="time_in_force" label="Time in force" />
+              <InfoTip term="time_in_force" label={t("tradeTimeInForce")} />
               <select
                 value={tif}
                 onChange={(e) => setTif(e.target.value as TimeInForce)}
-                aria-label="Time in force"
+                aria-label={t("tradeTimeInForce")}
                 className="min-w-0 max-w-[11rem] cursor-pointer appearance-none border-0 bg-transparent py-0.5 text-right text-xs font-medium text-[rgb(72,75,94)] outline-none"
               >
                 {TIF_OPTIONS.map((opt) => (
                   <option key={opt.id} value={opt.id}>
-                    {opt.label}
+                    {t(opt.labelKey)}
                   </option>
                 ))}
               </select>
             </div>
             {isFutures ? (
               <DetailRow
-                label="Est. trading fee"
+                label={t("tradeEstTradingFee")}
                 tip="trading_fee"
                 value={
                   notional != null
@@ -923,24 +935,22 @@ export default function OrderTicket({
             ) : (
               <>
                 <DetailRow
-                  label="Est. trading fee"
+                  label={t("tradeEstTradingFee")}
                   tip="trading_fee"
                   value={`${estFeeUsd.toFixed(10).replace(/\.?0+$/, "") || "0"} ${asset}`}
                 />
                 <div className="flex items-center justify-between text-xs">
-                  <InfoTip term="maker_fee" label="Your maker fee" />
+                  <InfoTip term="maker_fee" label={t("tradeYourMakerFee")} />
                   <span className="tabular-nums font-medium text-[rgb(72,75,94)]">
                     {paperFees(venue).maker}
                   </span>
                 </div>
               </>
             )}
-            {isMargin && <DetailRow label="Est. margin fee" value="—" />}
+            {isMargin && <DetailRow label={t("tradeEstMarginFee")} value="—" />}
             {!isFutures && (
               <p className="text-[10px] text-[var(--text-muted)]">
-                {tif === "GTC"
-                  ? "Paper orders rest until filled or canceled."
-                  : "Any quantity that cannot fill immediately is canceled."}
+                {tif === "GTC" ? t("tradePaperGtcHint") : t("tradePaperIocHint")}
               </p>
             )}
           </div>
@@ -957,8 +967,8 @@ export default function OrderTicket({
       )}
       <p className="text-[11px] leading-relaxed text-[var(--text-muted)]">
         {isDeriv
-          ? `Practice money only. Margin figures are a preview — the order fills unlevered against your paper balance, not at ${leverage}x.`
-          : "Practice money only — you can’t lose anything real."}
+          ? t("tradePracticeDeriv", { leverage: String(leverage) })
+          : t("tradePracticeSpot")}
       </p>
     </div>
   );

@@ -33,7 +33,7 @@ describe("evaluateOrder", () => {
   it("blocks a buy that exceeds the cash balance", () => {
     const result = evaluateOrder({ ...base, quantity: "20" });
     expect(result.canSubmit).toBe(false);
-    expect(result.reason).toBe("Not enough balance");
+    expect(result.reasonKey).toBe("tradeNotEnoughBalance");
   });
 
   it("does not apply the balance ceiling to sells", () => {
@@ -42,14 +42,18 @@ describe("evaluateOrder", () => {
   });
 
   it("requires a positive quantity", () => {
-    expect(evaluateOrder({ ...base, quantity: "0" }).reason).toBe("Enter a quantity");
-    expect(evaluateOrder({ ...base, quantity: "" }).reason).toBe("Enter a quantity");
+    expect(evaluateOrder({ ...base, quantity: "0" }).reasonKey).toBe(
+      "tradeEnterQuantity",
+    );
+    expect(evaluateOrder({ ...base, quantity: "" }).reasonKey).toBe(
+      "tradeEnterQuantity",
+    );
   });
 
   it("requires a limit price for limit orders", () => {
     const result = evaluateOrder({ ...base, orderType: "LIMIT", limitPrice: "" });
     expect(result.canSubmit).toBe(false);
-    expect(result.reason).toBe("Enter a limit price");
+    expect(result.reasonKey).toBe("tradeEnterLimitPrice");
   });
 
   it("accepts comma-formatted limit prices", () => {
@@ -66,6 +70,6 @@ describe("evaluateOrder", () => {
   it("waits for a live price on a market order when none is available", () => {
     const result = evaluateOrder({ ...base, livePrice: null });
     expect(result.canSubmit).toBe(false);
-    expect(result.reason).toBe("Waiting for a live price");
+    expect(result.reasonKey).toBe("tradeWaitingLivePrice");
   });
 });

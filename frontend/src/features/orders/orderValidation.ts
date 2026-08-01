@@ -1,4 +1,5 @@
 import type { OrderSide, OrderType } from "./ordersApi";
+import type { TradeShellMessageKey } from "../i18n/shellTradeCatalog";
 
 export interface OrderInput {
   side: OrderSide;
@@ -13,13 +14,9 @@ export interface OrderEvaluation {
   effectivePrice: number | null;
   estimatedTotal: number | null;
   canSubmit: boolean;
-  reason: string | null;
+  reasonKey: TradeShellMessageKey | null;
 }
 
-// Pure order validation kept out of the component so the buying-power and price rules can be
-// unit-tested without rendering. A market order prices at the latest trade; a limit order at the
-// user's price. Sell-side position sufficiency is enforced by the backend (the browser has no
-// authoritative holdings view yet), so it is intentionally not blocked here.
 export function evaluateOrder(input: OrderInput): OrderEvaluation {
   const quantity = Number(String(input.quantity).replace(/,/g, ""));
   const limit = Number(String(input.limitPrice).replace(/,/g, ""));
@@ -35,7 +32,7 @@ export function evaluateOrder(input: OrderInput): OrderEvaluation {
       effectivePrice: priceValid ? (effectivePrice as number) : null,
       estimatedTotal: null,
       canSubmit: false,
-      reason: "Enter a quantity",
+      reasonKey: "tradeEnterQuantity",
     };
   }
   if (!priceValid) {
@@ -43,7 +40,10 @@ export function evaluateOrder(input: OrderInput): OrderEvaluation {
       effectivePrice: null,
       estimatedTotal: null,
       canSubmit: false,
-      reason: input.orderType === "LIMIT" ? "Enter a limit price" : "Waiting for a live price",
+      reasonKey:
+        input.orderType === "LIMIT"
+          ? "tradeEnterLimitPrice"
+          : "tradeWaitingLivePrice",
     };
   }
   if (
@@ -56,8 +56,8 @@ export function evaluateOrder(input: OrderInput): OrderEvaluation {
       effectivePrice,
       estimatedTotal,
       canSubmit: false,
-      reason: "Not enough balance",
+      reasonKey: "tradeNotEnoughBalance",
     };
   }
-  return { effectivePrice, estimatedTotal, canSubmit: true, reason: null };
+  return { effectivePrice, estimatedTotal, canSubmit: true, reasonKey: null };
 }

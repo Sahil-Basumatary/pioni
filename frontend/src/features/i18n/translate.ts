@@ -14,12 +14,22 @@ import {
   type StatusShellMessageKey,
   STATUS_SHELL_CATALOG,
 } from "./shellStatusCatalog";
+import {
+  tradeShellMessage,
+  type TradeShellMessageKey,
+  TRADE_SHELL_CATALOG,
+} from "./shellTradeCatalog";
 
-export type MessageKey = AuthMessageKey | ShellMessageKey | StatusShellMessageKey;
+export type MessageKey =
+  | AuthMessageKey
+  | ShellMessageKey
+  | StatusShellMessageKey
+  | TradeShellMessageKey;
 
 const AUTH_KEYS = new Set<string>(Object.keys(AUTH_CATALOG["en-US"]));
 const SHELL_KEYS = new Set<string>(Object.keys(SHELL_CATALOG["en-US"]));
 const STATUS_KEYS = new Set<string>(Object.keys(STATUS_SHELL_CATALOG["en-US"]));
+const TRADE_KEYS = new Set<string>(Object.keys(TRADE_SHELL_CATALOG["en-US"]));
 
 export function translate(
   language: AppLanguage,
@@ -35,7 +45,15 @@ export function translate(
   if (STATUS_KEYS.has(key)) {
     return statusShellMessage(language, key as StatusShellMessageKey, vars);
   }
+  if (TRADE_KEYS.has(key)) {
+    return tradeShellMessage(language, key as TradeShellMessageKey, vars);
+  }
   return String(key);
 }
 
-export type { ShellMessageKey, AuthMessageKey, StatusShellMessageKey };
+export type {
+  ShellMessageKey,
+  AuthMessageKey,
+  StatusShellMessageKey,
+  TradeShellMessageKey,
+};

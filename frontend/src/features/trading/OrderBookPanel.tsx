@@ -9,6 +9,7 @@ import {
   type DepthLevel,
 } from "./orderBookMath";
 import InfoTip from "../onboarding/InfoTip";
+import { useLanguage } from "../auth/LanguageProvider";
 
 function formatPx(raw: string | number): string {
   const n = Number(raw);
@@ -27,6 +28,7 @@ function formatQty(raw: string | number): string {
 }
 
 export default function OrderBookPanel({ symbol }: { symbol: string }) {
+  const { t } = useLanguage();
   const [groupIdx, setGroupIdx] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -64,7 +66,6 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
     return withCumulativeDepth(grouped, true);
   }, [data?.bids, step]);
 
-  // Keep best asks pinned to the spread (bottom of the ask pane), like Pro.
   useEffect(() => {
     const el = asksRef.current;
     if (!el) return;
@@ -82,10 +83,10 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--card-bg)]">
       <div className="flex shrink-0 items-center gap-1 border-b border-[var(--card-border)] px-2 py-1">
-        <InfoTip term="order_book" label="Book" className="me-1 text-[11px]" />
+        <InfoTip term="order_book" label={t("tradeBook")} className="me-1 text-[11px]" />
         <button
           type="button"
-          aria-label="Decrease grouping"
+          aria-label={t("tradeDecreaseGrouping")}
           disabled={groupIdx <= 0}
           onClick={() => setGroupIdx((i) => Math.max(0, i - 1))}
           className="rail-icon flex h-6 w-6 items-center justify-center rounded-md text-[var(--text-muted)] hover:text-[var(--text-secondary)] disabled:opacity-40"
@@ -95,7 +96,7 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
         <div className="relative" ref={menuRef}>
           <button
             type="button"
-            aria-label="Order book grouping"
+            aria-label={t("tradeBookGrouping")}
             aria-haspopup="listbox"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((o) => !o)}
@@ -106,7 +107,7 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
           {menuOpen && (
             <ul
               role="listbox"
-              aria-label="Order book grouping"
+              aria-label={t("tradeBookGrouping")}
               className="absolute start-0 top-full z-30 mt-1 max-h-56 w-20 overflow-y-auto rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] py-1 shadow-[0px_4px_24px_rgba(0,0,0,0.12)]"
             >
               {GROUPINGS.map((g, i) => (
@@ -132,7 +133,7 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
         </div>
         <button
           type="button"
-          aria-label="Increase grouping"
+          aria-label={t("tradeIncreaseGrouping")}
           disabled={groupIdx >= GROUPINGS.length - 1}
           onClick={() => setGroupIdx((i) => Math.min(GROUPINGS.length - 1, i + 1))}
           className="rail-icon flex h-6 w-6 items-center justify-center rounded-md text-[var(--text-muted)] hover:text-[var(--text-secondary)] disabled:opacity-40"
@@ -141,27 +142,29 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
         </button>
       </div>
       <div className="grid shrink-0 grid-cols-3 gap-1 px-2 py-1 text-[10px] font-medium text-[var(--text-muted)]">
-        <span>Price</span>
-        <span className="text-right">Quantity</span>
-        <span className="text-right">Total</span>
+        <span>{t("tradePrice")}</span>
+        <span className="text-right">{t("tradeQuantity")}</span>
+        <span className="text-right">{t("tradeTotal")}</span>
       </div>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden pb-1">
         {isLoading && !data ? (
-          <p className="px-2 py-8 text-center text-xs text-[var(--text-muted)]">Loading book…</p>
+          <p className="px-2 py-8 text-center text-xs text-[var(--text-muted)]">
+            {t("tradeLoadingBook")}
+          </p>
         ) : isError ? (
           <div className="flex flex-col items-center gap-2 px-2 py-8">
-            <p className="text-xs text-[var(--text-muted)]">Couldn’t load order book.</p>
+            <p className="text-xs text-[var(--text-muted)]">{t("tradeCouldntLoadBook")}</p>
             <button
               type="button"
               onClick={() => refetch()}
               className="rounded-lg bg-[var(--accent)] px-2 py-1 text-[11px] font-medium text-white"
             >
-              Retry
+              {t("retry")}
             </button>
           </div>
         ) : !asks.length && !bids.length ? (
           <p className="px-3 py-8 text-center text-xs text-[var(--text-muted)]">
-            Waiting for market depth…
+            {t("tradeWaitingDepth")}
           </p>
         ) : (
           <>
@@ -184,7 +187,7 @@ export default function OrderBookPanel({ symbol }: { symbol: string }) {
               </span>
               <InfoTip
                 term="book_grouping"
-                label="Grouping"
+                label={t("tradeGrouping")}
                 className="ms-auto text-[11px]"
               />
             </div>
