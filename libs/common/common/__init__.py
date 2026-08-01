@@ -58,6 +58,14 @@ from common.database import (
     PortfolioSnapshot,
 )
 from common.trading import estimate_required_cash, held_quantity
+from common.numeric_limits import (
+    MAX_NOTIONAL,
+    MAX_NUMERIC_20_2,
+    MAX_NUMERIC_20_8,
+    fits_notional,
+    fits_numeric_20_2,
+    fits_numeric_20_8,
+)
 
 __all__ = [
     "setup_logging",
@@ -117,4 +125,10 @@ __all__ = [
     "PortfolioSnapshot",
     "estimate_required_cash",
     "held_quantity",
+    "MAX_NOTIONAL",
+    "MAX_NUMERIC_20_2",
+    "MAX_NUMERIC_20_8",
+    "fits_notional",
+    "fits_numeric_20_2",
+    "fits_numeric_20_8",
 ]

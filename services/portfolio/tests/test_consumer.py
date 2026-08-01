@@ -2,8 +2,9 @@ from __future__ import annotations
 import json
 import uuid
 from decimal import Decimal
-from unittest.mock import AsyncMock
-from portfolio.consumer import TradeConsumer, _PortfolioUpdate
+from unittest.mock import AsyncMock, patch
+from portfolio.consumer import TradeConsumer, _PortfolioUpdate, _is_numeric_overflow
+from portfolio.state import FillOverflowError
 
 
 def _update(**overrides) -> _PortfolioUpdate:
@@ -68,3 +69,59 @@ async def test_publish_serializes_negative_pnl_delta():
 
     payload = json.loads(redis.publish.await_args.args[1])
     assert payload["realized_pnl_delta"] == "-123.45"
+
+
+def test_is_numeric_overflow_detects_asyncpg_message():
+    assert _is_numeric_overflow(Exception("numeric field overflow"))
+    assert _is_numeric_overflow(Exception("NumericValueOutOfRangeError: boom"))
+    assert not _is_numeric_overflow(Exception("connection reset"))
+
+
+async def test_handle_drops_fill_overflow_without_reraising():
+    consumer = TradeConsumer(rmq=None, session_factory=None, redis=None)
+    event_id = uuid.uuid4()
+    order_id = uuid.uuid4()
+    payload = {
+        "event_id": str(event_id),
+        "trade_id": str(uuid.uuid4()),
+        "order_id": str(order_id),
+        "portfolio_id": str(uuid.uuid4()),
+        "symbol": "BTCUSDT",
+        "side": "BUY",
+        "quantity": "1",
+        "price": "100",
+        "fee": "0",
+        "maker_order_id": str(uuid.uuid4()),
+        "taker_order_id": str(order_id),
+        "timestamp": "2026-01-01T00:00:00Z",
+    }
+    with patch.object(consumer, "_apply", AsyncMock(side_effect=FillOverflowError("boom"))):
+        await consumer._handle(payload)
+    assert event_id in consumer._seen
+
+
+async def test_handle_drops_database_numeric_overflow_without_reraising():
+    consumer = TradeConsumer(rmq=None, session_factory=None, redis=None)
+    event_id = uuid.uuid4()
+    order_id = uuid.uuid4()
+    payload = {
+        "event_id": str(event_id),
+        "trade_id": str(uuid.uuid4()),
+        "order_id": str(order_id),
+        "portfolio_id": str(uuid.uuid4()),
+        "symbol": "BTCUSDT",
+        "side": "BUY",
+        "quantity": "1",
+        "price": "100",
+        "fee": "0",
+        "maker_order_id": str(uuid.uuid4()),
+        "taker_order_id": str(order_id),
+        "timestamp": "2026-01-01T00:00:00Z",
+    }
+    with patch.object(
+        consumer,
+        "_apply",
+        AsyncMock(side_effect=Exception("numeric field overflow")),
+    ):
+        await consumer._handle(payload)
+    assert event_id in consumer._seen

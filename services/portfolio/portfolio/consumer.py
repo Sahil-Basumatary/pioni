@@ -21,13 +21,27 @@ from portfolio.domain import PortfolioState, PositionState
 from portfolio.events import TradeExecutedEvent
 from portfolio.ledger import legs_for_fill
 from portfolio.repository import PortfolioNotFoundError, PortfolioRepository
-from portfolio.state import apply_fill_to_portfolio
+from portfolio.state import FillOverflowError, apply_fill_to_portfolio
 
 logger = logging.getLogger(__name__)
 
 QUEUE_PORTFOLIO_TRADES = "portfolio.trades"
 BINDING_KEY = "trade.executed.*"
 DEDUP_CACHE_SIZE = 10000
+
+
+def _is_numeric_overflow(exc: BaseException) -> bool:
+    msg = str(exc).lower()
+    if (
+        "numeric field overflow" in msg
+        or "numeric value out of range" in msg
+        or "numericvalueoutofrange" in msg
+    ):
+        return True
+    cause = exc.__cause__ or getattr(exc, "orig", None)
+    if isinstance(cause, BaseException) and cause is not exc:
+        return _is_numeric_overflow(cause)
+    return False
 
 
 @dataclass(frozen=True, slots=True)
@@ -109,7 +123,30 @@ class TradeConsumer:
                 },
             )
             return
-        except Exception:
+        except FillOverflowError:
+            # Poison event: retrying will never succeed and stalls the queue.
+            logger.exception(
+                "trade event exceeds numeric limits, dropping",
+                extra={
+                    "event_id": str(event.event_id),
+                    "trade_id": str(event.trade_id),
+                    "quantity": str(event.quantity),
+                    "price": str(event.price),
+                },
+            )
+            self._seen.add(event.event_id)
+            return
+        except Exception as exc:
+            if _is_numeric_overflow(exc):
+                logger.exception(
+                    "trade event caused database numeric overflow, dropping",
+                    extra={
+                        "event_id": str(event.event_id),
+                        "trade_id": str(event.trade_id),
+                    },
+                )
+                self._seen.add(event.event_id)
+                return
             logger.exception(
                 "failed to apply trade event",
                 extra={

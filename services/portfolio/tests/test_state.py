@@ -141,3 +141,32 @@ def test_apply_fill_to_portfolio_updates_cash_and_position():
     assert new_position.quantity == Decimal("10")
     assert new_position.avg_entry_price == Decimal("500")
     assert realized == Decimal("0")
+
+
+def test_apply_fill_rejects_notional_overflow():
+    from portfolio.state import FillOverflowError
+    pos = _empty_position()
+    with pytest.raises(FillOverflowError, match="notional"):
+        apply_fill(pos, OrderSide.BUY, Decimal("1000000000"), Decimal("1000000000"))
+
+
+def test_apply_fill_to_portfolio_rejects_cash_overflow():
+    from portfolio.state import FillOverflowError
+    portfolio = PortfolioState(
+        id=uuid.uuid4(),
+        user_id=uuid.uuid4(),
+        cash_balance=Decimal("999999999999"),
+        initial_balance=Decimal("999999999999"),
+    )
+    position = PositionState(
+        portfolio_id=portfolio.id,
+        symbol="BTC",
+        quantity=Decimal("1"),
+        avg_entry_price=Decimal("1"),
+        realized_pnl=Decimal("0"),
+    )
+    with pytest.raises(FillOverflowError, match="overflow"):
+        apply_fill_to_portfolio(
+            portfolio, position, OrderSide.SELL,
+            Decimal("1"), Decimal("2"),
+        )

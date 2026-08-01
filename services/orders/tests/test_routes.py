@@ -65,6 +65,26 @@ def test_submit_limit_without_price_returns_422(client, mock_svc):
     assert resp.status_code == 422
 
 
+def test_submit_quantity_overflow_returns_422(client, mock_svc):
+    resp = client.post("/orders", json={
+        "portfolio_id": str(uuid.uuid4()), "symbol": "BTCUSDT",
+        "side": "BUY", "order_type": "LIMIT",
+        "quantity": "1000000000000", "price": "1",
+    })
+    assert resp.status_code == 422
+    mock_svc.submit_order.assert_not_called()
+
+
+def test_submit_notional_overflow_returns_422(client, mock_svc):
+    resp = client.post("/orders", json={
+        "portfolio_id": str(uuid.uuid4()), "symbol": "BTCUSDT",
+        "side": "BUY", "order_type": "LIMIT",
+        "quantity": "1000000000", "price": "1000000000",
+    })
+    assert resp.status_code == 422
+    mock_svc.submit_order.assert_not_called()
+
+
 def test_cancel_order_success(client, mock_svc):
     oid = uuid.uuid4()
     mock_svc.cancel_order.return_value = CancelOrderResponse(

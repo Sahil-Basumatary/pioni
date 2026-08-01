@@ -72,4 +72,26 @@ describe("evaluateOrder", () => {
     expect(result.canSubmit).toBe(false);
     expect(result.reasonKey).toBe("tradeWaitingLivePrice");
   });
+
+  it("blocks quantity above the numeric ceiling", () => {
+    const result = evaluateOrder({
+      ...base,
+      quantity: "1000000000000",
+      cashBalance: null,
+    });
+    expect(result.canSubmit).toBe(false);
+    expect(result.reasonKey).toBe("tradeOrderTooLarge");
+  });
+
+  it("blocks notional above the numeric ceiling", () => {
+    const result = evaluateOrder({
+      ...base,
+      orderType: "LIMIT",
+      quantity: "1000000000",
+      limitPrice: "1000000000",
+      cashBalance: null,
+    });
+    expect(result.canSubmit).toBe(false);
+    expect(result.reasonKey).toBe("tradeOrderTooLarge");
+  });
 });

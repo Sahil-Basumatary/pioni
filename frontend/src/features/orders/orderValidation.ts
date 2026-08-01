@@ -1,6 +1,10 @@
 import type { OrderSide, OrderType } from "./ordersApi";
 import type { TradeShellMessageKey } from "../i18n/shellTradeCatalog";
 
+// Keep in sync with libs/common/common/numeric_limits.py (NUMERIC 20,8).
+export const MAX_ORDER_QUANTITY = 999_999_999_999.99999999;
+export const MAX_ORDER_NOTIONAL = 999_999_999_999.99999999;
+
 export interface OrderInput {
   side: OrderSide;
   orderType: OrderType;
@@ -35,6 +39,14 @@ export function evaluateOrder(input: OrderInput): OrderEvaluation {
       reasonKey: "tradeEnterQuantity",
     };
   }
+  if (quantity > MAX_ORDER_QUANTITY) {
+    return {
+      effectivePrice: priceValid ? (effectivePrice as number) : null,
+      estimatedTotal: null,
+      canSubmit: false,
+      reasonKey: "tradeOrderTooLarge",
+    };
+  }
   if (!priceValid) {
     return {
       effectivePrice: null,
@@ -44,6 +56,14 @@ export function evaluateOrder(input: OrderInput): OrderEvaluation {
         input.orderType === "LIMIT"
           ? "tradeEnterLimitPrice"
           : "tradeWaitingLivePrice",
+    };
+  }
+  if (estimatedTotal != null && estimatedTotal > MAX_ORDER_NOTIONAL) {
+    return {
+      effectivePrice,
+      estimatedTotal,
+      canSubmit: false,
+      reasonKey: "tradeOrderTooLarge",
     };
   }
   if (
