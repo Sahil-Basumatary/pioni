@@ -11,6 +11,7 @@ import type { TradingVenue } from "./tradingVenue";
 import { paperFees } from "./paperFees";
 import InfoTip from "../onboarding/InfoTip";
 import type { GlossaryTermId } from "../onboarding/glossary";
+import { useLanguage } from "../auth/LanguageProvider";
 
 const DEFAULT_GATEWAY_URL = "http://localhost:8000";
 const SNAPSHOT_REFRESH_MS = 15_000;
@@ -84,6 +85,7 @@ function PairHeader({
   onCreateAlert?: () => void;
   compact?: boolean;
 }) {
+  const { t } = useLanguage();
   const trade = useLiveMarketTrade(symbol);
   const { favorites, toggleFav, openSearch } = useMarketSearch();
   const { data: book } = useGetOrderBookQuery({ symbol, depth: 1 }, {
@@ -150,7 +152,7 @@ function PairHeader({
       ? (bid + ask) / 2
       : currentPrice;
 
-  const lastLabel = venue === "futures" ? "Mark price" : "Last price";
+  const lastLabel = t(venue === "futures" ? "tradeMarkPrice" : "tradeLastPrice");
   const markOrLast =
     venue === "futures" ? (currentPrice ?? indexPrice) : currentPrice;
   const lastValue = markOrLast != null ? formatPrice(markOrLast) : "—";
@@ -168,7 +170,7 @@ function PairHeader({
   const pairButton = (
     <button
       type="button"
-      aria-label="Select market"
+      aria-label={t("tradeSelectMarket")}
       onClick={openSearch}
       className="rail-icon flex items-center gap-2 rounded-lg px-1 py-0.5 hover:bg-black/[0.04]"
     >
@@ -191,7 +193,7 @@ function PairHeader({
           <span>
             <span>{asset}</span>
             {venue === "futures" ? (
-              <span className="text-[var(--text-muted)]"> Perp</span>
+              <span className="text-[var(--text-muted)]"> {t("tradePerp")}</span>
             ) : (
               <span className="text-[var(--text-muted)]">/USD</span>
             )}
@@ -218,8 +220,8 @@ function PairHeader({
     <>
       <button
         type="button"
-        aria-label="Create alert"
-        title="Create alert"
+        aria-label={t("createAlert")}
+        title={t("createAlert")}
         onClick={onCreateAlert}
         className="rail-icon flex h-7 w-7 items-center justify-center rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)]"
       >
@@ -227,7 +229,9 @@ function PairHeader({
       </button>
       <button
         type="button"
-        aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
+        aria-label={t(
+          favorited ? "tradeRemoveFromFavorites" : "tradeAddToFavorites",
+        )}
         onClick={() => toggleFav(symbol)}
         className={`rail-icon flex h-7 w-7 items-center justify-center rounded-full ${
           favorited ? "text-amber-500" : "text-[var(--text-muted)]"
@@ -277,7 +281,7 @@ function PairHeader({
       </div>
       <Stat
         compact={compact}
-        label="Index price"
+        label={t("tradeIndexPrice")}
         tip="index_price"
         value={indexPrice != null ? formatPrice(indexPrice) : "—"}
         suffix={indexPrice != null ? "USD" : undefined}
@@ -289,7 +293,7 @@ function PairHeader({
       >
         <InfoTip
           term="change_24h"
-          label="24H Change"
+          label={t("trade24hChange")}
           className="text-[10px] uppercase tracking-wider"
           placement="bottom"
         />
@@ -320,12 +324,12 @@ function PairHeader({
       </div>
       {venue === "futures" ? (
         <>
-          <Stat compact={compact} label="Funding rate" tip="funding_rate" value={FUTURES_PAPER_FUNDING} />
+          <Stat compact={compact} label={t("tradeFundingRate")} tip="funding_rate" value={FUTURES_PAPER_FUNDING} />
           <Stat
             compact={compact}
-            label="Next funding rate"
+            label={t("tradeNextFundingRate")}
             tip="funding_rate"
-            value={`0.0000% @ ${nextFundingAtLabel()}`}
+            value={t("tradeNextFundingAt", { time: nextFundingAtLabel() })}
           />
           {compact ? (
             <VolumeStat
@@ -344,7 +348,7 @@ function PairHeader({
             />
           ) : (
             <Stat
-              label="24H Volume"
+              label={t("trade24hVolume")}
               tip="volume_24h"
               value={
                 snapshot?.volume_24h
@@ -353,7 +357,7 @@ function PairHeader({
               }
             />
           )}
-          <Stat compact={compact} label="Open interest" value="—" />
+          <Stat compact={compact} label={t("tradeOpenInterest")} value="—" />
         </>
       ) : (
         <>
@@ -374,7 +378,7 @@ function PairHeader({
             />
           ) : (
             <Stat
-              label="24H Volume"
+              label={t("trade24hVolume")}
               tip="volume_24h"
               value={
                 snapshot?.volume_24h
@@ -386,12 +390,12 @@ function PairHeader({
           {!compact && (
             <>
               <Stat
-                label="24H High"
+                label={t("trade24hHigh")}
                 tip="high_24h"
                 value={snapshot?.high_24h ? formatPrice(snapshot.high_24h) : "—"}
               />
               <Stat
-                label="24H Low"
+                label={t("trade24hLow")}
                 tip="low_24h"
                 value={snapshot?.low_24h ? formatPrice(snapshot.low_24h) : "—"}
               />
@@ -406,13 +410,13 @@ function PairHeader({
       >
         <InfoTip
           term="fees"
-          label="Fees"
+          label={t("tradeFees")}
           className="text-[10px] uppercase tracking-wider"
           placement="bottom"
         />
         <Link
           to="/terms"
-          title="Paper trading — no exchange fees"
+          title={t("tradePaperFeesHint")}
           className={`inline-flex items-center gap-1 rounded-lg px-1 font-medium tabular-nums text-[var(--text-primary)] hover:bg-black/[0.04] ${
             compact ? "text-[14px]" : "text-[13px]"
           }`}
@@ -452,6 +456,7 @@ function PairHeader({
     >
       <button
         type="button"
+        aria-label={t("tradeSelectMarket")}
         onClick={openSearch}
         className="rail-icon flex items-center gap-2 rounded-lg px-1 py-1 hover:bg-black/[0.04]"
       >
@@ -474,7 +479,7 @@ function PairHeader({
             <span>
               {asset}
               {venue === "futures" ? (
-                <span className="text-[var(--text-muted)]"> Perp</span>
+                <span className="text-[var(--text-muted)]"> {t("tradePerp")}</span>
               ) : (
                 <span className="text-[var(--text-muted)]">/USD</span>
               )}
@@ -497,8 +502,8 @@ function PairHeader({
       </button>
       <button
         type="button"
-        aria-label="Create alert"
-        title="Create alert"
+        aria-label={t("createAlert")}
+        title={t("createAlert")}
         onClick={onCreateAlert}
         className="rail-icon flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)]"
       >
@@ -506,7 +511,9 @@ function PairHeader({
       </button>
       <button
         type="button"
-        aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
+        aria-label={t(
+          favorited ? "tradeRemoveFromFavorites" : "tradeAddToFavorites",
+        )}
         onClick={() => toggleFav(symbol)}
         className={`rail-icon flex h-8 w-8 items-center justify-center rounded-lg ${
           favorited ? "text-amber-500" : "text-[var(--text-muted)]"
@@ -580,6 +587,7 @@ function VolumeStat({
   quote: string | null;
   compact?: boolean;
 }) {
+  const { t } = useLanguage();
   return (
     <div
       className={`flex shrink-0 flex-col whitespace-nowrap ${
@@ -589,7 +597,7 @@ function VolumeStat({
       <span className="text-[10px] uppercase tracking-wider whitespace-nowrap text-[var(--text-muted)]">
         <InfoTip
           term="volume_24h"
-          label="24H Volume"
+          label={t("trade24hVolume")}
           className="text-[10px] uppercase tracking-wider"
           placement="bottom"
         />

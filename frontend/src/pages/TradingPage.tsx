@@ -25,6 +25,7 @@ import TradingBottomPanel, {
 } from "../features/trading/TradingBottomPanel";
 import ContentWindow, {
   type ContentTab,
+  type MenuItem,
 } from "../features/trading/ContentWindow";
 import AlertsPanel from "../features/trading/AlertsPanel";
 import { useAlertCreate } from "../features/trading/AlertCreateContext";
@@ -38,80 +39,88 @@ import {
   type MobileTradeTab,
 } from "../features/trading/MobileTradeTabs";
 import { useCompactShell } from "../hooks/useCompactShell";
+import { useLanguage } from "../features/auth/LanguageProvider";
+import type { MessageKey } from "../features/i18n/translate";
 import type { TradingVenue } from "../features/trading/tradingVenue";
 import type { Kline } from "../types/market";
 
 type PaneId = "ticket" | "book" | "chart" | "bottom";
 
 const TICKET_TABS: ContentTab[] = [
-  { id: "orderform", label: "Order form" },
-  { id: "alerts", label: "Alerts" },
+  { id: "orderform", labelKey: "tradePaneOrderForm" },
+  { id: "alerts", labelKey: "tradePaneAlerts" },
 ];
 
 const BOOK_TABS: ContentTab[] = [
-  { id: "orderbook", label: "Order book" },
-  { id: "markettrades", label: "Market trades" },
+  { id: "orderbook", labelKey: "tradePaneOrderBook" },
+  { id: "markettrades", labelKey: "tradePaneMarketTrades" },
 ];
 
-const CHART_TABS: ContentTab[] = [{ id: "marketchart", label: "Market chart" }];
+const CHART_TABS: ContentTab[] = [
+  { id: "marketchart", labelKey: "tradePaneMarketChart" },
+];
 
 const BOTTOM_TABS: ContentTab[] = [
-  { id: "balances", label: "Balances" },
-  { id: "positions", label: "Positions" },
-  { id: "orders", label: "Orders", closable: true },
-  { id: "closed", label: "Closed orders" },
-  { id: "history", label: "Trades" },
+  { id: "balances", labelKey: "tradePaneBalances" },
+  { id: "positions", labelKey: "tradePanePositions" },
+  { id: "orders", labelKey: "tradePaneOrders", closable: true },
+  { id: "closed", labelKey: "tradePaneClosedOrders" },
+  { id: "history", labelKey: "tradePaneTrades" },
 ];
 
-const TICKET_ADD = [
-  { id: "depth", label: "Depth chart" },
-  { id: "trades", label: "Trades", soon: false },
+const TICKET_ADD: MenuItem[] = [
+  { id: "depth", labelKey: "tradePaneDepthChart" },
+  { id: "trades", labelKey: "tradePaneTrades", soon: false },
 ];
-const BOOK_OVERFLOW = [
-  { id: "depth", label: "Depth chart" },
-  { id: "trades", label: "Trades", soon: false },
+const BOOK_OVERFLOW: MenuItem[] = [
+  { id: "depth", labelKey: "tradePaneDepthChart" },
+  { id: "trades", labelKey: "tradePaneTrades", soon: false },
 ];
-const CHART_OVERFLOW = [{ id: "depth", label: "Depth chart" }];
-const BOTTOM_OVERFLOW = [{ id: "fills", label: "Fills" }];
-const BOTTOM_ADD = [
-  { id: "balances", label: "Balances", soon: false },
-  { id: "positions", label: "Positions", soon: false },
+const CHART_OVERFLOW: MenuItem[] = [
+  { id: "depth", labelKey: "tradePaneDepthChart" },
+];
+const BOTTOM_OVERFLOW: MenuItem[] = [
+  { id: "fills", labelKey: "tradePaneFills" },
+];
+const BOTTOM_ADD: MenuItem[] = [
+  { id: "balances", labelKey: "tradePaneBalances", soon: false },
+  { id: "positions", labelKey: "tradePanePositions", soon: false },
 ];
 
 const MOBILE_TABS: MobileTradeTab[] = [
-  { id: "orders", label: "Orders" },
-  { id: "marketchart", label: "Market chart" },
-  { id: "orderform", label: "Order form" },
-  { id: "positions", label: "Positions" },
-  { id: "marketsummary", label: "Market summary" },
-  { id: "balances", label: "Balances" },
-  { id: "depth", label: "Depth chart" },
-  { id: "favorites", label: "Favorites" },
-  { id: "markettrades", label: "Market trades" },
-  { id: "orderbook", label: "Order book" },
-  { id: "simpleorderform", label: "Simple order form" },
-  { id: "portfolio", label: "Portfolio" },
-  { id: "closed", label: "Closed orders" },
-  { id: "history", label: "Trades" },
-  { id: "alerts", label: "Alerts" },
-  { id: "oneclick", label: "1-Click trading" },
-  { id: "aggressor", label: "Aggressor ratio" },
-  { id: "tradecount", label: "Trade count" },
-  { id: "volatility", label: "Volatility" },
-  { id: "volume", label: "Volume" },
-  { id: "bookanalytics", label: "Order book analytics" },
-  { id: "futurebasis", label: "Future basis" },
-  { id: "fundingrate", label: "Funding rate" },
-  { id: "openinterest", label: "Open interest" },
-  { id: "liqvolume", label: "Liquidation volume" },
-  { id: "spread", label: "Spread" },
-  { id: "longshort", label: "Long short ratio" },
-  { id: "technical", label: "Technical analysis" },
-  { id: "activity", label: "Activity" },
-  { id: "fundingtx", label: "Funding transactions" },
-  { id: "explore", label: "Explore" },
-  { id: "news", label: "News" },
-  { id: "bots", label: "Bots" },
+  { id: "orders", labelKey: "tradePaneOrders" },
+  { id: "marketchart", labelKey: "tradePaneMarketChart" },
+  { id: "orderform", labelKey: "tradePaneOrderForm" },
+  { id: "positions", labelKey: "tradePanePositions" },
+  { id: "marketsummary", labelKey: "tradePaneMarketSummary" },
+  { id: "balances", labelKey: "tradePaneBalances" },
+  { id: "depth", labelKey: "tradePaneDepthChart" },
+  { id: "favorites", labelKey: "favorites" },
+  { id: "markettrades", labelKey: "tradePaneMarketTrades" },
+  { id: "orderbook", labelKey: "tradePaneOrderBook" },
+  { id: "simpleorderform", labelKey: "tradePaneSimpleOrderForm" },
+  { id: "portfolio", labelKey: "tradePanePortfolio" },
+  { id: "closed", labelKey: "tradePaneClosedOrders" },
+  { id: "history", labelKey: "tradePaneTrades" },
+  { id: "alerts", labelKey: "tradePaneAlerts" },
+  { id: "oneclick", labelKey: "tradePaneOneClick" },
+  { id: "aggressor", labelKey: "tradePaneAggressorRatio" },
+  { id: "tradecount", labelKey: "tradePaneTradeCount" },
+  { id: "volatility", labelKey: "tradePaneVolatility" },
+  { id: "volume", labelKey: "tradePaneVolume" },
+  { id: "bookanalytics", labelKey: "tradePaneBookAnalytics" },
+  { id: "futurebasis", labelKey: "tradePaneFutureBasis" },
+  { id: "fundingrate", labelKey: "tradePaneFundingRate" },
+  { id: "openinterest", labelKey: "tradePaneOpenInterest" },
+  { id: "liqvolume", labelKey: "tradePaneLiqVolume" },
+  { id: "spread", labelKey: "tradePaneSpread" },
+  { id: "longshort", labelKey: "tradePaneLongShort" },
+  { id: "technical", labelKey: "tradePaneTechnical" },
+  { id: "activity", labelKey: "tradePaneActivity" },
+  { id: "fundingtx", labelKey: "tradePaneFundingTx" },
+  { id: "explore", labelKey: "tradePaneExplore" },
+  { id: "news", labelKey: "tradePaneNews" },
+  { id: "bots", labelKey: "tradePaneBots" },
 ];
 
 export default function TradingPage({
@@ -120,6 +129,7 @@ export default function TradingPage({
   venue?: TradingVenue;
 }) {
   const dispatch = useAppDispatch();
+  const { t } = useLanguage();
   const symbol = useAppSelector(selectSymbol);
   const interval = useAppSelector(selectInterval);
   const status = useAppSelector(selectMarketStatus);
@@ -218,8 +228,9 @@ export default function TradingPage({
       clearStub("bottom");
       setBottomTab(id);
       if (!bottomTabs.some((tab) => tab.id === id)) {
-        const label = id === "balances" ? "Balances" : "Positions";
-        setBottomTabs((tabs) => [...tabs, { id, label }]);
+        const labelKey =
+          id === "balances" ? "tradePaneBalances" : "tradePanePositions";
+        setBottomTabs((tabs) => [...tabs, { id, labelKey }]);
       }
       return;
     }
@@ -280,8 +291,11 @@ export default function TradingPage({
       default:
         return (
           <ComingSoonBody
-            title={MOBILE_TABS.find((t) => t.id === mobileTab)?.label ?? mobileTab}
-            description="This widget will unlock in a later milestone."
+            title={t(
+              MOBILE_TABS.find((tab) => tab.id === mobileTab)?.labelKey ??
+                "tradePaneMarketChart",
+            )}
+            description={t("tradeWidgetSoonBlurb")}
           />
         );
     }
@@ -339,7 +353,7 @@ export default function TradingPage({
             style={maximized === "ticket" ? undefined : { width: sizes.ticketWidth }}
           >
             <ContentWindow
-              label="Order form"
+              label={t("tradePaneOrderForm")}
               tabs={TICKET_TABS}
               activeTabId={ticketTab}
               onTabChange={(id) => {
@@ -355,8 +369,8 @@ export default function TradingPage({
                 <DepthChartPanel symbol={symbol} />
               ) : stubTitle.ticket ? (
                 <ComingSoonBody
-                  title={labelForStub(stubTitle.ticket)}
-                  description="This widget will unlock in a later milestone."
+                  title={t(labelKeyForStub(stubTitle.ticket))}
+                  description={t("tradeWidgetSoonBlurb")}
                 />
               ) : ticketTab === "alerts" ? (
                 <AlertsPanel />
@@ -369,7 +383,7 @@ export default function TradingPage({
         {maximized == null && (
           <ResizeHandle
             orientation="vertical"
-            label="Resize order ticket"
+            label={t("tradeResizeOrderTicket")}
             active={dragging === "ticketWidth"}
             onPointerDown={(e) => beginResize("ticketWidth", "horizontal", e, 1)}
             onDoubleClick={reset}
@@ -402,7 +416,7 @@ export default function TradingPage({
                   style={maximized === "book" ? undefined : { width: sizes.bookWidth }}
                 >
                   <ContentWindow
-                    label="Order book"
+                    label={t("tradePaneOrderBook")}
                     tabs={BOOK_TABS}
                     activeTabId={bookTab}
                     onTabChange={(id) => {
@@ -419,8 +433,8 @@ export default function TradingPage({
                       <DepthChartPanel symbol={symbol} />
                     ) : stubTitle.book ? (
                       <ComingSoonBody
-                        title={labelForStub(stubTitle.book)}
-                        description="This widget will unlock in a later milestone."
+                        title={t(labelKeyForStub(stubTitle.book))}
+                        description={t("tradeWidgetSoonBlurb")}
                       />
                     ) : bookTab === "markettrades" ? (
                       <MarketTradesPanel symbol={symbol} />
@@ -433,7 +447,7 @@ export default function TradingPage({
               {maximized == null && (
                 <ResizeHandle
                   orientation="vertical"
-                  label="Resize order book"
+                  label={t("tradeResizeOrderBook")}
                   active={dragging === "bookWidth"}
                   onPointerDown={(e) => beginResize("bookWidth", "horizontal", e, 1)}
                   onDoubleClick={reset}
@@ -447,7 +461,7 @@ export default function TradingPage({
                   )}
                 >
                   <ContentWindow
-                    label="Market chart"
+                    label={t("tradePaneMarketChart")}
                     tabs={CHART_TABS}
                     activeTabId={chartTab}
                     onTabChange={(id) => {
@@ -464,8 +478,8 @@ export default function TradingPage({
                       <DepthChartPanel symbol={symbol} />
                     ) : stubTitle.chart ? (
                       <ComingSoonBody
-                        title={labelForStub(stubTitle.chart)}
-                        description="This widget will unlock in a later milestone."
+                        title={t(labelKeyForStub(stubTitle.chart))}
+                        description={t("tradeWidgetSoonBlurb")}
                       />
                     ) : (
                       <div className="flex h-full min-h-0 flex-1 flex-col">
@@ -485,7 +499,7 @@ export default function TradingPage({
           {maximized == null && show("bottom") && (
             <ResizeHandle
               orientation="horizontal"
-              label="Resize bottom panel"
+              label={t("tradeResizeBottomPanel")}
               active={dragging === "bottomHeight"}
               onPointerDown={(e) => beginResize("bottomHeight", "vertical", e, -1)}
               onDoubleClick={reset}
@@ -500,7 +514,7 @@ export default function TradingPage({
               style={maximized === "bottom" ? undefined : { height: sizes.bottomHeight }}
             >
               <ContentWindow
-                label="Trading activity"
+                label={t("tradePaneTradingActivity")}
                 tabs={bottomTabs}
                 activeTabId={bottomTab}
                 onTabChange={(id) => {
@@ -517,8 +531,8 @@ export default function TradingPage({
               >
                 {stubTitle.bottom ? (
                   <ComingSoonBody
-                    title={labelForStub(stubTitle.bottom)}
-                    description="This widget will unlock in a later milestone."
+                    title={t(labelKeyForStub(stubTitle.bottom))}
+                    description={t("tradeWidgetSoonBlurb")}
                   />
                 ) : (
                   <TradingBottomPanel symbol={symbol} tab={bottomTab} />
@@ -532,13 +546,13 @@ export default function TradingPage({
   );
 }
 
-function labelForStub(id: string): string {
-  const map: Record<string, string> = {
-    depth: "Depth chart",
-    trades: "Trades",
-    fills: "Fills",
-    balances: "Balances",
-    positions: "Positions",
+function labelKeyForStub(id: string): MessageKey {
+  const map: Record<string, MessageKey> = {
+    depth: "tradePaneDepthChart",
+    trades: "tradePaneTrades",
+    fills: "tradePaneFills",
+    balances: "tradePaneBalances",
+    positions: "tradePanePositions",
   };
-  return map[id] ?? id;
+  return map[id] ?? "tradePaneMarketChart";
 }

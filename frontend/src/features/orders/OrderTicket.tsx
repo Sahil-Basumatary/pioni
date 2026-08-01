@@ -351,8 +351,22 @@ export default function OrderTicket({
       setFeedback({
         tone: "success",
         message: filled
-          ? `Filled — ${isDeriv ? (isBuy ? "longed" : "shorted") : isBuy ? "bought" : "sold"} ${order.filled_quantity} ${asset}`
-          : `Order placed (${order.status.toLowerCase().replace(/_/g, " ")})`,
+          ? t("tradeFilledFeedback", {
+              verb: t(
+                isDeriv
+                  ? isBuy
+                    ? "tradeVerbLonged"
+                    : "tradeVerbShorted"
+                  : isBuy
+                    ? "tradeVerbBought"
+                    : "tradeVerbSold",
+              ),
+              qty: order.filled_quantity,
+              asset,
+            })
+          : t("tradeOrderPlacedFeedback", {
+              status: order.status.toLowerCase().replace(/_/g, " "),
+            }),
       });
       toast(toastFromOrder(order));
       watchOpenOrder(order.id, order.status);

@@ -6,6 +6,7 @@ import SignedOutUnlock from "../auth/SignedOutUnlock";
 import { useLiveMarketTrade } from "../market/liveMarketStore";
 import { useMarketSocket } from "../market/MarketSocketProvider";
 import { useToast } from "../toasts/useToast";
+import { useLanguage } from "../auth/LanguageProvider";
 import { useAlertCreate } from "./AlertCreateContext";
 import { formatAlertPair } from "./alertFormat";
 import {
@@ -14,6 +15,7 @@ import {
 } from "./alertsApi";
 
 export default function CreateAlertDialog() {
+  const { t } = useLanguage();
   const { open, symbol, closeCreateAlert } = useAlertCreate();
   const { isSignedIn } = useAuth();
   const toast = useToast();
@@ -58,7 +60,7 @@ export default function CreateAlertDialog() {
   const onSubmit = async () => {
     const price = Number(priceRaw.replace(/,/g, ""));
     if (!Number.isFinite(price) || price <= 0) {
-      setError("Enter a valid price");
+      setError(t("tradeEnterValidPrice"));
       return;
     }
     setError(null);
@@ -68,10 +70,10 @@ export default function CreateAlertDialog() {
         condition,
         target_price: String(price),
       }).unwrap();
-      toast({ title: "Alert created", tone: "positive" });
+      toast({ title: t("tradeAlertCreated"), tone: "positive" });
       closeCreateAlert();
     } catch {
-      setError("Couldn’t create alert. Try again.");
+      setError(t("tradeCouldntCreateAlert"));
     }
   };
 
@@ -79,21 +81,21 @@ export default function CreateAlertDialog() {
     <div className="fixed inset-0 z-[90] flex items-start justify-center px-3 pt-[min(12vh,150px)]">
       <button
         type="button"
-        aria-label="Dismiss alert"
+        aria-label={t("tradeDismissAlert")}
         className="absolute inset-0 bg-[rgba(0,0,0,0.4)]"
         onClick={closeCreateAlert}
       />
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Create alert"
+        aria-label={t("createAlert")}
         className="relative z-[1] w-full max-w-[400px] rounded-[20px] bg-white shadow-[0_8px_40px_rgba(0,0,0,0.18)]"
       >
         <div className="flex items-center justify-between px-5 pb-2 pt-5">
-          <h1 className="text-base font-medium leading-6">Create alert</h1>
+          <h1 className="text-base font-medium leading-6">{t("createAlert")}</h1>
           <button
             type="button"
-            aria-label="Close"
+            aria-label={t("tradeClose")}
             onClick={closeCreateAlert}
             className="rail-icon inline-flex h-7 w-7 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[rgba(104,107,130,0.08)]"
           >
@@ -107,20 +109,22 @@ export default function CreateAlertDialog() {
         ) : (
           <div className="flex flex-col gap-4 px-5 pb-5 pt-2">
             <div>
-              <p className="text-xs font-medium text-[rgb(104,107,130)]">Market</p>
+              <p className="text-xs font-medium text-[rgb(104,107,130)]">
+                {t("tradeMarket")}
+              </p>
               <p className="mt-1 text-sm font-medium text-[var(--text-primary)]">
                 {formatAlertPair(symbol)}
               </p>
             </div>
             <div>
               <p className="mb-1.5 text-xs font-medium text-[rgb(104,107,130)]">
-                Condition
+                {t("tradeCondition")}
               </p>
               <div className="inline-flex rounded-xl bg-[rgba(104,107,130,0.08)] p-0.5">
                 {(
                   [
-                    { id: "ABOVE", label: "Rises to" },
-                    { id: "BELOW", label: "Falls to" },
+                    { id: "ABOVE", labelKey: "tradeRisesTo" },
+                    { id: "BELOW", labelKey: "tradeFallsTo" },
                   ] as const
                 ).map((opt) => {
                   const active = condition === opt.id;
@@ -135,7 +139,7 @@ export default function CreateAlertDialog() {
                           : "text-[rgb(104,107,130)]"
                       }`}
                     >
-                      {opt.label}
+                      {t(opt.labelKey)}
                     </button>
                   );
                 })}
@@ -143,7 +147,7 @@ export default function CreateAlertDialog() {
             </div>
             <label className="block">
               <span className="text-xs font-medium text-[rgb(104,107,130)]">
-                Price
+                {t("tradePrice")}
               </span>
               <input
                 type="text"
@@ -164,7 +168,7 @@ export default function CreateAlertDialog() {
               onClick={() => void onSubmit()}
               className="flex h-10 w-full items-center justify-center rounded-xl bg-[var(--accent)] text-sm font-medium text-white hover:bg-[var(--accent-soft)] disabled:opacity-60"
             >
-              {isLoading ? "Creating…" : "Create alert"}
+              {t(isLoading ? "tradeCreating" : "createAlert")}
             </button>
           </div>
         )}

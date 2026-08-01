@@ -1,16 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
+  alertConditionKey,
   alertMeetsCondition,
-  formatAlertCondition,
   formatAlertPair,
   formatAlertPrice,
 } from "./alertFormat";
+import { translate } from "../i18n/translate";
 
 describe("alertFormat", () => {
   it("formats pairs and conditions", () => {
     expect(formatAlertPair("BTCUSDT")).toBe("BTC/USD");
-    expect(formatAlertCondition("ABOVE")).toBe("Rises to");
-    expect(formatAlertCondition("BELOW")).toBe("Falls to");
+    expect(translate("en-US", alertConditionKey("ABOVE"))).toBe("Rises to");
+    expect(translate("en-US", alertConditionKey("BELOW"))).toBe("Falls to");
     expect(formatAlertPrice("65000.5")).toBe("65,000.5");
   });
 

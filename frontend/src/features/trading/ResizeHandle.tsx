@@ -1,3 +1,5 @@
+import { useLanguage } from "../auth/LanguageProvider";
+
 type ResizeHandleProps = {
   orientation: "vertical" | "horizontal";
   label: string;
@@ -13,6 +15,7 @@ export default function ResizeHandle({
   onPointerDown,
   onDoubleClick,
 }: ResizeHandleProps) {
+  const { t } = useLanguage();
   const vertical = orientation === "vertical";
   const lineTone = active
     ? "bg-[var(--accent)] opacity-100"
@@ -21,7 +24,7 @@ export default function ResizeHandle({
     <button
       type="button"
       aria-label={label}
-      title={`${label} (double-click to reset)`}
+      title={t("tradeResizeResetHint", { label })}
       onPointerDown={onPointerDown}
       onDoubleClick={onDoubleClick}
       className={[

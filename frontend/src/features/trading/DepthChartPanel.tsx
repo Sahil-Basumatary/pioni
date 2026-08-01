@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useGetOrderBookQuery } from "../orders/ordersApi";
+import { useLanguage } from "../auth/LanguageProvider";
 
 type Point = { x: number; y: number };
 
@@ -22,6 +23,7 @@ function toPath(points: Point[]): string {
 }
 
 export default function DepthChartPanel({ symbol }: { symbol: string }) {
+  const { t } = useLanguage();
   const { data } = useGetOrderBookQuery({ symbol, depth: 40 }, {
     pollingInterval: 3_000,
   });
@@ -72,7 +74,7 @@ export default function DepthChartPanel({ symbol }: { symbol: string }) {
           viewBox="0 0 600 320"
           preserveAspectRatio="none"
           className="absolute inset-0 h-full w-full"
-          aria-label="Depth chart"
+          aria-label={t("tradePaneDepthChart")}
         >
           <line
             x1={midY}

@@ -1,19 +1,25 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import type { ReactElement } from "react";
 import userEvent from "@testing-library/user-event";
+import { LanguageProvider } from "../auth/LanguageProvider";
 import ContentWindow from "./ContentWindow";
+
+function renderContent(ui: ReactElement) {
+  return render(<LanguageProvider>{ui}</LanguageProvider>);
+}
 
 describe("ContentWindow", () => {
   it("switches tabs and toggles maximize", async () => {
     const user = userEvent.setup();
     const onTabChange = vi.fn();
     const onMaximizeToggle = vi.fn();
-    render(
+    renderContent(
       <ContentWindow
         label="Order form"
         tabs={[
-          { id: "orderform", label: "Order form" },
-          { id: "alerts", label: "Alerts" },
+          { id: "orderform", labelKey: "tradePaneOrderForm" },
+          { id: "alerts", labelKey: "tradePaneAlerts" },
         ]}
         activeTabId="orderform"
         onTabChange={onTabChange}
@@ -33,13 +39,13 @@ describe("ContentWindow", () => {
   it("opens add-widget menu with coming-soon items", async () => {
     const user = userEvent.setup();
     const onMenuSelect = vi.fn();
-    render(
+    renderContent(
       <ContentWindow
         label="Order book"
-        tabs={[{ id: "orderbook", label: "Order book" }]}
+        tabs={[{ id: "orderbook", labelKey: "tradePaneOrderBook" }]}
         activeTabId="orderbook"
         onTabChange={() => {}}
-        addItems={[{ id: "depth", label: "Depth chart" }]}
+        addItems={[{ id: "depth", labelKey: "tradePaneDepthChart" }]}
         onMenuSelect={onMenuSelect}
         maximized={false}
         onMaximizeToggle={() => {}}
@@ -53,12 +59,12 @@ describe("ContentWindow", () => {
   });
 
   it("keeps tab labels as single unbroken words", () => {
-    render(
+    renderContent(
       <ContentWindow
         label="Order book"
         tabs={[
-          { id: "orderbook", label: "Order book" },
-          { id: "markettrades", label: "Market trades" },
+          { id: "orderbook", labelKey: "tradePaneOrderBook" },
+          { id: "markettrades", labelKey: "tradePaneMarketTrades" },
         ]}
         activeTabId="orderbook"
         onTabChange={() => {}}

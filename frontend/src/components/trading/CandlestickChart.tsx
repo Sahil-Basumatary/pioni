@@ -20,6 +20,8 @@ import {
   type Time,
 } from "lightweight-charts";
 import type { Kline } from "../../types/market";
+import { useLanguage } from "../../features/auth/LanguageProvider";
+import type { MessageKey } from "../../features/i18n/translate";
 
 export const INTERVALS = ["1m", "5m", "15m", "1h", "4h", "1d"] as const;
 export type Interval = (typeof INTERVALS)[number];
@@ -35,13 +37,13 @@ const INTERVAL_LABEL: Record<Interval, string> = {
 
 type ChartTool = "crosshair" | "trend" | "horiz" | "fib" | "text" | "measure";
 
-const TOOLS: { id: ChartTool; label: string; ready: boolean }[] = [
-  { id: "crosshair", label: "Crosshair", ready: true },
-  { id: "trend", label: "Trend line", ready: false },
-  { id: "horiz", label: "Horizontal line", ready: false },
-  { id: "fib", label: "Fib retracement", ready: false },
-  { id: "text", label: "Text", ready: false },
-  { id: "measure", label: "Measure", ready: false },
+const TOOLS: { id: ChartTool; labelKey: MessageKey; ready: boolean }[] = [
+  { id: "crosshair", labelKey: "tradeToolCrosshair", ready: true },
+  { id: "trend", labelKey: "tradeToolTrend", ready: false },
+  { id: "horiz", labelKey: "tradeToolHoriz", ready: false },
+  { id: "fib", labelKey: "tradeToolFib", ready: false },
+  { id: "text", labelKey: "tradeToolText", ready: false },
+  { id: "measure", labelKey: "tradeToolMeasure", ready: false },
 ];
 
 const DEFAULT_GATEWAY_URL = "http://localhost:8000";
@@ -94,6 +96,7 @@ const CandlestickChart = forwardRef<
   CandlestickChartHandle,
   CandlestickChartProps
 >(function CandlestickChart({ symbol, interval: controlledInterval, onIntervalChange }, ref) {
+  const { t } = useLanguage();
   const [internalInterval, setInternalInterval] = useState<Interval>("1m");
   const interval = controlledInterval ?? internalInterval;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -121,10 +124,10 @@ const CandlestickChart = forwardRef<
     }
   }, [onIntervalChange]);
 
-  function selectTool(next: ChartTool, ready: boolean, label: string) {
+  function selectTool(next: ChartTool, ready: boolean, labelKey: MessageKey) {
     setTool(next);
     if (!ready) {
-      setToolNote(`${label} drawing lands next — crosshair is live now.`);
+      setToolNote(t("tradeToolComingNext", { label: t(labelKey) }));
       return;
     }
     setToolNote(null);
@@ -212,11 +215,11 @@ const CandlestickChart = forwardRef<
       .catch((err) => {
         if (cancelled) return;
         console.error("[CandlestickChart] fetch failed:", err);
-        setError(err instanceof Error ? err.message : "Failed to load chart data");
+        setError(t("tradeFailedLoadChart"));
         setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [symbol, interval]);
+  }, [symbol, interval, t]);
 
   return (
     <div data-tour="chart" className="flex h-full min-h-0 flex-col">
@@ -244,17 +247,17 @@ const CandlestickChart = forwardRef<
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div
           role="toolbar"
-          aria-label="Chart tools"
+          aria-label={t("tradeChartTools")}
           className="flex w-7 shrink-0 flex-col items-center gap-0.5 border-e border-[var(--card-border)] py-1"
         >
           {TOOLS.map((item) => (
             <button
               key={item.id}
               type="button"
-              title={item.label}
-              aria-label={item.label}
+              title={t(item.labelKey)}
+              aria-label={t(item.labelKey)}
               aria-pressed={tool === item.id}
-              onClick={() => selectTool(item.id, item.ready, item.label)}
+              onClick={() => selectTool(item.id, item.ready, item.labelKey)}
               className={`rail-icon flex h-6 w-6 items-center justify-center rounded ${
                 tool === item.id
                   ? "bg-black/[0.08] text-[var(--text-primary)]"
@@ -274,7 +277,7 @@ const CandlestickChart = forwardRef<
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Loading {symbol} {interval}…
+                {t("tradeLoadingChart", { symbol, interval })}
               </div>
             </div>
           )}
@@ -294,14 +297,14 @@ const CandlestickChart = forwardRef<
                         chartRef.current?.timeScale().fitContent();
                         setLoading(false);
                       })
-                      .catch((err) => {
-                        setError(err instanceof Error ? err.message : "Fetch failed");
+                      .catch(() => {
+                        setError(t("tradeFetchFailed"));
                         setLoading(false);
                       });
                   }}
                   className="rounded-lg bg-[var(--accent)] px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[var(--accent-soft)]"
                 >
-                  Retry
+                  {t("retry")}
                 </button>
               </div>
             </div>

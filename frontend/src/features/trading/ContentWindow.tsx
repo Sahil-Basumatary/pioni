@@ -15,17 +15,19 @@ import {
   PlusSmallIcon,
   SettingsSliderHorizontalIcon,
 } from "../../components/shell/shellIcons";
+import { useLanguage } from "../auth/LanguageProvider";
+import type { MessageKey } from "../i18n/translate";
 import { fitTabIds } from "./fitTabIds";
 
 export type ContentTab = {
   id: string;
-  label: string;
+  labelKey: MessageKey;
   closable?: boolean;
 };
 
 export type MenuItem = {
   id: string;
-  label: string;
+  labelKey: MessageKey;
   soon?: boolean;
 };
 
@@ -67,6 +69,7 @@ export default function ContentWindow({
   children,
   className = "",
 }: ContentWindowProps) {
+  const { t } = useLanguage();
   const [menu, setMenu] = useState<"add" | "overflow" | "options" | "tabs" | null>(
     null,
   );
@@ -152,6 +155,7 @@ export default function ContentWindow({
         <div ref={stripRef} className="flex min-w-0 flex-1 items-center gap-0.5 overflow-hidden">
           {visibleTabs.map((tab) => {
             const active = tab.id === activeTabId;
+            const tabLabel = t(tab.labelKey);
             return (
               <div
                 key={tab.id}
@@ -166,12 +170,12 @@ export default function ContentWindow({
                   onClick={() => onTabChange(tab.id)}
                   className="rail-icon whitespace-nowrap px-2 py-1 text-[12px] font-medium leading-none"
                 >
-                  {tab.label}
+                  {tabLabel}
                 </button>
                 {tab.closable && onTabClose && (
                   <button
                     type="button"
-                    aria-label={`Close ${tab.label}`}
+                    aria-label={t("tradeCloseTab", { label: tabLabel })}
                     onClick={() => onTabClose(tab.id)}
                     className={`rail-icon me-0.5 flex h-5 w-5 items-center justify-center rounded ${
                       active ? "opacity-70 hover:opacity-100" : "opacity-0 group-hover:opacity-100"
@@ -187,7 +191,7 @@ export default function ContentWindow({
             <button
               ref={tabOverflowBtnRef}
               type="button"
-              aria-label={`${hiddenTabs.length} more tabs`}
+              aria-label={t("tradeMoreTabs", { count: String(hiddenTabs.length) })}
               aria-expanded={menu === "tabs"}
               aria-controls={menuId}
               onClick={() => setMenu((m) => (m === "tabs" ? null : "tabs"))}
@@ -209,7 +213,7 @@ export default function ContentWindow({
               className="flex shrink-0 items-center rounded"
             >
               <span className="whitespace-nowrap px-2 py-1 text-[12px] font-medium leading-none">
-                {tab.label}
+                {t(tab.labelKey)}
               </span>
               {tab.closable ? <span className="me-0.5 h-5 w-5" /> : null}
             </div>
@@ -219,7 +223,9 @@ export default function ContentWindow({
           <button
             ref={overflowBtnRef}
             type="button"
-            aria-label={`+${overflowItems.length} more widgets`}
+            aria-label={t("tradeMoreWidgets", {
+              count: String(overflowItems.length),
+            })}
             aria-expanded={menu === "overflow"}
             aria-controls={menuId}
             onClick={() => setMenu((m) => (m === "overflow" ? null : "overflow"))}
@@ -232,7 +238,7 @@ export default function ContentWindow({
           <button
             ref={addBtnRef}
             type="button"
-            aria-label="Add widget"
+            aria-label={t("tradeAddWidget")}
             aria-expanded={menu === "add"}
             aria-controls={menuId}
             onClick={() => setMenu((m) => (m === "add" ? null : "add"))}
@@ -248,8 +254,8 @@ export default function ContentWindow({
         <div className="relative flex shrink-0 items-center gap-0">
           <button
             type="button"
-            aria-label={maximized ? "Restore" : "Maximize"}
-            title={maximized ? "Restore" : "Maximize"}
+            aria-label={t(maximized ? "tradeRestore" : "tradeMaximize")}
+            title={t(maximized ? "tradeRestore" : "tradeMaximize")}
             onClick={onMaximizeToggle}
             className={iconBtn}
           >
@@ -262,7 +268,7 @@ export default function ContentWindow({
           <button
             ref={optionsBtnRef}
             type="button"
-            aria-label="Options"
+            aria-label={t("tradeOptions")}
             aria-expanded={menu === "options"}
             onClick={() => setMenu((m) => (m === "options" ? null : "options"))}
             className={iconBtn}
@@ -275,7 +281,11 @@ export default function ContentWindow({
       {menu === "tabs" && (
         <MenuBox
           id={menuId}
-          items={hiddenTabs.map((t) => ({ id: t.id, label: t.label, soon: false }))}
+          items={hiddenTabs.map((tab) => ({
+            id: tab.id,
+            labelKey: tab.labelKey,
+            soon: false,
+          }))}
           onSelect={(id) => {
             onTabChange(id);
             setMenu(null);
@@ -311,7 +321,7 @@ export default function ContentWindow({
             className="fixed z-[80] w-52 overflow-hidden rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] py-1 shadow-[0px_4px_24px_rgba(0,0,0,0.12)]"
           >
             <p className="px-3 py-2 text-[11px] text-[var(--text-muted)]">
-              Pane options coming soon
+              {t("tradePaneOptionsSoon")}
             </p>
           </div>,
           document.body,
@@ -347,6 +357,7 @@ function MenuBox({
   anchorRef: RefObject<HTMLElement | null>;
   panelRef: RefObject<HTMLDivElement | null>;
 }) {
+  const { t } = useLanguage();
   const [pos, setPos] = useState({ top: 0, left: 0 });
   useLayoutEffect(() => {
     setPos(anchorStyle(anchorRef.current, "start"));
@@ -367,9 +378,9 @@ function MenuBox({
           onClick={() => onSelect(item.id)}
           className="flex w-full items-center justify-between px-3 py-2 text-left text-[12px] text-[var(--text-primary)] hover:bg-black/[0.04]"
         >
-          <span className="whitespace-nowrap">{item.label}</span>
+          <span className="whitespace-nowrap">{t(item.labelKey)}</span>
           {item.soon !== false && (
-            <span className="text-[10px] text-[var(--text-muted)]">Soon</span>
+            <span className="text-[10px] text-[var(--text-muted)]">{t("tradeSoon")}</span>
           )}
         </button>
       ))}

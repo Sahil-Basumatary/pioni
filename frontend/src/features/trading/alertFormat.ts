@@ -1,4 +1,5 @@
 import { baseAsset } from "../../components/shell/activityFormat";
+import type { MessageKey } from "../i18n/translate";
 import type { AlertCondition } from "./alertsApi";
 
 export function formatAlertPair(symbol: string): string {
@@ -13,8 +14,8 @@ export function formatAlertPair(symbol: string): string {
   return `${base}/${quote}`;
 }
 
-export function formatAlertCondition(condition: string): string {
-  return condition.toUpperCase() === "BELOW" ? "Falls to" : "Rises to";
+export function alertConditionKey(condition: string): MessageKey {
+  return condition.toUpperCase() === "BELOW" ? "tradeFallsTo" : "tradeRisesTo";
 }
 
 export function formatAlertPrice(raw: string): string {

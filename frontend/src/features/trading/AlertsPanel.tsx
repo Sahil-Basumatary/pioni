@@ -5,9 +5,10 @@ import SignedOutUnlock from "../auth/SignedOutUnlock";
 import { useAppSelector } from "../../app/hooks";
 import { selectSymbol } from "../instrument/instrumentSlice";
 import { useToast } from "../toasts/useToast";
+import { useLanguage } from "../auth/LanguageProvider";
 import { useAlertCreate } from "./AlertCreateContext";
 import {
-  formatAlertCondition,
+  alertConditionKey,
   formatAlertPair,
   formatAlertPrice,
 } from "./alertFormat";
@@ -19,6 +20,7 @@ import {
 } from "./alertsApi";
 
 export default function AlertsPanel() {
+  const { t } = useLanguage();
   const { isSignedIn } = useAuth();
   const toast = useToast();
   const currentSymbol = useAppSelector(selectSymbol);
@@ -67,14 +69,14 @@ export default function AlertsPanel() {
                     : "text-[rgb(104,107,130)]"
                 }`}
               >
-                {id === "active" ? "Active" : "History"}
+                {t(id === "active" ? "tradeAlertsActive" : "tradeAlertsHistory")}
               </button>
             );
           })}
         </div>
         <button
           type="button"
-          aria-label="Filter"
+          aria-label={t("tradeFilter")}
           aria-expanded={filterOpen}
           onClick={() => setFilterOpen((v) => !v)}
           className={`inline-flex size-8 items-center justify-center rounded-lg p-1.5 hover:bg-[rgba(104,107,130,0.12)] ${
@@ -89,8 +91,13 @@ export default function AlertsPanel() {
           <div className="absolute end-2 top-10 z-10 w-44 rounded-xl border border-[rgba(104,107,130,0.16)] bg-white p-1 shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
             {(
               [
-                { id: "all", label: "All markets" },
-                { id: "current", label: `Current · ${formatAlertPair(currentSymbol)}` },
+                { id: "all", label: t("tradeAllMarkets") },
+                {
+                  id: "current",
+                  label: t("tradeCurrentMarket", {
+                    pair: formatAlertPair(currentSymbol),
+                  }),
+                },
               ] as const
             ).map((opt) => (
               <button
@@ -115,17 +122,17 @@ export default function AlertsPanel() {
 
       {isLoading ? (
         <div className="flex flex-1 items-center justify-center text-sm text-[rgb(104,107,130)]">
-          Loading alerts…
+          {t("loading")}
         </div>
       ) : isError ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center">
-          <p className="text-sm text-[rgb(104,107,130)]">Couldn’t load alerts.</p>
+          <p className="text-sm text-[rgb(104,107,130)]">{t("couldntLoadAlerts")}</p>
           <button
             type="button"
             onClick={() => void refetch()}
             className="rounded-lg bg-[rgba(104,107,130,0.08)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)]"
           >
-            Retry
+            {t("retry")}
           </button>
         </div>
       ) : empty ? (
@@ -137,10 +144,10 @@ export default function AlertsPanel() {
               </span>
               <div className="flex flex-col items-center gap-1">
                 <p className="text-base font-medium text-[var(--text-primary)]">
-                  Create an alert
+                  {t("tradeCreateAnAlert")}
                 </p>
                 <p className="text-sm font-normal text-[rgb(104,107,130)]">
-                  Never miss a trading opportunity
+                  {t("tradeNeverMissOpportunity")}
                 </p>
               </div>
             </div>
@@ -151,7 +158,7 @@ export default function AlertsPanel() {
               onClick={() => openCreateAlert(currentSymbol)}
               className="flex h-9 w-full items-center justify-center rounded-xl bg-[rgba(104,107,130,0.08)] px-3 text-sm font-medium text-[var(--text-primary)] hover:bg-[rgba(104,107,130,0.12)]"
             >
-              Create new alert
+              {t("tradeCreateNewAlert")}
             </button>
           </div>
         </>
@@ -167,9 +174,9 @@ export default function AlertsPanel() {
                 onCancel={async () => {
                   try {
                     await cancelAlert(alert.id).unwrap();
-                    toast({ title: "Alert cancelled", tone: "neutral" });
+                    toast({ title: t("alertCancelled"), tone: "neutral" });
                   } catch {
-                    toast({ title: "Couldn’t cancel alert", tone: "negative" });
+                    toast({ title: t("tradeCouldntCancelAlert"), tone: "negative" });
                   }
                 }}
               />
@@ -182,7 +189,7 @@ export default function AlertsPanel() {
                 onClick={() => openCreateAlert(currentSymbol)}
                 className="flex h-9 w-full items-center justify-center rounded-xl bg-[rgba(104,107,130,0.08)] px-3 text-sm font-medium text-[var(--text-primary)] hover:bg-[rgba(104,107,130,0.12)]"
               >
-                Create new alert
+                {t("tradeCreateNewAlert")}
               </button>
             </div>
           ) : null}
@@ -203,12 +210,13 @@ function AlertRow({
   busy: boolean;
   onCancel: () => void | Promise<void>;
 }) {
+  const { t } = useLanguage();
   const statusLabel =
     alert.status === "TRIGGERED"
-      ? "Triggered"
+      ? t("alertTriggered")
       : alert.status === "CANCELLED"
-        ? "Cancelled"
-        : formatAlertCondition(alert.condition);
+        ? t("alertCancelled")
+        : t(alertConditionKey(alert.condition));
 
   return (
     <li className="flex items-center justify-between gap-2 border-b border-[rgba(104,107,130,0.12)] py-2.5">
@@ -227,11 +235,11 @@ function AlertRow({
           onClick={() => void onCancel()}
           className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-[rgb(104,107,130)] hover:bg-[rgba(104,107,130,0.08)] hover:text-[var(--text-primary)] disabled:opacity-60"
         >
-          Cancel
+          {t("tradeCancel")}
         </button>
       ) : (
         <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-[rgb(104,107,130)]">
-          {alert.status === "TRIGGERED" ? "Triggered" : "Cancelled"}
+          {t(alert.status === "TRIGGERED" ? "alertTriggered" : "alertCancelled")}
         </span>
       )}
     </li>

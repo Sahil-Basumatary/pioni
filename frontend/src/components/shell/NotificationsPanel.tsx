@@ -7,7 +7,7 @@ import TeachingEmpty from "../../features/onboarding/TeachingEmpty";
 import { useSettings } from "../../features/settings/settingsContext";
 import { useAlertCreate } from "../../features/trading/AlertCreateContext";
 import {
-  formatAlertCondition,
+  alertConditionKey,
   formatAlertPair,
   formatAlertPrice,
 } from "../../features/trading/alertFormat";
@@ -121,7 +121,7 @@ export default function NotificationsPanel({ onClose }: { onClose: () => void })
                         {formatAlertPair(alert.symbol)}
                       </p>
                       <p className="truncate text-xs text-[rgb(104,107,130)]">
-                        {formatAlertCondition(alert.condition)}{" "}
+                        {t(alertConditionKey(alert.condition))}{" "}
                         {formatAlertPrice(alert.target_price)}
                       </p>
                     </div>

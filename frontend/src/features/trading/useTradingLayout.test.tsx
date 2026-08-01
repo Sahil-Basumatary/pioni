@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import ResizeHandle from "./ResizeHandle";
 import { useTradingLayout } from "./useTradingLayout";
 import { DEFAULT_LAYOUT } from "./layoutStorage";
+import { LanguageProvider } from "../auth/LanguageProvider";
 
 function Harness() {
   const { sizes, beginResize, dragging } = useTradingLayout();
@@ -26,7 +27,11 @@ describe("resize drag", () => {
   });
 
   it("widens the ticket when the handle is dragged right", () => {
-    render(<Harness />);
+    render(
+      <LanguageProvider>
+        <Harness />
+      </LanguageProvider>,
+    );
     const handle = screen.getByRole("button", { name: "Resize order ticket" });
     expect(screen.getByTestId("ticket-width")).toHaveTextContent(
       String(DEFAULT_LAYOUT.ticketWidth),

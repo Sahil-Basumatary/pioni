@@ -18,6 +18,7 @@ import { formatUsd } from "../../utils/formatters";
 import SignedOutUnlock from "../auth/SignedOutUnlock";
 import InfoTip from "../onboarding/InfoTip";
 import TeachingEmpty from "../onboarding/TeachingEmpty";
+import { useLanguage } from "../auth/LanguageProvider";
 
 const OPEN_STATUSES = new Set(["OPEN", "PARTIALLY_FILLED", "NEW", "PENDING"]);
 const CLOSED_STATUSES = new Set([
@@ -62,6 +63,7 @@ export default function TradingBottomPanel({
 }
 
 export function ResetAccountChip() {
+  const { t } = useLanguage();
   const [resetPortfolio, { isLoading }] = useResetPortfolioMutation();
   const [confirm, setConfirm] = useState(false);
   if (!confirm) {
@@ -71,7 +73,7 @@ export function ResetAccountChip() {
         onClick={() => setConfirm(true)}
         className="rail-icon rounded-lg px-2 py-1 text-[11px] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
       >
-        Reset account
+        {t("tradeResetAccount")}
       </button>
     );
   }
@@ -89,20 +91,21 @@ export function ResetAccountChip() {
         }}
         className="rounded-lg bg-rose-500 px-2 py-1 text-[11px] font-medium text-white disabled:opacity-50"
       >
-        {isLoading ? "Resetting…" : "Confirm reset"}
+        {t(isLoading ? "tradeResetting" : "tradeConfirmReset")}
       </button>
       <button
         type="button"
         onClick={() => setConfirm(false)}
         className="rail-icon rounded-lg px-2 py-1 text-[11px] text-[var(--text-muted)]"
       >
-        Cancel
+        {t("tradeCancel")}
       </button>
     </div>
   );
 }
 
 function BalancesTab() {
+  const { t } = useLanguage();
   const { isSignedIn } = useAuth();
   const { data, isLoading, isError, refetch } = useGetMySummaryQuery(undefined, {
     skip: !isSignedIn,
@@ -110,17 +113,17 @@ function BalancesTab() {
   if (!isSignedIn) {
     return <SignedOutUnlock />;
   }
-  if (isLoading) return <Empty copy="Loading balances…" />;
+  if (isLoading) return <Empty copy={t("tradeLoadingBalances")} />;
   if (isError || !data) {
     return (
       <div className="flex flex-col items-center gap-2 py-10">
-        <Empty copy="Couldn’t load balances." />
+        <Empty copy={t("tradeCouldntLoadBalances")} />
         <button
           type="button"
           onClick={() => refetch()}
           className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-medium text-white"
         >
-          Retry
+          {t("retry")}
         </button>
       </div>
     );
@@ -130,9 +133,9 @@ function BalancesTab() {
     <table className="w-full min-w-[480px] border-collapse text-left text-xs">
       <thead>
         <tr className="text-[11px] text-[var(--text-muted)]">
-          <th className="px-3 py-1.5 font-medium">Asset</th>
-          <th className="px-3 py-1.5 font-medium">Balance</th>
-          <th className="px-3 py-1.5 font-medium">Value</th>
+          <th className="px-3 py-1.5 font-medium">{t("tradeAsset")}</th>
+          <th className="px-3 py-1.5 font-medium">{t("tradeBalance")}</th>
+          <th className="px-3 py-1.5 font-medium">{t("tradeValue")}</th>
         </tr>
       </thead>
       <tbody>
@@ -168,6 +171,7 @@ function BalancesTab() {
 }
 
 function PositionsTab() {
+  const { t } = useLanguage();
   const { isSignedIn } = useAuth();
   const { data, isLoading, isError, refetch } = useGetMyPositionsQuery(
     { openOnly: true },
@@ -178,17 +182,17 @@ function PositionsTab() {
     [data],
   );
   if (!isSignedIn) return <SignedOutUnlock />;
-  if (isLoading) return <Empty copy="Loading positions…" />;
+  if (isLoading) return <Empty copy={t("tradeLoadingPositions")} />;
   if (isError) {
     return (
       <div className="flex flex-col items-center gap-2 py-10">
-        <Empty copy="Couldn’t load positions." />
+        <Empty copy={t("tradeCouldntLoadPositions")} />
         <button
           type="button"
           onClick={() => refetch()}
           className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-medium text-white"
         >
-          Retry
+          {t("retry")}
         </button>
       </div>
     );
@@ -198,8 +202,8 @@ function PositionsTab() {
     <table className="w-full min-w-[560px] border-collapse text-left text-xs">
       <thead>
         <tr className="text-[11px] text-[var(--text-muted)]">
-          <th className="px-3 py-1.5 font-medium">Market</th>
-          <th className="px-3 py-1.5 font-medium">Size</th>
+          <th className="px-3 py-1.5 font-medium">{t("tradeMarketLabel")}</th>
+          <th className="px-3 py-1.5 font-medium">{t("tradeSize")}</th>
           <th className="px-3 py-1.5 font-medium">
             <InfoTip term="entry_price" className="text-[11px]" />
           </th>
@@ -257,6 +261,7 @@ function OrdersTab({
   symbol: string;
   mode: "open" | "closed";
 }) {
+  const { t } = useLanguage();
   const { isSignedIn } = useAuth();
   const { data, isLoading, isError, refetch } = useListOrdersQuery(
     { symbol, limit: 50 },
@@ -274,21 +279,27 @@ function OrdersTab({
     );
   }
   if (isLoading) {
-    return <Empty copy={mode === "open" ? "Loading orders…" : "Loading closed orders…"} />;
+    return (
+      <Empty
+        copy={t(
+          mode === "open" ? "tradeLoadingOrders" : "tradeLoadingClosedOrders",
+        )}
+      />
+    );
   }
   if (isError) {
     return (
       <div className="flex flex-col items-center gap-2 py-8">
-        <Empty copy="Couldn’t load orders." />
+        <Empty copy={t("tradeCouldntLoadOrders")} />
         <p className="text-[11px] text-[var(--text-muted)]">
-          Live orders unavailable right now.
+          {t("tradeLiveOrdersUnavailable")}
         </p>
         <button
           type="button"
           onClick={() => refetch()}
           className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-medium text-white"
         >
-          Retry
+          {t("retry")}
         </button>
       </div>
     );
@@ -302,13 +313,13 @@ function OrdersTab({
     <table className="w-full min-w-[640px] border-collapse text-left text-xs">
       <thead>
         <tr className="text-[11px] text-[var(--text-muted)]">
-          <th className="px-3 py-1.5 font-medium">Market</th>
-          <th className="px-3 py-1.5 font-medium">Side</th>
-          <th className="px-3 py-1.5 font-medium">Type</th>
-          <th className="px-3 py-1.5 font-medium">Price</th>
-          <th className="px-3 py-1.5 font-medium">Quantity</th>
-          <th className="px-3 py-1.5 font-medium">Filled</th>
-          <th className="px-3 py-1.5 font-medium">Status</th>
+          <th className="px-3 py-1.5 font-medium">{t("tradeMarketLabel")}</th>
+          <th className="px-3 py-1.5 font-medium">{t("tradeSide")}</th>
+          <th className="px-3 py-1.5 font-medium">{t("tradeType")}</th>
+          <th className="px-3 py-1.5 font-medium">{t("tradePrice")}</th>
+          <th className="px-3 py-1.5 font-medium">{t("tradeQuantity")}</th>
+          <th className="px-3 py-1.5 font-medium">{t("tradeFilledQty")}</th>
+          <th className="px-3 py-1.5 font-medium">{t("tradeStatus")}</th>
           {mode === "open" && <th className="px-3 py-1.5 font-medium" />}
         </tr>
       </thead>
@@ -322,6 +333,7 @@ function OrdersTab({
 }
 
 function OrderRow({ order, showCancel }: { order: Order; showCancel: boolean }) {
+  const { t } = useLanguage();
   const [cancelOrder, { isLoading }] = useCancelOrderMutation();
   const isBuy = order.side === "BUY";
   return (
@@ -330,11 +342,11 @@ function OrderRow({ order, showCancel }: { order: Order; showCancel: boolean }) 
         {baseAsset(order.symbol)}/USD
       </td>
       <td className={`px-3 py-2 font-medium ${isBuy ? "text-emerald-600" : "text-rose-500"}`}>
-        {isBuy ? "Buy" : "Sell"}
+        {t(isBuy ? "tradeBuy" : "tradeSell")}
       </td>
       <td className="px-3 py-2 text-[var(--text-muted)]">{order.order_type}</td>
       <td className="px-3 py-2 tabular-nums text-[var(--text-primary)]">
-        {order.price != null ? formatUsd(order.price) : "Market"}
+        {order.price != null ? formatUsd(order.price) : t("tradeMarket")}
       </td>
       <td className="px-3 py-2 tabular-nums">{order.quantity}</td>
       <td className="px-3 py-2 tabular-nums text-[var(--text-muted)]">{order.filled_quantity}</td>
@@ -347,7 +359,7 @@ function OrderRow({ order, showCancel }: { order: Order; showCancel: boolean }) 
             onClick={() => cancelOrder(order.id)}
             className="rounded-lg border border-[var(--card-border)] bg-transparent px-2 py-1 text-[11px] font-medium text-[var(--text-muted)] hover:text-rose-500 disabled:opacity-50"
           >
-            {isLoading ? "…" : "Cancel"}
+            {isLoading ? "…" : t("tradeCancel")}
           </button>
         </td>
       )}
@@ -356,23 +368,24 @@ function OrderRow({ order, showCancel }: { order: Order; showCancel: boolean }) 
 }
 
 function TradesTab({ symbol }: { symbol: string }) {
+  const { t } = useLanguage();
   const { isSignedIn } = useAuth();
   const { data, isLoading, isError, refetch } = useGetMyTradesQuery(
     { symbol, limit: 50 },
     { skip: !isSignedIn },
   );
   if (!isSignedIn) return <SignedOutUnlock />;
-  if (isLoading) return <Empty copy="Loading trades…" />;
+  if (isLoading) return <Empty copy={t("tradeLoadingTrades")} />;
   if (isError) {
     return (
       <div className="flex flex-col items-center gap-2 py-10">
-        <Empty copy="Couldn’t load trades." />
+        <Empty copy={t("tradeCouldntLoadTrades")} />
         <button
           type="button"
           onClick={() => refetch()}
           className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-medium text-white"
         >
-          Retry
+          {t("retry")}
         </button>
       </div>
     );
@@ -383,12 +396,12 @@ function TradesTab({ symbol }: { symbol: string }) {
     <table className="w-full min-w-[640px] border-collapse text-left text-xs">
       <thead>
         <tr className="text-[11px] text-[var(--text-muted)]">
-          <th className="px-3 py-1.5 font-medium">Market</th>
-          <th className="px-3 py-1.5 font-medium">Side</th>
-          <th className="px-3 py-1.5 font-medium">Price</th>
-          <th className="px-3 py-1.5 font-medium">Quantity</th>
-          <th className="px-3 py-1.5 font-medium">Fee</th>
-          <th className="px-3 py-1.5 font-medium">Time</th>
+          <th className="px-3 py-1.5 font-medium">{t("tradeMarketLabel")}</th>
+          <th className="px-3 py-1.5 font-medium">{t("tradeSide")}</th>
+          <th className="px-3 py-1.5 font-medium">{t("tradePrice")}</th>
+          <th className="px-3 py-1.5 font-medium">{t("tradeQuantity")}</th>
+          <th className="px-3 py-1.5 font-medium">{t("tradeFee")}</th>
+          <th className="px-3 py-1.5 font-medium">{t("tradeTime")}</th>
         </tr>
       </thead>
       <tbody>
@@ -401,6 +414,7 @@ function TradesTab({ symbol }: { symbol: string }) {
 }
 
 function TradeRow({ trade }: { trade: PortfolioTrade }) {
+  const { t } = useLanguage();
   const isBuy = trade.side === "BUY";
   const when = new Date(trade.executed_at);
   const timeLabel = Number.isNaN(when.getTime())
@@ -417,7 +431,7 @@ function TradeRow({ trade }: { trade: PortfolioTrade }) {
         {baseAsset(trade.symbol)}/USD
       </td>
       <td className={`px-3 py-2 font-medium ${isBuy ? "text-emerald-600" : "text-rose-500"}`}>
-        {isBuy ? "Buy" : "Sell"}
+        {t(isBuy ? "tradeBuy" : "tradeSell")}
       </td>
       <td className="px-3 py-2 tabular-nums text-[var(--text-primary)]">
         {formatUsd(trade.price)}

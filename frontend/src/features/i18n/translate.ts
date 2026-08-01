@@ -19,17 +19,26 @@ import {
   type TradeShellMessageKey,
   TRADE_SHELL_CATALOG,
 } from "./shellTradeCatalog";
+import {
+  tradeChromeMessage,
+  type TradeChromeMessageKey,
+  TRADE_CHROME_CATALOG,
+} from "./shellTradeChromeCatalog";
 
 export type MessageKey =
   | AuthMessageKey
   | ShellMessageKey
   | StatusShellMessageKey
-  | TradeShellMessageKey;
+  | TradeShellMessageKey
+  | TradeChromeMessageKey;
 
 const AUTH_KEYS = new Set<string>(Object.keys(AUTH_CATALOG["en-US"]));
 const SHELL_KEYS = new Set<string>(Object.keys(SHELL_CATALOG["en-US"]));
 const STATUS_KEYS = new Set<string>(Object.keys(STATUS_SHELL_CATALOG["en-US"]));
 const TRADE_KEYS = new Set<string>(Object.keys(TRADE_SHELL_CATALOG["en-US"]));
+const TRADE_CHROME_KEYS = new Set<string>(
+  Object.keys(TRADE_CHROME_CATALOG["en-US"]),
+);
 
 export function translate(
   language: AppLanguage,
@@ -48,6 +57,9 @@ export function translate(
   if (TRADE_KEYS.has(key)) {
     return tradeShellMessage(language, key as TradeShellMessageKey, vars);
   }
+  if (TRADE_CHROME_KEYS.has(key)) {
+    return tradeChromeMessage(language, key as TradeChromeMessageKey, vars);
+  }
   return String(key);
 }
 
@@ -56,4 +68,5 @@ export type {
   AuthMessageKey,
   StatusShellMessageKey,
   TradeShellMessageKey,
+  TradeChromeMessageKey,
 };

@@ -1,12 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowTopRightIcon } from "../../components/shell/shellIcons";
+import { useLanguage } from "../auth/LanguageProvider";
 import {
   TEACHING_EMPTY,
   type TeachingEmptyId,
 } from "./teachingEmptyCopy";
 
 export function focusOrderTicket() {
-  const region = document.querySelector('[aria-label="Order form"]');
+  const region = document.querySelector('[data-tour="order-ticket"]');
   const input =
     region?.querySelector<HTMLInputElement>('input[aria-label="Quantity BTC"]') ??
     region?.querySelector<HTMLInputElement>("input");
@@ -26,6 +27,7 @@ export default function TeachingEmpty({
   onAction,
 }: TeachingEmptyProps) {
   const entry = TEACHING_EMPTY[id];
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   function runAction() {
@@ -54,15 +56,15 @@ export default function TeachingEmpty({
 
   return (
     <div className={`flex flex-col items-center text-center ${pad}`}>
-      <p className={titleClass}>{entry.title}</p>
-      <p className={bodyClass}>{entry.body}</p>
-      {entry.actionLabel && entry.action ? (
+      <p className={titleClass}>{t(entry.titleKey)}</p>
+      <p className={bodyClass}>{t(entry.bodyKey)}</p>
+      {entry.actionLabelKey && entry.action ? (
         <button
           type="button"
           onClick={runAction}
           className="rail-icon mt-3 inline-flex items-center gap-0.5 bg-transparent p-0 text-xs font-medium text-[var(--text-primary)] hover:bg-transparent hover:underline"
         >
-          {entry.actionLabel}
+          {t(entry.actionLabelKey)}
           <ArrowTopRightIcon className="h-3.5 w-3.5" />
         </button>
       ) : null}

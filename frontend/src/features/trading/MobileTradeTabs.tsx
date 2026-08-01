@@ -3,10 +3,12 @@ import {
   ChevronDownSmallIcon,
   SettingsSliderHorizontalIcon,
 } from "../../components/shell/shellIcons";
+import { useLanguage } from "../auth/LanguageProvider";
+import type { MessageKey } from "../i18n/translate";
 
 export type MobileTradeTab = {
   id: string;
-  label: string;
+  labelKey: MessageKey;
 };
 
 type MobileTradeTabsProps = {
@@ -16,31 +18,44 @@ type MobileTradeTabsProps = {
 };
 
 const WIDGET_TOGGLES = [
-  "Open and trigger orders",
-  "Open positions",
-  "Futures liquidation price",
-  "Order form preview",
-  "Price alerts",
-  "Trade history (last 1000)",
+  { id: "open-trigger-orders", labelKey: "tradeToggleOpenTriggerOrders" },
+  { id: "open-positions", labelKey: "tradeToggleOpenPositions" },
+  { id: "futures-liquidation", labelKey: "tradeToggleFuturesLiq" },
+  { id: "order-form-preview", labelKey: "tradeToggleOrderFormPreview" },
+  { id: "price-alerts", labelKey: "tradeTogglePriceAlerts" },
+  { id: "trade-history", labelKey: "tradeToggleTradeHistory" },
 ] as const;
 
 const SELECT_GROUPS = [
   {
     id: "drawings",
-    label: "Trade drawings",
-    options: ["Arrows", "Circles"] as const,
+    labelKey: "tradeDrawings",
+    options: [
+      { id: "arrows", labelKey: "tradeDrawArrows" },
+      { id: "circles", labelKey: "tradeDrawCircles" },
+    ],
   },
   {
     id: "engine",
-    label: "Chart engine",
-    options: ["TradingView", "SimpleChart"] as const,
+    labelKey: "tradeChartEngine",
+    options: [
+      { id: "advanced", labelKey: "tradeEngineTradingView" },
+      { id: "simple", labelKey: "tradeEngineSimpleChart" },
+    ],
   },
   {
     id: "futures",
-    label: "Futures prices",
-    options: ["Trade price", "Mark price"] as const,
+    labelKey: "tradeFuturesPrices",
+    options: [
+      { id: "trade", labelKey: "tradePriceTrade" },
+      { id: "mark", labelKey: "tradePriceMark" },
+    ],
   },
-] as const;
+] as const satisfies readonly {
+  id: string;
+  labelKey: MessageKey;
+  options: readonly { id: string; labelKey: MessageKey }[];
+}[];
 
 type SelectId = (typeof SELECT_GROUPS)[number]["id"];
 
@@ -80,13 +95,14 @@ function ToggleSwitch({
 }
 
 function MobileTradeOptionsMenu() {
+  const { t } = useLanguage();
   const [toggles, setToggles] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(WIDGET_TOGGLES.map((label) => [label, true])),
+    Object.fromEntries(WIDGET_TOGGLES.map((item) => [item.id, true])),
   );
   const [selects, setSelects] = useState<Record<SelectId, string>>({
-    drawings: "Arrows",
-    engine: "TradingView",
-    futures: "Trade price",
+    drawings: "arrows",
+    engine: "advanced",
+    futures: "trade",
   });
   const [openSelect, setOpenSelect] = useState<SelectId | null>(null);
 
@@ -98,16 +114,16 @@ function MobileTradeOptionsMenu() {
       <ul className="min-w-[280px]">
         <li className="flex gap-2 p-2">
           <div className="w-full text-[10px] font-semibold uppercase tracking-[0.8px] text-[var(--text-muted)]">
-            Widget settings
+            {t("tradeWidgetSettings")}
           </div>
         </li>
-        {WIDGET_TOGGLES.map((label) => (
-          <li key={label}>
+        {WIDGET_TOGGLES.map((item) => (
+          <li key={item.id}>
             <ToggleSwitch
-              label={label}
-              checked={toggles[label] ?? true}
+              label={t(item.labelKey)}
+              checked={toggles[item.id] ?? true}
               onChange={(next) =>
-                setToggles((prev) => ({ ...prev, [label]: next }))
+                setToggles((prev) => ({ ...prev, [item.id]: next }))
               }
             />
           </li>
@@ -115,7 +131,7 @@ function MobileTradeOptionsMenu() {
         {SELECT_GROUPS.map((group) => (
           <li key={group.id} className="px-2 py-1.5">
             <p className="text-[10px] font-semibold uppercase tracking-[0.8px] text-[var(--text-muted)]">
-              {group.label}
+              {t(group.labelKey)}
             </p>
             <div className="relative mt-1 inline-flex flex-col">
               <button
@@ -127,7 +143,10 @@ function MobileTradeOptionsMenu() {
                 }
                 className="inline-flex items-center gap-1 rounded-lg px-1 py-0.5 text-xs font-medium text-[var(--text-primary)] hover:bg-black/[0.04]"
               >
-                {selects[group.id]}
+                {t(
+                  group.options.find((option) => option.id === selects[group.id])
+                    ?.labelKey ?? group.options[0].labelKey,
+                )}
                 <ChevronDownSmallIcon className="h-3 w-3 text-[var(--text-muted)]" />
               </button>
               {openSelect === group.id && (
@@ -136,15 +155,15 @@ function MobileTradeOptionsMenu() {
                   className="absolute left-0 top-full z-40 mt-1 min-w-[140px] overflow-hidden rounded-lg border border-[rgba(104,107,130,0.08)] bg-[var(--card-bg)] py-1 shadow-[0_4px_8px_rgba(0,0,0,0.15)]"
                 >
                   {group.options.map((option) => {
-                    const selected = selects[group.id] === option;
+                    const selected = selects[group.id] === option.id;
                     return (
-                      <li key={option} role="option" aria-selected={selected}>
+                      <li key={option.id} role="option" aria-selected={selected}>
                         <button
                           type="button"
                           onClick={() => {
                             setSelects((prev) => ({
                               ...prev,
-                              [group.id]: option,
+                              [group.id]: option.id,
                             }));
                             setOpenSelect(null);
                           }}
@@ -154,7 +173,7 @@ function MobileTradeOptionsMenu() {
                               : "text-[var(--text-muted)]"
                           }`}
                         >
-                          {option}
+                          {t(option.labelKey)}
                         </button>
                       </li>
                     );
@@ -170,6 +189,7 @@ function MobileTradeOptionsMenu() {
 }
 
 export function MobileTradeTabs({ tabs, activeId, onChange }: MobileTradeTabsProps) {
+  const { t } = useLanguage();
   const [optionsOpen, setOptionsOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -206,7 +226,7 @@ export function MobileTradeTabs({ tabs, activeId, onChange }: MobileTradeTabsPro
                     : "text-[rgb(104,107,130)] hover:text-[var(--text-primary)]"
                 }`}
               >
-                {tab.label}
+                {t(tab.labelKey)}
               </button>
             );
           })}
@@ -214,7 +234,7 @@ export function MobileTradeTabs({ tabs, activeId, onChange }: MobileTradeTabsPro
       </div>
       <button
         type="button"
-        aria-label="Options"
+        aria-label={t("tradeOptions")}
         aria-expanded={optionsOpen}
         onClick={() => setOptionsOpen((v) => !v)}
         className="rail-icon mr-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[rgba(104,107,130,0.08)] text-[rgb(104,107,130)] hover:text-[var(--text-primary)]"

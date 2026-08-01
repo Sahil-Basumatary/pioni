@@ -1,5 +1,6 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { useLiveMarketTrade } from "../../features/market/liveMarketStore";
+import { useLanguage } from "../../features/auth/LanguageProvider";
 import type { TickerSnapshot } from "../../types/market";
 
 const DEFAULT_GATEWAY_URL = "http://localhost:8000";
@@ -51,6 +52,7 @@ async function fetchSnapshot(symbol: string): Promise<TickerSnapshot> {
 }
 
 function PriceTicker({ symbol }: PriceTickerProps) {
+  const { t } = useLanguage();
   const trade = useLiveMarketTrade(symbol);
   const [snapshot, setSnapshot] = useState<TickerSnapshot | null>(null);
   const [flashDir, setFlashDir] = useState<"up" | "down" | "">("");
@@ -122,9 +124,9 @@ function PriceTicker({ symbol }: PriceTickerProps) {
       </div>
       <div className="h-8 w-px bg-[var(--card-border)]" />
       <div className="flex items-center gap-5">
-        <Stat label="24h High" value={snapshot?.high_24h ? formatPrice(snapshot.high_24h) : "—"} />
-        <Stat label="24h Low" value={snapshot?.low_24h ? formatPrice(snapshot.low_24h) : "—"} />
-        <Stat label="24h Volume" value={formatVolume(snapshot?.volume_24h)} />
+        <Stat label={t("trade24hHigh")} value={snapshot?.high_24h ? formatPrice(snapshot.high_24h) : "—"} />
+        <Stat label={t("trade24hLow")} value={snapshot?.low_24h ? formatPrice(snapshot.low_24h) : "—"} />
+        <Stat label={t("trade24hVolume")} value={formatVolume(snapshot?.volume_24h)} />
       </div>
     </div>
   );

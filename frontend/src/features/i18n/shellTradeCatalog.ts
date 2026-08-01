@@ -324,7 +324,6 @@ export const TRADE_SHELL_CATALOG: Record<AppLanguage, TradeShellMessages> = {
     tradeSide: "Sisi",
     tradeTime: "Masa",
     tradeWaitingTrades: "Waiting for trades…",
-    tradeRetrylike: null,
   },
   "cs-CZ": {
     tradeBuy: "Koupit",
