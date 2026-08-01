@@ -13,7 +13,7 @@ export default defineConfig({
   e2e: {
     ...E2E_BASE,
     specPattern: "cypress/e2e/**/*.cy.ts",
-    excludeSpecPattern: "cypress/e2e/smoke/**",
+    excludeSpecPattern: ["cypress/e2e/smoke/**", "cypress/e2e/perf/**"],
     setupNodeEvents(on) {
       on("task", {
         log(message: string) {

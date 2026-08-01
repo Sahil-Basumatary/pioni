@@ -43,4 +43,11 @@ describe("favorites", () => {
     localStorage.setItem("pioni.marketFavorites", "{not-json");
     expect(readFavorites()).toEqual([]);
   });
+
+  it("shapes a PUT body from merged favorites", () => {
+    const symbols = mergeFavorites(["ETHUSDT"], ["BTCUSDT", "ethusdt"]);
+    expect({ symbols }).toEqual({
+      symbols: ["ETHUSDT", "BTCUSDT"],
+    });
+  });
 });

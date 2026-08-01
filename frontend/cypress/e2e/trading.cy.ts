@@ -25,42 +25,83 @@ const SNAPSHOTS: Record<string, Record<string, unknown>> = {
   },
 };
 
-describe("Trading page (stubbed market data)", () => {
+function stubMarketApis() {
+  cy.intercept("GET", "**/market/prices", {
+    fixture: "market-prices.json",
+  }).as("prices");
+
+  cy.intercept("GET", "**/market/prices/*", (req) => {
+    const symbol =
+      req.url.split("/").pop()?.split("?")[0]?.toUpperCase() ?? "BTCUSDT";
+    req.reply(SNAPSHOTS[symbol] ?? SNAPSHOTS.BTCUSDT);
+  }).as("snapshot");
+
+  cy.intercept("GET", "**/market/klines/*", {
+    statusCode: 200,
+    body: { symbol: "BTCUSDT", interval: "1m", klines: [] },
+  }).as("klines");
+
+  cy.intercept("GET", "**/orderbook/**", {
+    statusCode: 200,
+    body: {
+      symbol: "BTCUSDT",
+      bids: [],
+      asks: [],
+      best_bid: null,
+      best_ask: null,
+      spread: null,
+      timestamp: new Date().toISOString(),
+    },
+  }).as("orderbook");
+}
+
+describe("Trade page (stubbed market data)", () => {
   beforeEach(() => {
-    cy.intercept("GET", "**/market/prices", {
-      fixture: "market-prices.json",
-    }).as("prices");
-
-    cy.intercept("GET", "**/market/prices/*", (req) => {
-      const symbol =
-        req.url.split("/").pop()?.split("?")[0]?.toUpperCase() ?? "BTCUSDT";
-      req.reply(SNAPSHOTS[symbol] ?? SNAPSHOTS.BTCUSDT);
-    }).as("snapshot");
-
-    cy.intercept("GET", "**/market/klines/*", {
-      statusCode: 200,
-      body: { symbol: "BTCUSDT", interval: "1m", klines: [] },
-    }).as("klines");
-
+    stubMarketApis();
     cy.visit("/trading");
   });
 
-  it("lists the tradable symbols with their latest prices", () => {
-    cy.wait("@prices");
-    cy.contains("button", "BTC").should("be.visible");
-    cy.contains("button", "ETH").should("be.visible");
-    cy.contains("button", "BTC").should("contain.text", "$50,000");
+  it("renders pair header and order ticket chrome", () => {
+    cy.get('[data-tour="pair-header"]').should("be.visible");
+    cy.get('[aria-label="Select market"]').should("be.visible");
+    cy.contains("BTC").should("be.visible");
+    cy.get('[data-tour="order-ticket"]').within(() => {
+      cy.get('[role="tab"]').contains("Buy").should("be.visible");
+      cy.get('[role="tab"]').contains("Sell").should("be.visible");
+      cy.get('[role="tab"]').contains("Limit").should("be.visible");
+      cy.get('[role="tab"]').contains("Market").should("be.visible");
+      cy.contains("a", "Sign up to trade").should("be.visible");
+    });
   });
 
-  it("switches the active instrument when another symbol is clicked", () => {
-    cy.contains("button", "BTC").should("have.class", "text-white");
-    cy.contains("button", "ETH").click();
-    cy.contains("button", "ETH").should("have.class", "text-white");
-    cy.contains("button", "BTC").should("not.have.class", "text-white");
-  });
-
-  it("shows the 24h change for the selected instrument", () => {
+  it("shows 24h change from the stubbed snapshot", () => {
     cy.wait("@snapshot");
     cy.contains("+2.46%").should("be.visible");
+  });
+
+  it("switches the active instrument from the market search palette", () => {
+    cy.get('[aria-label="Select market"]').click();
+    cy.get('[role="dialog"][aria-label="Search for a market"]').should(
+      "be.visible",
+    );
+    cy.get('[role="dialog"][aria-label="Search for a market"]').within(() => {
+      cy.get('input[type="search"], input').first().clear().type("ETH");
+      cy.contains("button", "ETH").click();
+    });
+    cy.get('[data-tour="pair-header"]').within(() => {
+      cy.contains("ETH").should("be.visible");
+      cy.contains("Ether").should("be.visible");
+    });
+  });
+
+  it("stars the current pair into local favorites", () => {
+    cy.get('[aria-label="Add to favorites"]').click();
+    cy.get('[aria-label="Remove from favorites"]').should("be.visible");
+    cy.window().then((win) => {
+      const raw = win.localStorage.getItem("pioni.marketFavorites");
+      expect(raw).to.be.a("string");
+      const parsed = JSON.parse(raw as string) as string[];
+      expect(parsed).to.include("BTCUSDT");
+    });
   });
 });
