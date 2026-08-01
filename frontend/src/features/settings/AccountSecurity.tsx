@@ -5,6 +5,7 @@ import {
   useReverification,
   useUser,
 } from "@clerk/clerk-react";
+import { useLanguage } from "../auth/LanguageProvider";
 import { useToast } from "../toasts/useToast";
 import ActiveSessionsPanel from "./ActiveSessionsPanel";
 import { deleteAccountCommand } from "./deleteAccountCommand";
@@ -24,7 +25,7 @@ type TotpSetup = {
   uri?: string | null;
 };
 
-function clerkMessage(err: unknown): string {
+function clerkMessage(err: unknown, fallback: string): string {
   if (err && typeof err === "object" && "errors" in err) {
     const first = (err as { errors?: { longMessage?: string; message?: string }[] })
       .errors?.[0];
@@ -32,7 +33,7 @@ function clerkMessage(err: unknown): string {
     if (first?.message) return first.message;
   }
   if (err instanceof Error && err.message) return err.message;
-  return "Something went wrong";
+  return fallback;
 }
 
 function SettingsBtn({
@@ -88,6 +89,7 @@ export default function AccountSecurity() {
   const { user } = useUser();
   const clerk = useClerk();
   const toast = useToast();
+  const { t } = useLanguage();
   const { closeSettings } = useSettings();
   const [panel, setPanel] = useState<Panel>(null);
   const [busy, setBusy] = useState(false);
@@ -152,9 +154,9 @@ export default function AccountSecurity() {
       if (!emailObj) throw new Error("Email not found after create");
       await emailObj.prepareVerification({ strategy: "email_code" });
       setPendingEmail(emailObj);
-      toast("Verification code sent");
+      toast(t("settingsVerificationCodeSent"));
     } catch (err) {
-      toast(clerkMessage(err));
+      toast(clerkMessage(err, t("settingsSomethingWentWrong")));
     } finally {
       setBusy(false);
     }
@@ -172,9 +174,9 @@ export default function AccountSecurity() {
       setEmailCode("");
       setEmailInput("");
       setPanel(null);
-      toast("Email updated");
+      toast(t("settingsEmailUpdated"));
     } catch (err) {
-      toast(clerkMessage(err));
+      toast(clerkMessage(err, t("settingsSomethingWentWrong")));
     } finally {
       setBusy(false);
     }
@@ -189,9 +191,9 @@ export default function AccountSecurity() {
       setCurrentPassword("");
       setNewPassword("");
       setPanel(null);
-      toast("Password updated");
+      toast(t("settingsPasswordUpdated"));
     } catch (err) {
-      toast(clerkMessage(err));
+      toast(clerkMessage(err, t("settingsSomethingWentWrong")));
     } finally {
       setBusy(false);
     }
@@ -203,7 +205,7 @@ export default function AccountSecurity() {
       const resource = await createTOTP();
       if (resource) setTotp(resource as TotpSetup);
     } catch (err) {
-      toast(clerkMessage(err));
+      toast(clerkMessage(err, t("settingsSomethingWentWrong")));
     } finally {
       setBusy(false);
     }
@@ -219,9 +221,9 @@ export default function AccountSecurity() {
       setTotp(null);
       setTotpCode("");
       setPanel(null);
-      toast("Two-step verification enabled");
+      toast(t("settingsTwoStepEnabledToast"));
     } catch (err) {
-      toast(clerkMessage(err));
+      toast(clerkMessage(err, t("settingsSomethingWentWrong")));
     } finally {
       setBusy(false);
     }
@@ -233,9 +235,9 @@ export default function AccountSecurity() {
       await disableTOTP();
       await user?.reload();
       setPanel(null);
-      toast("Two-step verification disabled");
+      toast(t("settingsTwoStepDisabledToast"));
     } catch (err) {
-      toast(clerkMessage(err));
+      toast(clerkMessage(err, t("settingsSomethingWentWrong")));
     } finally {
       setBusy(false);
     }
@@ -246,9 +248,9 @@ export default function AccountSecurity() {
     try {
       await createPasskey();
       await user?.reload();
-      toast("Passkey added");
+      toast(t("settingsPasskeyAdded"));
     } catch (err) {
-      toast(clerkMessage(err));
+      toast(clerkMessage(err, t("settingsSomethingWentWrong")));
     } finally {
       setBusy(false);
     }
@@ -261,9 +263,9 @@ export default function AccountSecurity() {
     try {
       await key.delete();
       await user?.reload();
-      toast("Passkey removed");
+      toast(t("settingsPasskeyRemoved"));
     } catch (err) {
-      toast(clerkMessage(err));
+      toast(clerkMessage(err, t("settingsSomethingWentWrong")));
     } finally {
       setBusy(false);
     }
@@ -278,12 +280,12 @@ export default function AccountSecurity() {
       user.emailAddresses[0]?.emailAddress ||
       "";
     if (!username) {
-      toast("Couldn’t resolve username for delete confirmation");
+      toast(t("settingsCouldntResolveUsername"));
       return;
     }
     const expected = deleteAccountCommand(username);
     if (deleteConfirmInput !== expected) {
-      toast("Type the delete command exactly to continue");
+      toast(t("settingsTypeDeleteCommand"));
       return;
     }
     setBusy(true);
@@ -291,10 +293,10 @@ export default function AccountSecurity() {
       await deleteUser();
       closeDeleteConfirm();
       closeSettings();
-      toast("Account deleted");
+      toast(t("settingsAccountDeleted"));
       await clerk.signOut({ redirectUrl: "/trading" });
     } catch (err) {
-      toast(clerkMessage(err));
+      toast(clerkMessage(err, t("settingsSomethingWentWrong")));
     } finally {
       setBusy(false);
     }
@@ -303,8 +305,8 @@ export default function AccountSecurity() {
   if (!user) return null;
 
   const totpBody = user.totpEnabled
-    ? "You have two-step verification enabled"
-    : "Add an authenticator app for an extra layer of security";
+    ? t("settingsTwoStepEnabled")
+    : t("settingsTwoStepAdd");
   const passkeyCount = user.passkeys?.length ?? 0;
   const deleteUsername =
     user.username?.trim() ||
@@ -321,14 +323,18 @@ export default function AccountSecurity() {
   return (
     <div className="flex flex-col gap-8 border-t border-[rgba(42,28,0,0.07)] pt-6">
       <div>
-        <h3 className="text-base font-semibold text-[#2C2C2B]">Account security</h3>
+        <h3 className="text-base font-semibold text-[#2C2C2B]">
+          {t("settingsAccountSecurity")}
+        </h3>
         <div className="mt-4 flex flex-col gap-5">
           <div>
             <SecurityRow
-              title="Email"
+              title={t("settingsEmail")}
               body={primaryEmail}
               action={
-                <SettingsBtn onClick={() => openPanel("email")}>Manage emails</SettingsBtn>
+                <SettingsBtn onClick={() => openPanel("email")}>
+                  {t("settingsManageEmails")}
+                </SettingsBtn>
               }
             />
             {panel === "email" ? (
@@ -342,7 +348,9 @@ export default function AccountSecurity() {
                       <span>
                         {addr.emailAddress}
                         {user.primaryEmailAddressId === addr.id ? (
-                          <span className="ml-2 text-xs text-[#A19E99]">Primary</span>
+                          <span className="ml-2 text-xs text-[#A19E99]">
+                            {t("settingsPrimary")}
+                          </span>
                         ) : null}
                       </span>
                     </li>
@@ -355,11 +363,11 @@ export default function AccountSecurity() {
                       required
                       value={emailInput}
                       onChange={(e) => setEmailInput(e.target.value)}
-                      placeholder="Add email address"
+                      placeholder={t("settingsAddEmailPlaceholder")}
                       className="h-8 w-full max-w-md rounded-[6px] border border-[rgba(42,28,0,0.12)] px-2.5 text-sm text-[#2C2C2B]"
                     />
                     <SettingsBtn type="submit" disabled={busy}>
-                      {busy ? "Sending…" : "Add email"}
+                      {busy ? t("settingsSending") : t("settingsAddEmail")}
                     </SettingsBtn>
                   </form>
                 ) : (
@@ -368,7 +376,9 @@ export default function AccountSecurity() {
                     className="flex flex-col gap-2"
                   >
                     <p className="text-xs text-[#787774]">
-                      Enter the code sent to {pendingEmail.emailAddress}
+                      {t("settingsEnterCodeSentTo", {
+                        email: pendingEmail.emailAddress,
+                      })}
                     </p>
                     <input
                       type="text"
@@ -376,11 +386,11 @@ export default function AccountSecurity() {
                       required
                       value={emailCode}
                       onChange={(e) => setEmailCode(e.target.value)}
-                      placeholder="Verification code"
+                      placeholder={t("settingsVerificationCode")}
                       className="h-8 w-full max-w-xs rounded-[6px] border border-[rgba(42,28,0,0.12)] px-2.5 text-sm text-[#2C2C2B]"
                     />
                     <SettingsBtn type="submit" disabled={busy}>
-                      {busy ? "Verifying…" : "Verify email"}
+                      {busy ? t("settingsVerifying") : t("settingsVerifyEmail")}
                     </SettingsBtn>
                   </form>
                 )}
@@ -390,11 +400,11 @@ export default function AccountSecurity() {
 
           <div>
             <SecurityRow
-              title="Password"
-              body="Change the password you use to log in"
+              title={t("settingsPassword")}
+              body={t("settingsPasswordBody")}
               action={
                 <SettingsBtn onClick={() => openPanel("password")}>
-                  Change password
+                  {t("settingsChangePassword")}
                 </SettingsBtn>
               }
             />
@@ -409,7 +419,7 @@ export default function AccountSecurity() {
                     autoComplete="current-password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Current password"
+                    placeholder={t("settingsCurrentPassword")}
                     className="h-8 rounded-[6px] border border-[rgba(42,28,0,0.12)] px-2.5 text-sm"
                   />
                 ) : null}
@@ -419,14 +429,16 @@ export default function AccountSecurity() {
                   autoComplete="new-password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="New password"
+                  placeholder={t("settingsNewPassword")}
                   className="h-8 rounded-[6px] border border-[rgba(42,28,0,0.12)] px-2.5 text-sm"
                 />
                 <div className="flex gap-2">
                   <SettingsBtn type="submit" disabled={busy}>
-                    {busy ? "Saving…" : "Update password"}
+                    {busy ? t("settingsSaving") : t("settingsUpdatePassword")}
                   </SettingsBtn>
-                  <SettingsBtn onClick={() => setPanel(null)}>Cancel</SettingsBtn>
+                  <SettingsBtn onClick={() => setPanel(null)}>
+                    {t("tradeCancel")}
+                  </SettingsBtn>
                 </div>
               </form>
             ) : null}
@@ -434,11 +446,11 @@ export default function AccountSecurity() {
 
           <div>
             <SecurityRow
-              title="Two-step verification"
+              title={t("settingsTwoStep")}
               body={totpBody}
               action={
                 <SettingsBtn onClick={() => openPanel("totp")}>
-                  Manage verification methods
+                  {t("settingsManageVerification")}
                 </SettingsBtn>
               }
             />
@@ -447,19 +459,23 @@ export default function AccountSecurity() {
                 {user.totpEnabled ? (
                   <div className="flex flex-col gap-2">
                     <p className="text-sm text-[#787774]">
-                      Authenticator app is enabled on this account.
+                      {t("settingsAuthenticatorEnabled")}
                     </p>
                     <SettingsBtn
                       danger
                       disabled={busy}
                       onClick={() => void onDisableTotp()}
                     >
-                      {busy ? "Disabling…" : "Disable authenticator"}
+                      {busy
+                        ? t("settingsDisabling")
+                        : t("settingsDisableAuthenticator")}
                     </SettingsBtn>
                   </div>
                 ) : !totp ? (
                   <SettingsBtn disabled={busy} onClick={() => void onStartTotp()}>
-                    {busy ? "Preparing…" : "Set up authenticator app"}
+                    {busy
+                      ? t("settingsPreparing")
+                      : t("settingsSetupAuthenticator")}
                   </SettingsBtn>
                 ) : (
                   <form
@@ -467,7 +483,7 @@ export default function AccountSecurity() {
                     className="flex flex-col gap-2"
                   >
                     <p className="text-xs text-[#787774]">
-                      Add this key in your authenticator app, then enter a code.
+                      {t("settingsAuthenticatorSetupHint")}
                     </p>
                     <code className="break-all rounded-[6px] bg-black/[0.04] px-2 py-1.5 text-xs text-[#2C2C2B]">
                       {totp.secret}
@@ -477,7 +493,7 @@ export default function AccountSecurity() {
                         href={totp.uri}
                         className="text-xs text-[var(--accent)] underline"
                       >
-                        Open setup link
+                        {t("settingsOpenSetupLink")}
                       </a>
                     ) : null}
                     <input
@@ -486,11 +502,13 @@ export default function AccountSecurity() {
                       required
                       value={totpCode}
                       onChange={(e) => setTotpCode(e.target.value)}
-                      placeholder="6-digit code"
+                      placeholder={t("settingsSixDigitCode")}
                       className="h-8 w-full max-w-xs rounded-[6px] border border-[rgba(42,28,0,0.12)] px-2.5 text-sm"
                     />
                     <SettingsBtn type="submit" disabled={busy}>
-                      {busy ? "Verifying…" : "Verify and enable"}
+                      {busy
+                        ? t("settingsVerifying")
+                        : t("settingsVerifyAndEnable")}
                     </SettingsBtn>
                   </form>
                 )}
@@ -500,15 +518,20 @@ export default function AccountSecurity() {
 
           <div>
             <SecurityRow
-              title="Passkeys"
+              title={t("settingsPasskeys")}
               body={
                 passkeyCount > 0
-                  ? `${passkeyCount} passkey${passkeyCount === 1 ? "" : "s"} on this account`
-                  : "Sign in with on-device biometric authentication"
+                  ? t(
+                      passkeyCount === 1
+                        ? "settingsPasskeyCountOne"
+                        : "settingsPasskeyCountMany",
+                      { count: String(passkeyCount) },
+                    )
+                  : t("settingsPasskeysEmptyBody")
               }
               action={
                 <SettingsBtn onClick={() => openPanel("passkeys")}>
-                  Manage passkeys
+                  {t("settingsManagePasskeys")}
                 </SettingsBtn>
               }
             />
@@ -520,22 +543,24 @@ export default function AccountSecurity() {
                       key={key.id}
                       className="flex items-center justify-between gap-2 text-sm text-[#2C2C2B]"
                     >
-                      <span>{key.name || "Passkey"}</span>
+                      <span>{key.name || t("settingsPasskeyFallback")}</span>
                       <SettingsBtn
                         danger
                         disabled={busy}
                         onClick={() => void onDeletePasskey(key.id)}
                       >
-                        Remove
+                        {t("settingsRemove")}
                       </SettingsBtn>
                     </li>
                   ))}
                   {(user.passkeys ?? []).length === 0 ? (
-                    <li className="text-sm text-[#787774]">No passkeys yet.</li>
+                    <li className="text-sm text-[#787774]">
+                      {t("settingsNoPasskeysYet")}
+                    </li>
                   ) : null}
                 </ul>
                 <SettingsBtn disabled={busy} onClick={() => void onAddPasskey()}>
-                  {busy ? "Waiting…" : "Add passkey"}
+                  {busy ? t("settingsWaiting") : t("settingsAddPasskey")}
                 </SettingsBtn>
               </div>
             ) : null}
@@ -544,9 +569,11 @@ export default function AccountSecurity() {
       </div>
 
       <div className="border-t border-[rgba(42,28,0,0.07)] pt-6">
-        <h3 className="text-base font-semibold text-[#2C2C2B]">Delete my account</h3>
+        <h3 className="text-base font-semibold text-[#2C2C2B]">
+          {t("settingsDeleteMyAccount")}
+        </h3>
         <p className="mt-1 text-sm text-[#787774]">
-          Permanently delete your account and remove access to this paper profile.
+          {t("settingsDeleteAccountBlurb")}
         </p>
         <div className="mt-3">
           <SettingsBtn
@@ -556,7 +583,7 @@ export default function AccountSecurity() {
               setPanel("delete");
             }}
           >
-            Delete my account
+            {t("settingsDeleteMyAccount")}
           </SettingsBtn>
         </div>
       </div>
@@ -566,7 +593,7 @@ export default function AccountSecurity() {
             <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
               <button
                 type="button"
-                aria-label="Dismiss delete confirmation"
+                aria-label={t("settingsDismissDeleteConfirm")}
                 className="absolute inset-0 bg-[rgba(15,15,15,0.6)]"
                 onClick={closeDeleteConfirm}
               />
@@ -580,10 +607,10 @@ export default function AccountSecurity() {
                   id="delete-account-title"
                   className="text-base font-semibold text-[#2C2C2B]"
                 >
-                  Delete my account
+                  {t("settingsDeleteMyAccount")}
                 </h3>
                 <p className="mt-1 text-sm text-[#787774]">
-                  This cannot be undone. Type the command below exactly to confirm.
+                  {t("settingsDeleteConfirmBlurb")}
                 </p>
                 {expectedDeleteCommand ? (
                   <code className="mt-3 block break-all rounded-[8px] bg-black/[0.04] px-3 py-2 font-mono text-xs text-[#2C2C2B]">
@@ -591,7 +618,7 @@ export default function AccountSecurity() {
                   </code>
                 ) : (
                   <p className="mt-3 text-sm text-[#E56458]">
-                    No username is available for this account.
+                    {t("settingsNoUsernameForDelete")}
                   </p>
                 )}
                 <form
@@ -600,7 +627,7 @@ export default function AccountSecurity() {
                 >
                   <label className="flex flex-col gap-1.5">
                     <span className="text-sm font-semibold text-[#2C2C2B]">
-                      Confirmation command
+                      {t("settingsConfirmationCommand")}
                     </span>
                     <input
                       type="text"
@@ -612,7 +639,7 @@ export default function AccountSecurity() {
                       placeholder={
                         expectedDeleteCommand || 'sudo delete "username"'
                       }
-                      aria-label="Delete confirmation command"
+                      aria-label={t("settingsDeleteConfirmAria")}
                       className="h-9 w-full rounded-[6px] border border-[rgba(42,28,0,0.12)] px-2.5 font-mono text-sm text-[#2C2C2B]"
                     />
                   </label>
@@ -622,9 +649,13 @@ export default function AccountSecurity() {
                       danger
                       disabled={busy || !deleteCommandMatches}
                     >
-                      {busy ? "Deleting…" : "Delete my account"}
+                      {busy
+                        ? t("settingsDeleting")
+                        : t("settingsDeleteMyAccount")}
                     </SettingsBtn>
-                    <SettingsBtn onClick={closeDeleteConfirm}>Cancel</SettingsBtn>
+                    <SettingsBtn onClick={closeDeleteConfirm}>
+                      {t("tradeCancel")}
+                    </SettingsBtn>
                   </div>
                 </form>
               </div>
@@ -638,7 +669,9 @@ export default function AccountSecurity() {
       </div>
 
       <div className="border-t border-[rgba(42,28,0,0.07)] pt-6">
-        <p className="text-sm font-semibold text-[#2C2C2B]">User ID</p>
+        <p className="text-sm font-semibold text-[#2C2C2B]">
+          {t("settingsUserId")}
+        </p>
         <p className="mt-1 font-mono text-xs tracking-wide text-[#787774]">{user.id}</p>
       </div>
     </div>

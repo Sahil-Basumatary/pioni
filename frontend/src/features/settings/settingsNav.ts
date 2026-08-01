@@ -1,3 +1,5 @@
+import type { SettingsMessageKey } from "../i18n/settingsCatalog";
+
 export type SettingsSectionId =
   | "account"
   | "preferences"
@@ -9,67 +11,78 @@ export type SettingsSectionId =
   | "shortcuts"
   | "activity";
 
+export type SettingsNavGroupId = "account" | "trading" | "workspace";
+
 export type SettingsNavItem = {
   id: SettingsSectionId;
-  label: string;
-  description: string;
-  group: "Account" | "Trading" | "Workspace";
+  labelKey: SettingsMessageKey;
+  descriptionKey: SettingsMessageKey;
+  group: SettingsNavGroupId;
 };
+
+export const SETTINGS_NAV_GROUPS: {
+  id: SettingsNavGroupId;
+  labelKey: SettingsMessageKey;
+}[] = [
+  { id: "account", labelKey: "settingsGroupAccount" },
+  { id: "trading", labelKey: "settingsGroupTrading" },
+  { id: "workspace", labelKey: "settingsGroupWorkspace" },
+];
 
 export const SETTINGS_NAV: SettingsNavItem[] = [
   {
     id: "account",
-    label: "Account",
-    description: "Manage your profile, login information, and devices",
-    group: "Account",
+    labelKey: "settingsNavAccount",
+    descriptionKey: "settingsNavAccountDesc",
+    group: "account",
   },
   {
     id: "preferences",
-    label: "Preferences",
-    description: "Choose how you want Pioni to look and behave",
-    group: "Account",
+    labelKey: "settingsNavPreferences",
+    descriptionKey: "settingsNavPreferencesDesc",
+    group: "account",
   },
   {
     id: "notifications",
-    label: "Notifications",
-    description: "Choose your notification preferences",
-    group: "Account",
+    labelKey: "settingsNavNotifications",
+    descriptionKey: "settingsNavNotificationsDesc",
+    group: "account",
   },
   {
     id: "privacy",
-    label: "Privacy",
-    description: "Manage privacy controls and export your data",
-    group: "Account",
+    labelKey: "settingsNavPrivacy",
+    descriptionKey: "settingsNavPrivacyDesc",
+    group: "account",
   },
   {
     id: "activity",
-    label: "Activity",
-    description: "Manage devices and recent paper trading activity",
-    group: "Account",
+    labelKey: "settingsNavActivity",
+    descriptionKey: "settingsNavActivityDesc",
+    group: "account",
   },
   {
     id: "paper",
-    label: "Paper trading",
-    description: "Manage your paper balances and onboarding",
-    group: "Trading",
+    labelKey: "settingsNavPaper",
+    descriptionKey: "settingsNavPaperDesc",
+    group: "trading",
   },
   {
     id: "limits",
-    label: "Limits",
-    description: "View your paper deposit and withdrawal limits",
-    group: "Trading",
+    labelKey: "settingsNavLimits",
+    descriptionKey: "settingsNavLimitsDesc",
+    group: "trading",
   },
   {
     id: "connections",
-    label: "Connections & API",
-    description: "Manage connected apps and paper API keys",
-    group: "Workspace",
+    labelKey: "settingsNavConnections",
+    descriptionKey: "settingsNavConnectionsDesc",
+    group: "workspace",
   },
   {
     id: "shortcuts",
-    label: "Keyboard shortcuts",
-    description: "View keyboard shortcuts for Pioni",
-    group: "Workspace",
+    labelKey: "settingsNavShortcuts",
+    descriptionKey: "settingsNavShortcutsDesc",
+    group: "workspace",
   },
 ];
 

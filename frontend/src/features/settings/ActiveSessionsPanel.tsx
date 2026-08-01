@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSession, useUser } from "@clerk/clerk-react";
+import { useLanguage } from "../auth/LanguageProvider";
 import { useToast } from "../toasts/useToast";
 
 type SessionRow = {
@@ -14,7 +15,7 @@ type SessionRow = {
   revoke: () => Promise<unknown>;
 };
 
-function clerkMessage(err: unknown): string {
+function clerkMessage(err: unknown, fallback: string): string {
   if (err && typeof err === "object" && "errors" in err) {
     const first = (err as { errors?: { longMessage?: string; message?: string }[] })
       .errors?.[0];
@@ -22,7 +23,7 @@ function clerkMessage(err: unknown): string {
     if (first?.message) return first.message;
   }
   if (err instanceof Error && err.message) return err.message;
-  return "Something went wrong";
+  return fallback;
 }
 
 function SessionBtn({
@@ -56,6 +57,7 @@ export default function ActiveSessionsPanel() {
   const { user } = useUser();
   const { session } = useSession();
   const toast = useToast();
+  const { t } = useLanguage();
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -84,9 +86,9 @@ export default function ActiveSessionsPanel() {
     try {
       await target.revoke();
       await refreshSessions();
-      toast("Signed out of device");
+      toast(t("settingsSignedOutDevice"));
     } catch (err) {
-      toast(clerkMessage(err));
+      toast(clerkMessage(err, t("settingsSomethingWentWrong")));
     } finally {
       setBusy(false);
     }
@@ -98,9 +100,9 @@ export default function ActiveSessionsPanel() {
       const others = sessions.filter((s) => s.id !== session?.id);
       await Promise.all(others.map((s) => s.revoke()));
       await refreshSessions();
-      toast("Signed out of other devices");
+      toast(t("settingsSignedOutOtherDevices"));
     } catch (err) {
-      toast(clerkMessage(err));
+      toast(clerkMessage(err, t("settingsSomethingWentWrong")));
     } finally {
       setBusy(false);
     }
@@ -112,9 +114,11 @@ export default function ActiveSessionsPanel() {
     <div>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-base font-semibold text-[#2C2C2B]">Devices</h3>
+          <h3 className="text-base font-semibold text-[#2C2C2B]">
+            {t("settingsDevices")}
+          </h3>
           <p className="mt-1 text-sm text-[#787774]">
-            Log out of active sessions on all your devices, other than this one
+            {t("settingsDevicesBlurb")}
           </p>
         </div>
         <SessionBtn
@@ -122,27 +126,31 @@ export default function ActiveSessionsPanel() {
           disabled={busy || sessionsLoading || sessions.length <= 1}
           onClick={() => void onRevokeOtherSessions()}
         >
-          Log out of all devices
+          {t("settingsLogOutAllDevices")}
         </SessionBtn>
       </div>
       <div className="mt-4 overflow-x-auto">
         <div className="grid min-w-[480px] grid-cols-[1.2fr_1fr_1.4fr_auto] gap-2 border-b border-[rgba(42,28,0,0.07)] pb-2 text-xs font-medium text-[#A19E99]">
-          <span>Device Name</span>
-          <span>Last Active</span>
-          <span>Location</span>
+          <span>{t("settingsDeviceName")}</span>
+          <span>{t("settingsLastActive")}</span>
+          <span>{t("settingsLocation")}</span>
           <span />
         </div>
         {sessionsLoading ? (
-          <p className="py-3 text-sm text-[#787774]">Loading devices…</p>
+          <p className="py-3 text-sm text-[#787774]">
+            {t("settingsLoadingDevices")}
+          </p>
         ) : sessions.length === 0 ? (
-          <p className="py-3 text-sm text-[#787774]">No active sessions found.</p>
+          <p className="py-3 text-sm text-[#787774]">
+            {t("settingsNoActiveSessions")}
+          </p>
         ) : (
           sessions.map((item) => {
             const activity = item.latestActivity;
             const name =
               [activity?.browserName, activity?.deviceType]
                 .filter(Boolean)
-                .join(" · ") || "Session";
+                .join(" · ") || t("settingsSessionFallback");
             const location =
               [activity?.city, activity?.country].filter(Boolean).join(", ") ||
               "—";
@@ -155,12 +163,14 @@ export default function ActiveSessionsPanel() {
                 <span>
                   {name}
                   {isCurrent ? (
-                    <span className="ml-2 text-xs text-[#A19E99]">This Device</span>
+                    <span className="ml-2 text-xs text-[#A19E99]">
+                      {t("settingsThisDevice")}
+                    </span>
                   ) : null}
                 </span>
                 <span className="text-[#787774]">
                   {isCurrent
-                    ? "Now"
+                    ? t("settingsNow")
                     : item.lastActiveAt.toLocaleString(undefined, {
                         dateStyle: "medium",
                         timeStyle: "short",
@@ -173,7 +183,7 @@ export default function ActiveSessionsPanel() {
                       disabled={busy}
                       onClick={() => void onRevokeSession(item.id)}
                     >
-                      Log out
+                      {t("settingsLogOut")}
                     </SessionBtn>
                   ) : null}
                 </span>

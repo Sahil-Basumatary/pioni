@@ -66,7 +66,7 @@ import PrivacySection from "./PrivacySection";
 import ShortcutsSection from "./ShortcutsSection";
 import SettingsSelect from "./SettingsSelect";
 import { useSettings } from "./settingsContext";
-import { SETTINGS_NAV, type SettingsSectionId } from "./settingsNav";
+import { SETTINGS_NAV, SETTINGS_NAV_GROUPS, type SettingsSectionId } from "./settingsNav";
 
 function navIcon(id: SettingsSectionId) {
   switch (id) {
@@ -93,51 +93,50 @@ function navIcon(id: SettingsSectionId) {
 
 export default function SettingsDialog() {
   const { open, section, setSection, closeSettings } = useSettings();
+  const { t } = useLanguage();
   const { user } = useUser();
   const active = SETTINGS_NAV.find((item) => item.id === section) ?? SETTINGS_NAV[0];
   const accountLabel =
     user?.fullName ||
     user?.username ||
     user?.primaryEmailAddress?.emailAddress ||
-    "Account";
+    t("settingsAccountFallback");
 
   if (!open) return null;
-
-  const groups = ["Account", "Trading", "Workspace"] as const;
 
   return createPortal(
     <div className="fixed inset-0 z-[95] flex items-center justify-center">
       <button
         type="button"
-        aria-label="Dismiss settings"
+        aria-label={t("settingsDismiss")}
         className="absolute inset-0 bg-[rgba(15,15,15,0.6)]"
         onClick={closeSettings}
       />
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Settings"
+        aria-label={t("settingsTitle")}
         className="relative z-[1] flex h-[calc(100%-100px)] max-h-full w-[90vw] max-w-[1512px] overflow-hidden rounded-[12px] bg-white shadow-[0_24px_48px_rgba(25,25,25,0.24),0_4px_12px_rgba(25,25,25,0.14),0_0_0_1px_rgba(42,28,0,0.07)]"
       >
         <aside
-          aria-label="Settings sections"
+          aria-label={t("settingsSections")}
           className="flex w-[240px] shrink-0 flex-col overflow-y-auto bg-[#F9F8F7] px-2 py-2"
         >
           <nav className="flex flex-col gap-0.5">
-            {groups.map((group) => {
-              const items = SETTINGS_NAV.filter((item) => item.group === group);
+            {SETTINGS_NAV_GROUPS.map((group) => {
+              const items = SETTINGS_NAV.filter((item) => item.group === group.id);
               if (!items.length) return null;
               return (
-                <div key={group} className="min-w-0">
+                <div key={group.id} className="min-w-0">
                   <p className="px-2 py-1.5 text-xs font-medium text-[#A19E99]">
-                    {group}
+                    {t(group.labelKey)}
                   </p>
                   <div className="flex flex-col gap-0.5">
                     {items.map((item) => {
                       const selected = item.id === section;
                       const Icon = navIcon(item.id);
                       const label =
-                        item.id === "account" ? accountLabel : item.label;
+                        item.id === "account" ? accountLabel : t(item.labelKey);
                       return (
                         <button
                           key={item.id}
@@ -169,7 +168,7 @@ export default function SettingsDialog() {
         <section className="relative flex min-w-0 flex-1 flex-col bg-white">
           <button
             type="button"
-            aria-label="Close"
+            aria-label={t("settingsClose")}
             onClick={closeSettings}
             className="absolute right-3 top-3 z-[2] flex h-[22px] w-[22px] items-center justify-center rounded-[6px] text-[#2C2C2B] hover:bg-[rgba(42,28,0,0.07)]"
           >
@@ -178,9 +177,9 @@ export default function SettingsDialog() {
           <div className="min-h-0 flex-1 overflow-y-auto px-[60px] py-9">
             <header className="mb-6 pr-8">
               <h2 className="text-[26px] font-semibold leading-tight tracking-tight text-[#2C2C2B]">
-                {active.label}
+                {t(active.labelKey)}
               </h2>
-              <p className="mt-1 text-sm text-[#787774]">{active.description}</p>
+              <p className="mt-1 text-sm text-[#787774]">{t(active.descriptionKey)}</p>
             </header>
             {section === "account" && <AccountSection />}
             {section === "preferences" && <PreferencesSection />}
@@ -211,6 +210,7 @@ function AccountSection() {
   const clerk = useClerk();
   const navigate = useNavigate();
   const toast = useToast();
+  const { t } = useLanguage();
   const { closeSettings } = useSettings();
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
@@ -218,7 +218,7 @@ function AccountSection() {
     user?.fullName ||
     user?.username ||
     user?.primaryEmailAddress?.emailAddress ||
-    "Paper trader";
+    t("settingsPaperTrader");
   const username = user?.username || user?.id?.slice(0, 18) || "—";
   const publicId = user?.id ? formatPublicId(user.id) : "—";
 
@@ -226,9 +226,9 @@ function AccountSection() {
     if (!user?.id) return;
     try {
       await navigator.clipboard.writeText(publicId);
-      toast("Public ID copied");
+      toast(t("settingsPublicIdCopied"));
     } catch {
-      toast("Couldn’t copy Public ID");
+      toast(t("settingsCouldntCopyPublicId"));
     }
   }
 
@@ -240,9 +240,9 @@ function AccountSection() {
     try {
       await user.update({ firstName, lastName });
       setEditingName(false);
-      toast("Preferred name saved");
+      toast(t("settingsPreferredNameSaved"));
     } catch {
-      toast("Couldn’t update name");
+      toast(t("settingsCouldntUpdateName"));
     }
   }
 
@@ -250,7 +250,7 @@ function AccountSection() {
     return (
       <div className="flex flex-col items-start gap-3">
         <p className="text-sm text-[#787774]">
-          Sign in to manage your profile and account security.
+          {t("settingsSignInToManage")}
         </p>
         <button
           type="button"
@@ -260,7 +260,7 @@ function AccountSection() {
           }}
           className="rounded-[6px] bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white"
         >
-          Sign in
+          {t("signIn")}
         </button>
       </div>
     );
@@ -269,13 +269,17 @@ function AccountSection() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h3 className="text-base font-semibold text-[#2C2C2B]">Profile</h3>
+        <h3 className="text-base font-semibold text-[#2C2C2B]">
+          {t("settingsProfile")}
+        </h3>
         <div className="mt-4 flex items-start gap-4">
           <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-black/[0.06] text-[#6B6B6B]">
             <UserIcon className="h-7 w-7" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium text-[#787774]">Preferred name</p>
+            <p className="text-xs font-medium text-[#787774]">
+              {t("settingsPreferredName")}
+            </p>
             {editingName ? (
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 <input
@@ -288,14 +292,14 @@ function AccountSection() {
                   onClick={() => void savePreferredName()}
                   className="h-7 rounded-[6px] border border-[rgba(28,19,1,0.11)] px-2 text-sm font-medium text-[#2C2C2B]"
                 >
-                  Save
+                  {t("settingsSave")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditingName(false)}
                   className="h-7 rounded-[6px] px-2 text-sm font-medium text-[#787774]"
                 >
-                  Cancel
+                  {t("tradeCancel")}
                 </button>
               </div>
             ) : (
@@ -311,35 +315,37 @@ function AccountSection() {
               </button>
             )}
             <p className="mt-1 text-xs text-[#787774]">
-              Paper trading only. Funds are simulated and are not real money.
+              {t("settingsPaperOnlyBlurb")}
             </p>
           </div>
         </div>
       </div>
 
       <div className="border-t border-[rgba(42,28,0,0.07)] pt-6">
-        <h3 className="text-base font-semibold text-[#2C2C2B]">Account details</h3>
+        <h3 className="text-base font-semibold text-[#2C2C2B]">
+          {t("settingsAccountDetails")}
+        </h3>
         <div className="mt-4 flex flex-col gap-5">
-          <DetailRow label="Username" value={username} />
+          <DetailRow label={t("settingsUsername")} value={username} />
           <DetailRow
-            label="Public ID"
+            label={t("settingsPublicId")}
             value={publicId}
             mono
-            hint="Use this ID when you need to share with support so your account is always secure."
+            hint={t("settingsPublicIdHint")}
             action={
               <button
                 type="button"
                 onClick={() => void copyPublicId()}
                 className="inline-flex h-7 items-center rounded-[6px] border border-[rgba(28,19,1,0.11)] px-2 text-sm font-medium text-[#2C2C2B] hover:bg-[rgba(42,28,0,0.045)]"
               >
-                Copy
+                {t("settingsCopy")}
               </button>
             }
           />
           <DetailRow
-            label="Verification"
-            value="Paper verified"
-            hint="High simulated limits for learning. No real-money identity verification is required."
+            label={t("settingsVerification")}
+            value={t("settingsPaperVerified")}
+            hint={t("settingsPaperVerifiedHint")}
           />
         </div>
       </div>
@@ -347,12 +353,14 @@ function AccountSection() {
       <AccountSecurity />
 
       <div className="border-t border-[rgba(42,28,0,0.07)] pt-6">
-        <h3 className="text-base font-semibold text-[#2C2C2B]">Trading platform</h3>
+        <h3 className="text-base font-semibold text-[#2C2C2B]">
+          {t("settingsTradingPlatform")}
+        </h3>
         <div className="mt-4">
           <DetailRow
-            label="Default"
+            label={t("settingsDefault")}
             value="Pioni"
-            hint="Your default paper trading workspace."
+            hint={t("settingsDefaultWorkspaceHint")}
           />
         </div>
       </div>
@@ -366,7 +374,7 @@ function AccountSection() {
           }}
           className="rounded-[6px] px-3 py-1.5 text-sm font-medium text-[#787774] hover:bg-[rgba(42,28,0,0.045)] hover:text-[#2C2C2B]"
         >
-          Sign out
+          {t("settingsSignOut")}
         </button>
       </div>
     </div>
