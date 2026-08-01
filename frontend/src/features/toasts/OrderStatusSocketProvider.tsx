@@ -13,6 +13,7 @@ import {
   watchedOrderIds,
   watchedStatus,
 } from "./orderWatch";
+import { useLanguage } from "../auth/LanguageProvider";
 
 const DEFAULT_MARKET_WS = "ws://localhost:8000/ws/market";
 const POLL_MS = 2500;
@@ -56,6 +57,7 @@ export default function OrderStatusSocketProvider({
   children: ReactNode;
 }) {
   const { isSignedIn } = useAuth();
+  const { t } = useLanguage();
   const dispatch = useAppDispatch();
   const { data: portfolio } = useGetMyPortfolioQuery(undefined, {
     skip: !isSignedIn,
@@ -82,9 +84,9 @@ export default function OrderStatusSocketProvider({
       }
       setWatchedStatus(update.order_id, update.status);
       if (shouldShowOrderToast(update.status)) {
-        dispatch(pushToast(toastFromOrderUpdate(update)));
+        dispatch(pushToast(toastFromOrderUpdate(update, t)));
       }
-      maybeNotifyBrowserPush(update);
+      maybeNotifyBrowserPush(update, t);
       dispatch(
         portfolioApi.util.invalidateTags([
           "Portfolio",
@@ -168,7 +170,7 @@ export default function OrderStatusSocketProvider({
       if (pollTimer) clearInterval(pollTimer);
       ws?.close();
     };
-  }, [dispatch, isSignedIn, portfolio?.id]);
+  }, [dispatch, isSignedIn, portfolio?.id, t]);
 
   return children;
 }

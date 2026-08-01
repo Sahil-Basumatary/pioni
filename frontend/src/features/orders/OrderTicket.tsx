@@ -368,7 +368,7 @@ export default function OrderTicket({
               status: order.status.toLowerCase().replace(/_/g, " "),
             }),
       });
-      toast(toastFromOrder(order));
+      toast(toastFromOrder(order, t));
       watchOpenOrder(order.id, order.status);
       setQuantity("");
       setTotal("");

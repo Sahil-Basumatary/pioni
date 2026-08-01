@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import toastReducer, { dismissToast, pushToast } from "./toastSlice";
 import { toastFromOrderUpdate } from "./orderToastCopy";
+import { translate } from "../i18n/translate";
+
+const t = (
+  key: Parameters<typeof translate>[1],
+  vars?: Record<string, string>,
+) => translate("en-US", key, vars);
 
 describe("toastSlice", () => {
   it("stacks toasts and caps length", () => {
@@ -35,14 +41,32 @@ describe("toastSlice", () => {
 
 describe("orderToastCopy", () => {
   it("formats fills", () => {
-    const t = toastFromOrderUpdate({
-      order_id: "1",
-      symbol: "BTCUSDT",
-      side: "BUY",
-      status: "FILLED",
-      filled_quantity: "0.01",
-    });
-    expect(t.title).toContain("bought 0.01 BTC");
-    expect(t.tone).toBe("positive");
+    const toast = toastFromOrderUpdate(
+      {
+        order_id: "1",
+        symbol: "BTCUSDT",
+        side: "BUY",
+        status: "FILLED",
+        filled_quantity: "0.01",
+      },
+      t,
+    );
+    expect(toast.title).toContain("bought 0.01 BTC");
+    expect(toast.tone).toBe("positive");
+  });
+
+  it("formats cancel and reject", () => {
+    expect(
+      toastFromOrderUpdate(
+        { order_id: "1", symbol: "BTCUSDT", status: "CANCELLED" },
+        t,
+      ).title,
+    ).toBe("Order canceled");
+    expect(
+      toastFromOrderUpdate(
+        { order_id: "1", symbol: "BTCUSDT", status: "REJECTED" },
+        t,
+      ).title,
+    ).toBe("Order rejected");
   });
 });
