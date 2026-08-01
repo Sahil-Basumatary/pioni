@@ -3,11 +3,16 @@ import { MARKET_CATALOG, MARKET_SYMBOLS, getMarketMeta } from "./catalog";
 import { SYMBOLS } from "../../components/trading/SymbolSelector";
 
 const NEW_PAIRS = [
-  "ALGOUSDT",
-  "INJUSDT",
-  "TIAUSDT",
-  "FLOWUSDT",
-  "XTZUSDT",
+  "BNBUSDT",
+  "UNIUSDT",
+  "NEARUSDT",
+  "SUIUSDT",
+  "OPUSDT",
+  "AAVEUSDT",
+  "FILUSDT",
+  "TRXUSDT",
+  "TONUSDT",
+  "SEIUSDT",
 ] as const;
 
 describe("MARKET_CATALOG", () => {
@@ -16,7 +21,7 @@ describe("MARKET_CATALOG", () => {
       expect(MARKET_SYMBOLS).toContain(symbol);
       expect(getMarketMeta(symbol)?.label).toBeTruthy();
     }
-    expect(MARKET_CATALOG).toHaveLength(21);
+    expect(MARKET_CATALOG).toHaveLength(31);
   });
 
   it("keeps SymbolSelector in sync with the catalog", () => {

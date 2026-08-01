@@ -29,7 +29,7 @@ Real-time cryptocurrency price feeds from Binance via WebSocket.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `TRADING_SYMBOLS` | full Markets catalog (21 pairs) | Comma-separated symbols to track |
+| `TRADING_SYMBOLS` | full Markets catalog (31 pairs) | Comma-separated symbols to track |
 | `BINANCE_WS_URL` | `wss://stream.binance.com:9443` | Binance WebSocket base URL |
 | `KLINE_INTERVALS` | `1m` | Candlestick intervals to subscribe to |
 | `REDIS_URL` | — | Redis connection URL (optional) |
