@@ -1,38 +1,56 @@
 .marketing-page {
-  background:
-    radial-gradient(1100px 480px at 18% -8%, rgba(255, 255, 255, 0.95), transparent 55%),
-    radial-gradient(900px 420px at 88% 8%, rgba(255, 255, 255, 0.55), transparent 50%),
-    linear-gradient(to bottom, #f8f8f8 0%, #f3f3f3 45%, #efefef 100%);
+  background: #f6f5f9;
+  --mkt-elevation: 0 1px 2px rgba(16, 17, 20, 0.04), 0 12px 32px rgba(16, 17, 20, 0.06);
+  --mkt-elevation-lift: 0 2px 4px rgba(16, 17, 20, 0.05),
+    0 28px 64px rgba(16, 17, 20, 0.1);
 }
 
 .marketing-hero-media {
+  position: relative;
   width: 100%;
+}
+
+/* Ambient wash behind the product shot so it reads as lit rather than pasted on. */
+.marketing-hero-media::before {
+  content: "";
+  position: absolute;
+  inset: 8% 4% -6%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(16, 17, 20, 0.13) 0%,
+    rgba(16, 17, 20, 0) 70%
+  );
+  filter: blur(28px);
+  z-index: 0;
 }
 
 .marketing-hero-media__frame {
   position: relative;
+  z-index: 1;
   overflow: hidden;
-  border-radius: 1.25rem;
+  border-radius: 1rem;
   border: 1px solid var(--card-border);
   background: var(--card-bg);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--mkt-elevation-lift);
 }
 
-.marketing-hero-media__img {
+.marketing-hero-media__img,
+.marketing-hero-media__video {
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 1734 / 824;
+  /* The render carries its own outer margin; scale past it to the desk edges. */
   object-fit: cover;
+  object-position: 51% 49%;
+  transform: scale(1.125);
 }
 
-/* The still carries LCP; the loop fades in only once it can actually play. */
 .marketing-hero-media__video {
   position: absolute;
   inset: 0;
-  width: 100%;
   height: 100%;
-  object-fit: cover;
   opacity: 0;
   transition: opacity 400ms ease;
   pointer-events: none;
@@ -42,18 +60,114 @@
   opacity: 1;
 }
 
-.marketing-proof-mock {
-  min-height: 8.5rem;
-  border-radius: 0.9rem;
+.marketing-panel {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 0.75rem;
   border: 1px solid var(--card-border);
-  background: linear-gradient(180deg, #fafafa 0%, #f4f4f4 100%);
-  padding: 1rem;
+  background: var(--card-bg);
+  box-shadow: var(--mkt-elevation);
+}
+
+.marketing-panel__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--card-border);
+  padding: 0.5rem 0.75rem;
+}
+
+.marketing-panel__title {
+  font-size: 11px;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
-.marketing-proof-mock__bar {
-  height: 0.55rem;
-  width: 38%;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.08);
+.marketing-panel__tab {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.marketing-book__row {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.marketing-book__depth {
+  position: absolute;
+  inset: -1px 0;
+  right: auto;
+  border-radius: 2px;
+}
+
+.marketing-book__depth--ask {
+  background: rgba(225, 29, 72, 0.09);
+}
+
+.marketing-book__depth--bid {
+  background: rgba(5, 150, 105, 0.09);
+}
+
+.marketing-float {
+  background: #efeff3;
+}
+
+.marketing-float__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .marketing-float__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .marketing-float__grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.marketing-desk-gallery {
+  background: #efeff3;
+}
+
+.marketing-desk-gallery__bento {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 768px) {
+  .marketing-desk-gallery__bento {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .marketing-desk-gallery__cell[data-cell="ticket"] {
+    grid-column: span 4;
+    grid-row: span 2;
+  }
+
+  .marketing-desk-gallery__cell[data-cell="chart"] {
+    grid-column: span 8;
+  }
+
+  .marketing-desk-gallery__cell[data-cell="book"] {
+    grid-column: span 4;
+  }
+
+  .marketing-desk-gallery__cell[data-cell="positions"] {
+    grid-column: span 4;
+  }
+}
+
+.marketing-closing {
+  background: #101114;
 }
