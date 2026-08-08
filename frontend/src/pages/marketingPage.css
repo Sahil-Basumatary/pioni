@@ -1,8 +1,174 @@
+/* The palette is declared at the root but applied only inside .marketing-page.
+   Nothing else in the app references these, so the light shell is unaffected,
+   and body can still reach them to match during overscroll. */
+:root {
+  /* Never pure black. A slight blue undertone stops large fills from reading as
+     a dead screen, and gives the ramp somewhere to go at the dark end. */
+  --mkt-ink-1000: #08090c;
+  --mkt-ink-950: #0b0d11;
+  --mkt-ink-900: #10131a;
+  --mkt-ink-850: #151920;
+  --mkt-ink-800: #1a1f28;
+  --mkt-ink-700: #222834;
+  --mkt-ink-600: #2d3442;
+  --mkt-ink-500: #3c4453;
+
+  --mkt-text: #f3f5f8;
+  --mkt-text-muted: #9ba4b4;
+
+  /* Primary actions invert on dark: light pill, ink label. */
+  --mkt-cta-bg: #ffffff;
+  --mkt-cta-fg: #0b0d11;
+  --mkt-hover: rgba(255, 255, 255, 0.07);
+
+  /* Pre-mixed alpha, because Tailwind's /opacity modifier cannot inject an alpha
+     channel into a var() colour and silently resolves to transparent. */
+  --mkt-scrim: rgba(11, 13, 17, 0.9);
+  --mkt-scrim-scrolled: rgba(11, 13, 17, 0.8);
+
+  --mkt-elevation: 0 1px 2px rgba(0, 0, 0, 0.55), 0 12px 32px rgba(0, 0, 0, 0.4);
+  --mkt-elevation-mid: 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 2px 8px rgba(0, 0, 0, 0.45), 0 18px 40px rgba(0, 0, 0, 0.4);
+  /* The 1px white ring does the separating, not the shadow: a drop shadow has
+     nothing to darken against on a dark page. */
+  --mkt-elevation-lift: 0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 2px 6px rgba(0, 0, 0, 0.5), 0 30px 70px rgba(0, 0, 0, 0.55);
+  --mkt-elevation-high: 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 8px 24px rgba(0, 0, 0, 0.55), 0 40px 90px rgba(0, 0, 0, 0.65);
+}
+
+/* Rubber-band overscroll would otherwise flash the light shell gradient above
+   and below the dark page. */
+body:has(.marketing-page) {
+  background: var(--mkt-ink-1000);
+}
+
+/* Marketing runs a dark ink palette while the app shell stays light. Scoping the
+   overrides to this class is what keeps the shell rule intact: nothing here
+   leaks past the marketing tree. */
 .marketing-page {
-  background: #f6f5f9;
+  --text-primary: var(--mkt-text);
+  --text-muted: var(--mkt-text-muted);
+  --card-bg: var(--mkt-ink-850);
+  --card-border: var(--mkt-ink-700);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.45);
+
+  background: var(--mkt-ink-950);
+  color: var(--mkt-text);
+  color-scheme: dark;
+}
+
+/* Product UI keeps the real light app palette. The whole point of a dark page is
+   that the actual desk glows inside the frames, so these surfaces opt back out. */
+.marketing-panel,
+.marketing-macbook__screen,
+.marketing-phone__screen {
+  --text-primary: rgba(0, 0, 0, 0.9);
+  --text-muted: rgba(0, 0, 0, 0.55);
+  --card-bg: #ffffff;
+  --card-border: #d9d9d9;
+  --shadow-card: 0px 2px 6px rgba(0, 0, 0, 0.07);
+  --shadow-soft: 0px 1px 3px rgba(0, 0, 0, 0.1);
   --mkt-elevation: 0 1px 2px rgba(16, 17, 20, 0.04), 0 12px 32px rgba(16, 17, 20, 0.06);
-  --mkt-elevation-lift: 0 2px 4px rgba(16, 17, 20, 0.05),
-    0 28px 64px rgba(16, 17, 20, 0.1);
+  color: #0a0a0a;
+  color-scheme: light;
+}
+
+/* Single-colour black mark, so inverting is exact and cannot drift out of sync
+   with the shape the way a duplicated light asset would. */
+.marketing-logo {
+  /* logo.svg carries ~62% transparent padding: the artwork spans y 245.5-329.5
+     inside a 224-unit box. Sizing by box height therefore renders a mark far
+     smaller than the number suggests, so size by ink and divide it back out.
+     If the asset is ever cropped to its artwork, this ratio becomes 1. */
+  --mkt-logo-ink-ratio: 0.375;
+  height: calc(var(--mkt-logo-ink) / var(--mkt-logo-ink-ratio));
+  width: auto;
+  filter: invert(1);
+}
+
+/* 22px of visible mark in a 64px bar. */
+.marketing-logo--header {
+  --mkt-logo-ink: 22px;
+}
+
+.marketing-logo--footer {
+  --mkt-logo-ink: 20px;
+}
+
+/* Sticky stack: the SLOT owns height + stacking. Sticky is constrained to the
+   slot, so it releases when the slot scrolls away instead of covering Closing. */
+.marketing-plane-slot {
+  position: relative;
+  z-index: var(--plane-z, 1);
+}
+
+.marketing-plane {
+  position: sticky;
+  top: 4rem;
+}
+
+.marketing-plane-slot--featured {
+  --plane-z: 2;
+  padding-bottom: 8vh;
+}
+
+.marketing-plane-slot--markets {
+  --plane-z: 3;
+  padding-bottom: 10vh;
+  margin-top: -3rem;
+}
+
+.marketing-plane-slot--practice {
+  --plane-z: 5;
+  padding-bottom: 6vh;
+  margin-top: -1.5rem;
+}
+
+.marketing-plane-slot--desk {
+  --plane-z: 6;
+  padding-bottom: 4vh;
+  margin-top: -2.5rem;
+}
+
+.marketing-featured {
+  background: var(--mkt-ink-950);
+  margin-top: -0.5rem;
+}
+
+.marketing-float {
+  background: var(--mkt-ink-900);
+  border-radius: 1.25rem 1.25rem 0 0;
+  box-shadow: var(--mkt-elevation-high);
+}
+
+.marketing-integrity {
+  position: relative;
+  z-index: 4;
+  margin-top: -2rem;
+}
+
+[data-mkt="practice"].marketing-plane {
+  box-shadow: var(--mkt-elevation-mid);
+}
+
+.marketing-desk-gallery.marketing-plane {
+  border-radius: 1.25rem 1.25rem 0 0;
+  box-shadow: var(--mkt-elevation-high);
+}
+
+/* Tail sections sit above the stack so a sticky miss never paints over them. */
+[data-mkt="app-showcase"],
+[data-mkt="faq"],
+[data-mkt="closing"],
+[data-mkt="footer"] {
+  position: relative;
+  z-index: 20;
+}
+
+[data-mkt="faq"] {
+  background: var(--mkt-ink-950);
 }
 
 .marketing-hero-media {
@@ -10,54 +176,196 @@
   width: 100%;
 }
 
-/* Ambient wash behind the product shot so it reads as lit rather than pasted on. */
+/* Ambient wash behind the product shot so it reads as lit rather than pasted on.
+   On dark this is a bloom rather than a shadow: the light screen has to look
+   like the thing emitting into the page. */
 .marketing-hero-media::before {
   content: "";
   position: absolute;
-  inset: 8% 4% -6%;
+  inset: 4% 0% -10%;
   border-radius: 50%;
   background: radial-gradient(
     ellipse at center,
-    rgba(16, 17, 20, 0.13) 0%,
-    rgba(16, 17, 20, 0) 70%
+    rgba(150, 175, 235, 0.22) 0%,
+    rgba(150, 175, 235, 0) 70%
   );
-  filter: blur(28px);
+  filter: blur(46px);
   z-index: 0;
 }
 
 .marketing-hero-media__frame {
   position: relative;
   z-index: 1;
-  overflow: hidden;
-  border-radius: 1rem;
-  border: 1px solid var(--card-border);
-  background: var(--card-bg);
-  box-shadow: var(--mkt-elevation-lift);
 }
 
-.marketing-hero-media__img,
-.marketing-hero-media__video {
+.marketing-hero-media__img {
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 1734 / 824;
-  /* The render carries its own outer margin; scale past it to the desk edges. */
-  object-fit: cover;
-  object-position: 51% 49%;
-  transform: scale(1.125);
+  aspect-ratio: 2610 / 1254;
 }
 
-.marketing-hero-media__video {
+/* The base flares wider than the lid, so the lid has to stay under 100% or the
+   flare pushes the page into a horizontal scroll. */
+.marketing-macbook {
+  width: 90%;
+  margin-inline: auto;
+}
+
+.marketing-macbook__lid {
+  position: relative;
+  border-radius: 0.9rem;
+  background: linear-gradient(180deg, #3a3d45 0%, #202329 100%);
+  padding: 0.75rem 0.75rem 0.85rem;
+  box-shadow: var(--mkt-elevation-lift);
+}
+
+.marketing-macbook__camera {
   position: absolute;
-  inset: 0;
-  height: 100%;
-  opacity: 0;
-  transition: opacity 400ms ease;
-  pointer-events: none;
+  top: 0.34rem;
+  left: 50%;
+  height: 4px;
+  width: 4px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: #4a4d55;
 }
 
-.marketing-hero-media__video[data-ready="true"] {
-  opacity: 1;
+.marketing-macbook__screen {
+  overflow: hidden;
+  border-radius: 0.3rem;
+  background: var(--card-bg);
+}
+
+.marketing-macbook__base {
+  position: relative;
+  left: 50%;
+  width: 108%;
+  height: 0.85rem;
+  transform: translateX(-50%);
+  border-radius: 0 0 0.7rem 0.7rem;
+  background: linear-gradient(180deg, #d6d7dc 0%, #aeb0b7 60%, #93959c 100%);
+  box-shadow: 0 12px 26px rgba(16, 17, 20, 0.16);
+}
+
+.marketing-macbook__notch {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 0.32rem;
+  width: 12%;
+  transform: translateX(-50%);
+  border-radius: 0 0 0.4rem 0.4rem;
+  background: rgba(16, 17, 20, 0.16);
+}
+
+.marketing-appshowcase {
+  background: var(--mkt-ink-900);
+}
+
+.marketing-appshowcase__row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.marketing-phone {
+  position: relative;
+  width: 210px;
+  flex: none;
+}
+
+.marketing-phone[data-depth="0"] {
+  z-index: 3;
+}
+
+.marketing-phone[data-depth="1"] {
+  z-index: 2;
+  width: 194px;
+  margin: 0 -1.5rem;
+  top: 30px;
+}
+
+.marketing-phone[data-depth="2"] {
+  z-index: 1;
+  width: 180px;
+  margin: 0 -1.5rem;
+  top: 58px;
+}
+
+/* The fan only reads as depth once there is room for all five phones. */
+@media (max-width: 1023px) {
+  .marketing-phone[data-depth="2"] {
+    display: none;
+  }
+}
+
+@media (max-width: 639px) {
+  .marketing-phone[data-depth="1"] {
+    display: none;
+  }
+}
+
+.marketing-phone__body {
+  border-radius: 1.9rem;
+  background: linear-gradient(160deg, #40434b 0%, #1d1f25 45%, #2c2f37 100%);
+  padding: 4px;
+  box-shadow: var(--mkt-elevation-lift);
+}
+
+.marketing-phone__screen {
+  position: relative;
+  display: flex;
+  aspect-ratio: 9 / 19.5;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 1.65rem;
+  background: var(--card-bg);
+}
+
+.marketing-phone__island {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  height: 11px;
+  width: 26%;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: #17181c;
+}
+
+.marketing-phone__status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px 2px;
+  font-size: 8px;
+  color: var(--text-primary);
+}
+
+.marketing-phone__content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.marketing-phone__tabs {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--card-border);
+  padding: 6px 10px 10px;
+  font-size: 7px;
+}
+
+.marketing-phone__home {
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  height: 3px;
+  width: 30%;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(16, 17, 20, 0.28);
 }
 
 .marketing-panel {
@@ -113,10 +421,6 @@
   background: rgba(5, 150, 105, 0.09);
 }
 
-.marketing-float {
-  background: #efeff3;
-}
-
 .marketing-float__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -136,7 +440,7 @@
 }
 
 .marketing-desk-gallery {
-  background: #efeff3;
+  background: var(--mkt-ink-900);
 }
 
 .marketing-desk-gallery__bento {
@@ -168,6 +472,14 @@
   }
 }
 
+/* The closing used to earn its weight by being the only dark band on a light
+   page. Now that the page is dark it has to differentiate the other way: drop to
+   the floor of the ramp and light it from above. */
 .marketing-closing {
-  background: #101114;
+  background: radial-gradient(
+      ellipse 55% 130% at 50% 0%,
+      rgba(150, 175, 235, 0.16) 0%,
+      rgba(150, 175, 235, 0) 68%
+    ),
+    var(--mkt-ink-1000);
 }
