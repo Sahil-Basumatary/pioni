@@ -68,10 +68,10 @@ export default function WelcomeIllustration({ className }: { className?: string 
       </g>
       <g className="pioni-welcome-chip" filter="url(#pioniWelcomeLift)">
         <rect x="330" y="176" width="92" height="56" rx="14" fill="#FFFFFF" stroke="#E5E5E5" />
-        <text x="348" y="200" fill="#8A8A8A" fontSize="10" fontFamily="Inter, system-ui, sans-serif">
+        <text x="348" y="200" fill="#8A8A8A" fontSize="10" fontFamily="'Archivo Variable', system-ui, sans-serif">
           Paper
         </text>
-        <text x="348" y="218" fill="#0A0A0A" fontSize="16" fontWeight="600" fontFamily="Inter, system-ui, sans-serif">
+        <text x="348" y="218" fill="#0A0A0A" fontSize="16" fontWeight="600" fontFamily="'Archivo Variable', system-ui, sans-serif">
           $100k
         </text>
       </g>

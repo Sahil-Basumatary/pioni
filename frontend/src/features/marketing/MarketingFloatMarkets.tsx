@@ -33,27 +33,27 @@ export default function MarketingFloatMarkets() {
     <section
       id="markets"
       data-mkt="float-markets"
-      className="marketing-float scroll-mt-32 border-y border-[var(--card-border)] py-16 sm:py-24"
+      className="marketing-float scroll-mt-32 border-y border-[var(--card-border)] pb-24 pt-20 sm:pb-28 sm:pt-24"
       aria-labelledby="mkt-float-title"
     >
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
           <h2
             id="mkt-float-title"
-            className="text-3xl font-normal tracking-tight text-[var(--text-primary)] sm:text-4xl sm:leading-[44px]"
+            className="text-3xl type-display font-medium text-[var(--text-primary)] sm:text-4xl sm:leading-[44px]"
           >
             {tab === "spot"
-              ? "Practice spot trading on live markets"
-              : "Preview margin workflow with paper funds"}
+              ? "Trade live markets with paper funds"
+              : "Learn the margin order flow"}
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-[var(--text-muted)]">
             {tab === "spot"
-              ? "Browse pairs, open the desk, and place simulated orders against live prices."
-              : "Margin figures are a preview. Fills still settle against your paper balance."}
+              ? "Choose a pair, open the desk, and place a simulated order at the current price."
+              : "See how margin orders are set up. Every fill still uses your paper balance."}
           </p>
         </div>
 
-        <div className="mt-8 flex justify-center">
+        <div className="mt-7 flex justify-center">
           <div
             className="inline-flex rounded-full border border-[var(--card-border)] bg-[var(--card-bg)] p-1"
             role="tablist"
@@ -73,7 +73,7 @@ export default function MarketingFloatMarkets() {
                 onClick={() => setTab(item.id)}
                 className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
                   tab === item.id
-                    ? "bg-[var(--text-primary)] text-white"
+                    ? "bg-[var(--mkt-cta-bg)] text-[var(--mkt-cta-fg)]"
                     : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                 }`}
               >
@@ -83,7 +83,7 @@ export default function MarketingFloatMarkets() {
           </div>
         </div>
 
-        <div className="marketing-float__grid mt-10">
+        <div className="marketing-float__grid mt-9">
           {cards.map((card) => {
             const up = card.changePct != null && card.changePct >= 0;
             const tone =
@@ -102,7 +102,7 @@ export default function MarketingFloatMarkets() {
                 <img
                   src={assetIconUrl(card.symbol)}
                   alt=""
-                  className="h-7 w-7 shrink-0 rounded-full bg-[var(--bg)] object-scale-down"
+                  className="h-7 w-7 shrink-0 rounded-full bg-white object-scale-down"
                 />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-xs font-semibold text-[var(--text-primary)]">
@@ -124,12 +124,12 @@ export default function MarketingFloatMarkets() {
           })}
         </div>
 
-        <div className="mt-10 text-center">
+        <div className="mt-12 text-center">
           <Link
             to={SIGN_UP_PATH}
-            className="inline-flex h-12 items-center justify-center rounded-xl bg-[var(--text-primary)] px-6 text-sm font-medium text-white hover:opacity-90"
+            className="inline-flex h-12 items-center justify-center rounded-xl bg-[var(--mkt-cta-bg)] px-6 text-sm font-medium text-[var(--mkt-cta-fg)] hover:opacity-90"
           >
-            Get started
+            Start paper trading
           </Link>
         </div>
       </div>

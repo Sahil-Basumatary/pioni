@@ -2,6 +2,9 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Provider } from 'react-redux'
 import { ClerkProvider } from '@clerk/clerk-react'
+// Width axis build: the same file serves UI text and the condensed display face,
+// so the heading style costs no extra download.
+import '@fontsource-variable/archivo/wdth.css'
 import './index.css'
 import App from './App'
 import { store } from './app/store'

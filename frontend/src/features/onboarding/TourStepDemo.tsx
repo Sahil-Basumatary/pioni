@@ -55,7 +55,7 @@ function ChartDemo({ className }: DemoProps) {
         <g className="pioni-demo-cursor">
           <circle cx="208" cy="50" r="4" fill="#0A0A0A" />
           <rect x="196" y="24" width="56" height="16" rx="4" fill="#2A2A2A" />
-          <text x="204" y="35" fill="#FFFFFF" fontSize="8" fontFamily="Inter, system-ui, sans-serif">
+          <text x="204" y="35" fill="#FFFFFF" fontSize="8" fontFamily="'Archivo Variable', system-ui, sans-serif">
             BTC/USD
           </text>
         </g>
@@ -69,7 +69,7 @@ function BalanceDemo({ className }: DemoProps) {
     <Frame className={className} label="Balance demo">
       <g className="pioni-demo-balance">
         <rect x="40" y="48" width="160" height="64" rx="12" fill="#F7F7F7" stroke="#E8E8E8" />
-        <text x="56" y="72" fill="#8A8A8A" fontSize="10" fontFamily="Inter, system-ui, sans-serif">
+        <text x="56" y="72" fill="#8A8A8A" fontSize="10" fontFamily="'Archivo Variable', system-ui, sans-serif">
           Available
         </text>
         <text
@@ -79,13 +79,13 @@ function BalanceDemo({ className }: DemoProps) {
           fill="#0A0A0A"
           fontSize="20"
           fontWeight="600"
-          fontFamily="Inter, system-ui, sans-serif"
+          fontFamily="'Archivo Variable', system-ui, sans-serif"
         >
           $100,000
         </text>
         <g className="pioni-demo-coin">
           <circle cx="248" cy="80" r="28" fill="#2A2A2A" />
-          <text x="239" y="86" fill="#FFFFFF" fontSize="18" fontWeight="700" fontFamily="Inter, system-ui, sans-serif">
+          <text x="239" y="86" fill="#FFFFFF" fontSize="18" fontWeight="700" fontFamily="'Archivo Variable', system-ui, sans-serif">
             $
           </text>
         </g>
@@ -108,15 +108,15 @@ function OrderDemo({ className }: DemoProps) {
     <Frame className={className} label="Order ticket demo">
       <g className="pioni-demo-order">
         <rect x="36" y="28" width="120" height="28" rx="8" fill="#0A0A0A" />
-        <text x="72" y="46" fill="#FFFFFF" fontSize="11" fontWeight="600" fontFamily="Inter, system-ui, sans-serif">
+        <text x="72" y="46" fill="#FFFFFF" fontSize="11" fontWeight="600" fontFamily="'Archivo Variable', system-ui, sans-serif">
           Buy
         </text>
         <rect x="164" y="28" width="120" height="28" rx="8" fill="#F0F0F0" />
-        <text x="206" y="46" fill="#8A8A8A" fontSize="11" fontFamily="Inter, system-ui, sans-serif">
+        <text x="206" y="46" fill="#8A8A8A" fontSize="11" fontFamily="'Archivo Variable', system-ui, sans-serif">
           Sell
         </text>
         <rect x="36" y="70" width="248" height="36" rx="8" fill="#F7F7F7" stroke="#E5E5E5" />
-        <text x="48" y="92" fill="#8A8A8A" fontSize="10" fontFamily="Inter, system-ui, sans-serif">
+        <text x="48" y="92" fill="#8A8A8A" fontSize="10" fontFamily="'Archivo Variable', system-ui, sans-serif">
           Quantity
         </text>
         <text
@@ -126,12 +126,12 @@ function OrderDemo({ className }: DemoProps) {
           fill="#0A0A0A"
           fontSize="12"
           fontWeight="600"
-          fontFamily="Inter, system-ui, sans-serif"
+          fontFamily="'Archivo Variable', system-ui, sans-serif"
         >
           0.001
         </text>
         <rect className="pioni-demo-submit" x="36" y="118" width="248" height="22" rx="8" fill="#2A2A2A" />
-        <text x="118" y="133" fill="#FFFFFF" fontSize="10" fontWeight="600" fontFamily="Inter, system-ui, sans-serif">
+        <text x="118" y="133" fill="#FFFFFF" fontSize="10" fontWeight="600" fontFamily="'Archivo Variable', system-ui, sans-serif">
           Place order
         </text>
         <g className="pioni-demo-click">
@@ -146,21 +146,21 @@ function PositionsDemo({ className }: DemoProps) {
   return (
     <Frame className={className} label="Positions demo">
       <g className="pioni-demo-positions">
-        <text x="36" y="40" fill="#8A8A8A" fontSize="9" fontFamily="Inter, system-ui, sans-serif">
+        <text x="36" y="40" fill="#8A8A8A" fontSize="9" fontFamily="'Archivo Variable', system-ui, sans-serif">
           SYMBOL
         </text>
-        <text x="140" y="40" fill="#8A8A8A" fontSize="9" fontFamily="Inter, system-ui, sans-serif">
+        <text x="140" y="40" fill="#8A8A8A" fontSize="9" fontFamily="'Archivo Variable', system-ui, sans-serif">
           SIZE
         </text>
-        <text x="220" y="40" fill="#8A8A8A" fontSize="9" fontFamily="Inter, system-ui, sans-serif">
+        <text x="220" y="40" fill="#8A8A8A" fontSize="9" fontFamily="'Archivo Variable', system-ui, sans-serif">
           P&amp;L
         </text>
         <g className="pioni-demo-row">
           <rect x="28" y="52" width="264" height="36" rx="8" fill="#F7F7F7" />
-          <text x="40" y="74" fill="#0A0A0A" fontSize="12" fontWeight="600" fontFamily="Inter, system-ui, sans-serif">
+          <text x="40" y="74" fill="#0A0A0A" fontSize="12" fontWeight="600" fontFamily="'Archivo Variable', system-ui, sans-serif">
             BTC
           </text>
-          <text x="140" y="74" fill="#0A0A0A" fontSize="12" fontFamily="Inter, system-ui, sans-serif">
+          <text x="140" y="74" fill="#0A0A0A" fontSize="12" fontFamily="'Archivo Variable', system-ui, sans-serif">
             0.001
           </text>
           <text
@@ -170,7 +170,7 @@ function PositionsDemo({ className }: DemoProps) {
             fill="#149E61"
             fontSize="12"
             fontWeight="600"
-            fontFamily="Inter, system-ui, sans-serif"
+            fontFamily="'Archivo Variable', system-ui, sans-serif"
           >
             +$12.40
           </text>
@@ -192,7 +192,7 @@ function SentimentDemo({ className }: DemoProps) {
     <Frame className={className} label="Sentiment demo">
       <g className="pioni-demo-sentiment">
         <rect x="36" y="36" width="100" height="88" rx="12" fill="#F7F7F7" stroke="#E8E8E8" />
-        <text x="56" y="58" fill="#8A8A8A" fontSize="9" fontFamily="Inter, system-ui, sans-serif">
+        <text x="56" y="58" fill="#8A8A8A" fontSize="9" fontFamily="'Archivo Variable', system-ui, sans-serif">
           Sentiment
         </text>
         <text
@@ -202,11 +202,11 @@ function SentimentDemo({ className }: DemoProps) {
           fill="#0A0A0A"
           fontSize="28"
           fontWeight="700"
-          fontFamily="Inter, system-ui, sans-serif"
+          fontFamily="'Archivo Variable', system-ui, sans-serif"
         >
           72
         </text>
-        <text x="98" y="92" fill="#8A8A8A" fontSize="12" fontFamily="Inter, system-ui, sans-serif">
+        <text x="98" y="92" fill="#8A8A8A" fontSize="12" fontFamily="'Archivo Variable', system-ui, sans-serif">
           /100
         </text>
         <g className="pioni-demo-bars-h">
@@ -219,7 +219,7 @@ function SentimentDemo({ className }: DemoProps) {
         </g>
         <g className="pioni-demo-nav-pill">
           <rect x="156" y="118" width="88" height="18" rx="9" fill="#0A0A0A" />
-          <text x="170" y="130" fill="#FFFFFF" fontSize="9" fontFamily="Inter, system-ui, sans-serif">
+          <text x="170" y="130" fill="#FFFFFF" fontSize="9" fontFamily="'Archivo Variable', system-ui, sans-serif">
             Sentiment →
           </text>
         </g>

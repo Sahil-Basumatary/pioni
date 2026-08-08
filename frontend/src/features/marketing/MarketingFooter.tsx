@@ -5,16 +5,20 @@ export default function MarketingFooter() {
   return (
     <footer
       data-mkt="footer"
-      className="border-t border-[var(--card-border)] bg-[#F1F1F1]"
+      className="border-t border-[var(--card-border)] bg-[var(--mkt-ink-1000)]"
     >
-      <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto w-full max-w-7xl px-4 pb-10 pt-16 sm:px-6 sm:pt-20">
+        <div className="grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
           <div className="sm:col-span-2 lg:col-span-1">
             <Link to="/" className="inline-flex items-center" aria-label="Pioni home">
-              <img src="/logo.svg" alt="Pioni" className="h-8" />
+              <img
+                src="/logo.svg"
+                alt="Pioni"
+                className="marketing-logo marketing-logo--footer"
+              />
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-[var(--text-muted)]">
-              Paper trading for learning the desk. Simulated funds only.
+              Paper trading with live prices and simulated funds.
             </p>
           </div>
           <div>
@@ -51,15 +55,15 @@ export default function MarketingFooter() {
           </div>
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
-              Paper only
+              Important
             </h3>
             <p className="mt-4 text-sm leading-relaxed text-[var(--text-muted)]">
-              Balances, fills, and fees are simulated. Pioni is not a brokerage
-              and not investment advice.
+              Pioni is a paper-trading product. Balances, fills, and fees are
+              simulated. Pioni is not a broker.
             </p>
           </div>
         </div>
-        <p className="mt-12 border-t border-[var(--card-border)] pt-6 text-xs text-[var(--text-muted)]">
+        <p className="mt-14 border-t border-[var(--card-border)] pt-7 text-xs text-[var(--text-muted)]">
           © {new Date().getFullYear()} Pioni. Simulated funds only. Not investment advice.
         </p>
       </div>

@@ -1,15 +1,15 @@
 const FAQS = [
   {
-    q: "Is this real money?",
-    a: "No. Balances, fills, and fees are simulated. You cannot deposit or withdraw real cash.",
+    q: "Does Pioni use real money?",
+    a: "No. You cannot deposit or withdraw cash. Every balance, fill, and fee is simulated.",
   },
   {
     q: "Are prices live?",
-    a: "Yes. The desk uses live market data so you practice against real price movement.",
+    a: "Yes. Orders use live market data, so prices move with the market.",
   },
   {
-    q: "What can I practice?",
-    a: "Spot order ticket, charts, order book, positions, history, and the overall desk workflow.",
+    q: "What can I do on the desk?",
+    a: "You can place spot orders, read charts and the order book, track positions, and review your trade history.",
   },
 ] as const;
 
@@ -18,20 +18,21 @@ export default function MarketingFaq() {
     <section
       id="faq"
       data-mkt="faq"
-      className="mx-auto w-full max-w-3xl scroll-mt-32 px-4 py-16 sm:px-6 sm:py-24"
+      className="mx-auto w-full max-w-3xl scroll-mt-32 px-4 pb-28 pt-20 sm:px-6 sm:pb-32 sm:pt-24"
       aria-labelledby="mkt-faq-title"
     >
       <h2
         id="mkt-faq-title"
-        className="text-center text-3xl font-normal tracking-tight text-[var(--text-primary)] sm:text-4xl sm:leading-[44px]"
+        className="text-3xl type-display font-medium text-[var(--text-primary)] sm:text-4xl sm:leading-[44px]"
       >
         FAQ
       </h2>
-      <dl className="mt-10 space-y-4">
+      <dl className="mt-9 space-y-3">
         {FAQS.map((item) => (
           <div
             key={item.q}
-            className="rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] px-5 py-4 shadow-[var(--shadow-card)]"
+            data-mkt="faq-item"
+            className="rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] px-5 pb-5 pt-4 shadow-[var(--shadow-card)] sm:px-6"
           >
             <dt className="text-sm font-semibold text-[var(--text-primary)]">{item.q}</dt>
             <dd className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">{item.a}</dd>

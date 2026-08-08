@@ -2,16 +2,16 @@ import { useMemo, useState } from "react";
 
 const FEATURES = [
   {
-    title: "See a practice path",
-    body: "Pick a starting balance and timeframe to preview how paper funds can move with simple fills.",
+    title: "Set your starting balance",
+    body: "Choose how much paper money you want to work with.",
   },
   {
-    title: "Track the desk",
-    body: "Balances, positions, and fills stay visible so you learn the real workflow.",
+    title: "Review every fill",
+    body: "Your balance, positions, and order history update after each trade.",
   },
   {
-    title: "Reset when you need to",
-    body: "Simulated funds can be reset. Nothing here is real money.",
+    title: "Start over anytime",
+    body: "Reset the account and try a different approach whenever you want.",
   },
 ] as const;
 
@@ -23,7 +23,6 @@ export default function MarketingPracticePanel() {
   const [months, setMonths] = useState<(typeof MONTHS)[number]>(6);
 
   const projected = useMemo(() => {
-    // Mild illustrative curve for presentation only — not a return promise.
     const growth = 1 + months * 0.012;
     return Math.round(amount * growth * 100) / 100;
   }, [amount, months]);
@@ -65,24 +64,26 @@ export default function MarketingPracticePanel() {
     <section
       id="practice"
       data-mkt="practice"
-      className="mx-auto w-full max-w-7xl scroll-mt-32 px-4 py-16 sm:px-6 sm:py-24"
+      className="mx-auto w-full max-w-7xl scroll-mt-32 px-4 pb-28 pt-24 sm:px-6 sm:pb-32 sm:pt-28"
       aria-labelledby="mkt-practice-title"
     >
-      <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch">
+      <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-stretch lg:gap-14">
         <div className="flex flex-col gap-3">
           <h2
             id="mkt-practice-title"
-            className="text-3xl font-normal tracking-tight text-[var(--text-primary)] sm:text-4xl sm:leading-[44px]"
+            className="text-3xl type-display font-medium text-[var(--text-primary)] sm:text-4xl sm:leading-[44px]"
           >
-            Practice with a clear path
+            A paper balance you can reset
           </h2>
           <p className="text-sm leading-relaxed text-[var(--text-muted)]">
-            A simple paper preview — not a performance guarantee and not real returns.
+            Choose a paper balance and a time range. The chart is an example, not a
+            forecast.
           </p>
           {FEATURES.map((item) => (
             <article
               key={item.title}
-              className="rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-5 shadow-[var(--shadow-card)]"
+              data-mkt="practice-card"
+              className="rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] px-5 pb-5 pt-4 shadow-[var(--shadow-card)]"
             >
               <h3 className="text-sm font-semibold text-[var(--text-primary)]">
                 {item.title}
@@ -108,8 +109,8 @@ export default function MarketingPracticePanel() {
                     onClick={() => setAmount(n)}
                     className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
                       amount === n
-                        ? "bg-[var(--text-primary)] text-white"
-                        : "border border-[var(--card-border)] text-[var(--text-primary)] hover:bg-black/[0.03]"
+                        ? "bg-[var(--mkt-cta-bg)] text-[var(--mkt-cta-fg)]"
+                        : "border border-[var(--card-border)] text-[var(--text-primary)] hover:bg-[var(--mkt-hover)]"
                     }`}
                   >
                     ${n.toLocaleString("en-US")}
@@ -118,7 +119,7 @@ export default function MarketingPracticePanel() {
               </div>
             </div>
             <div className="text-right">
-              <div className="text-xs text-[var(--text-muted)]">Illustrative after</div>
+              <div className="text-xs text-[var(--text-muted)]">Example balance</div>
               <div className="mt-1 text-2xl font-semibold tabular-nums text-[var(--text-primary)]">
                 {projected.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
@@ -129,11 +130,11 @@ export default function MarketingPracticePanel() {
             </div>
           </div>
 
-          <svg viewBox="0 0 520 180" className="mt-6 h-48 w-full" aria-hidden>
+          <svg viewBox="0 0 520 180" className="mt-8 h-48 w-full" aria-hidden>
             <defs>
               <linearGradient id="mkt-practice-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#101114" stopOpacity="0.16" />
-                <stop offset="100%" stopColor="#101114" stopOpacity="0" />
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.16" />
+                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
               </linearGradient>
             </defs>
             {[8, 44, 80, 116, 152].map((y) => (
@@ -145,7 +146,7 @@ export default function MarketingPracticePanel() {
                 y2={y}
                 stroke="currentColor"
                 strokeWidth="1"
-                className="text-black/[0.07]"
+                className="text-white/[0.08]"
               />
             ))}
             <path d={curve.area} fill="url(#mkt-practice-fill)" />
@@ -189,7 +190,7 @@ export default function MarketingPracticePanel() {
                 onClick={() => setMonths(m)}
                 className={`rounded-full px-3 py-1 text-xs font-medium ${
                   months === m
-                    ? "bg-black/[0.08] text-[var(--text-primary)]"
+                    ? "bg-white/[0.10] text-[var(--text-primary)]"
                     : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                 }`}
               >
@@ -198,7 +199,7 @@ export default function MarketingPracticePanel() {
             ))}
           </div>
           <p className="mt-4 text-xs leading-relaxed text-[var(--text-muted)]">
-            Illustration only for learning. Simulated funds. Not a forecast and not investment advice.
+            Example only. This is not a forecast or investment advice.
           </p>
         </div>
       </div>

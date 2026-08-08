@@ -1,30 +1,33 @@
-const LINKS = [
-  { id: "overview", label: "Overview" },
-  { id: "features", label: "Features" },
-  { id: "trade", label: "Trade" },
-  { id: "markets", label: "Markets" },
-  { id: "practice", label: "Practice" },
-  { id: "desk", label: "Desk" },
-  { id: "faq", label: "FAQ" },
-] as const;
+import { MARKETING_SECTIONS, MARKETING_SECTION_IDS } from "./marketingSections";
+import { useActiveSection } from "./useActiveSection";
 
 export default function MarketingSubNav() {
+  const activeId = useActiveSection(MARKETING_SECTION_IDS);
+
   return (
     <nav
       data-mkt="subnav"
-      className="sticky top-16 z-10 border-b border-[var(--card-border)] bg-[#F6F5F9]/92 backdrop-blur-sm"
-      aria-label="Marketing sections"
+      className="sticky top-16 z-10 border-b border-[var(--card-border)] bg-[var(--mkt-scrim)] backdrop-blur-sm lg:hidden"
+      aria-label="Page sections"
     >
-      <div className="mx-auto flex w-full max-w-7xl gap-1 overflow-x-auto px-4 py-2.5 sm:px-6">
-        {LINKS.map((link) => (
-          <a
-            key={link.id}
-            href={`#${link.id}`}
-            className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-[var(--text-muted)] hover:bg-black/[0.04] hover:text-[var(--text-primary)]"
-          >
-            {link.label}
-          </a>
-        ))}
+      <div className="flex w-full gap-1.5 overflow-x-auto px-4 py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {MARKETING_SECTIONS.map((section) => {
+          const isActive = activeId === section.id;
+          return (
+            <a
+              key={section.id}
+              href={`#${section.id}`}
+              aria-current={isActive ? "true" : undefined}
+              className={`shrink-0 rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition-colors duration-200 ${
+                isActive
+                  ? "border-transparent bg-[var(--mkt-cta-bg)] text-[var(--mkt-cta-fg)]"
+                  : "border-[var(--card-border)] bg-[var(--mkt-ink-850)] text-[var(--text-muted)]"
+              }`}
+            >
+              {section.label}
+            </a>
+          );
+        })}
       </div>
     </nav>
   );

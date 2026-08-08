@@ -1,6 +1,6 @@
 import type { Appearance } from "@clerk/shared/types";
 
-/** Full-page auth card chrome matched to Pro (Pioni monochrome). */
+/** Full-page auth card chrome (Pioni monochrome). */
 export const clerkAppearance = {
   layout: {
     logoImageUrl: "/logo.svg",
@@ -26,7 +26,7 @@ export const clerkAppearance = {
     colorShadow: "rgba(16, 24, 40, 0.04)",
     borderRadius: "0.75rem",
     fontFamily:
-      'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+      '"Archivo Variable", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
     fontSize: "0.875rem",
   },
   elements: {

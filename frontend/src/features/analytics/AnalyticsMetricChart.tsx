@@ -86,7 +86,7 @@ export default function AnalyticsMetricChart({
         background: { type: ColorType.Solid, color: "transparent" },
         textColor: MUTED,
         fontFamily:
-          "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+          "'Archivo Variable', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
         fontSize: 11,
         attributionLogo: false,
       },

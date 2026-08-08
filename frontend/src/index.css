@@ -4,21 +4,32 @@
 
 * {
   -webkit-font-smoothing: antialiased;
-  font-feature-settings: "ss01", "ss02", "cv02", "cv03";
+  font-feature-settings: "tnum" 1;
 }
 
 html, body {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-               "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  letter-spacing: -0.01em;
+  font-family: var(--font-sans);
+  /* Tracking stays neutral at text sizes. Negative tracking belongs on display
+     type only; applying it globally is what makes small UI text look cramped. */
+  letter-spacing: normal;
 }
 
 :root {
+  --font-sans: "Archivo Variable", ui-sans-serif, system-ui, -apple-system,
+               BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: var(--font-sans);
+  /* Headings run narrower than UI text, the way a separate condensed cut would. */
+  --font-display-stretch: 84%;
+
   --bg: #F5F5F5;
   --card-bg: #FFFFFF;
   --card-border: #D9D9D9;
-  --text-primary: #0A0A0A;
-  --text-muted: #6A6A6A;
+
+  /* Text is layered alpha rather than flat greys so it stays harmonious on any
+     surface tint instead of drifting warm/cool against it. */
+  --text-primary: rgba(0, 0, 0, 0.9);
+  --text-muted: rgba(0, 0, 0, 0.55);
+  --text-faint: rgba(0, 0, 0, 0.3);
 
   --accent: #2A2A2A;
   --accent-soft: #3A3A3A;
@@ -34,6 +45,23 @@ body {
   min-height: 100vh;
   background: linear-gradient(to bottom, #F8F8F8 0%, #F4F4F4 55%, #F1F1F1 100%);
   color: var(--text-primary);
+}
+
+/* Display type: narrower cut and slight negative tracking, which only earns its
+   keep above ~18px. Body text keeps normal tracking. */
+.type-display {
+  font-family: var(--font-display);
+  font-stretch: var(--font-display-stretch);
+  letter-spacing: -0.015em;
+}
+
+/* Small uppercase labels need positive tracking or the caps close up. */
+.type-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 button.rail-icon {
