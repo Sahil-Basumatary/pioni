@@ -1,9 +1,12 @@
 import type { OrderSide, OrderType } from "./ordersApi";
 import type { TradeShellMessageKey } from "../i18n/shellTradeCatalog";
 
-// Keep in sync with libs/common/common/numeric_limits.py (NUMERIC 20,8).
-export const MAX_ORDER_QUANTITY = 999_999_999_999.99999999;
-export const MAX_ORDER_NOTIONAL = 999_999_999_999.99999999;
+/* Keep in sync with libs/common/common/numeric_limits.py (NUMERIC 20,8), which
+   keeps magnitude under 10^12. Spelling the ceiling out as 999999999999.99999999
+   needs more significant digits than a double carries, so it rounds up to 10^12
+   and quietly admits orders the database then rejects. Hence the exclusive bound. */
+export const ORDER_QUANTITY_LIMIT = 1e12;
+export const ORDER_NOTIONAL_LIMIT = 1e12;
 
 export interface OrderInput {
   side: OrderSide;
@@ -39,7 +42,7 @@ export function evaluateOrder(input: OrderInput): OrderEvaluation {
       reasonKey: "tradeEnterQuantity",
     };
   }
-  if (quantity > MAX_ORDER_QUANTITY) {
+  if (quantity >= ORDER_QUANTITY_LIMIT) {
     return {
       effectivePrice: priceValid ? (effectivePrice as number) : null,
       estimatedTotal: null,
@@ -58,7 +61,7 @@ export function evaluateOrder(input: OrderInput): OrderEvaluation {
           : "tradeWaitingLivePrice",
     };
   }
-  if (estimatedTotal != null && estimatedTotal > MAX_ORDER_NOTIONAL) {
+  if (estimatedTotal != null && estimatedTotal >= ORDER_NOTIONAL_LIMIT) {
     return {
       effectivePrice,
       estimatedTotal,

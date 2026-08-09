@@ -83,6 +83,29 @@ describe("evaluateOrder", () => {
     expect(result.reasonKey).toBe("tradeOrderTooLarge");
   });
 
+  /* A tiny price keeps the notional well clear of its own ceiling, so only the
+     quantity guard can reject these two. */
+  it("blocks a quantity at the ceiling even when the notional stays small", () => {
+    const result = evaluateOrder({
+      ...base,
+      quantity: "1000000000000",
+      livePrice: 0.0000001,
+      cashBalance: null,
+    });
+    expect(result.canSubmit).toBe(false);
+    expect(result.reasonKey).toBe("tradeOrderTooLarge");
+  });
+
+  it("allows a quantity just under the ceiling", () => {
+    const result = evaluateOrder({
+      ...base,
+      quantity: "999999999999",
+      livePrice: 0.0000001,
+      cashBalance: null,
+    });
+    expect(result.canSubmit).toBe(true);
+  });
+
   it("blocks notional above the numeric ceiling", () => {
     const result = evaluateOrder({
       ...base,
