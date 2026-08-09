@@ -2,13 +2,14 @@ import { useRef } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { Navigate } from "react-router-dom";
 import MarketingAppShowcase from "../features/marketing/MarketingAppShowcase";
+import MarketingBrowseIndex from "../features/marketing/MarketingBrowseIndex";
 import MarketingClosing from "../features/marketing/MarketingClosing";
+import MarketingCoverage from "../features/marketing/MarketingCoverage";
 import MarketingDeskGallery from "../features/marketing/MarketingDeskGallery";
 import MarketingFaq from "../features/marketing/MarketingFaq";
 import MarketingFooter from "../features/marketing/MarketingFooter";
 import MarketingHeader from "../features/marketing/MarketingHeader";
 import MarketingHero from "../features/marketing/MarketingHero";
-import MarketingIntegrityStrip from "../features/marketing/MarketingIntegrityStrip";
 import MarketingLiveMarkets from "../features/marketing/MarketingLiveMarkets";
 import MarketingPracticePanel from "../features/marketing/MarketingPracticePanel";
 import MarketingSubNav from "../features/marketing/MarketingSubNav";
@@ -37,16 +38,13 @@ export default function MarketingPage() {
       <main>
         <MarketingHero />
         <MarketingLiveMarkets />
-        <MarketingIntegrityStrip />
-        <div className="marketing-plane-slot marketing-plane-slot--practice">
-          <MarketingPracticePanel />
-        </div>
-        <div className="marketing-plane-slot marketing-plane-slot--desk">
-          <MarketingDeskGallery />
-        </div>
+        <MarketingPracticePanel />
+        <MarketingDeskGallery />
+        <MarketingCoverage />
         <MarketingAppShowcase />
         <MarketingFaq />
         <MarketingClosing />
+        <MarketingBrowseIndex />
       </main>
       <MarketingFooter />
     </div>
