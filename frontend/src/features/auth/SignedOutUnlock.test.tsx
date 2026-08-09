@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import SignedOutUnlock from "./SignedOutUnlock";
 
 describe("SignedOutUnlock", () => {
-  it("matches Pro unlock line with Sign in and Sign up links", () => {
+  it("shows unlock line with Sign in and Sign up links", () => {
     render(
       <MemoryRouter>
         <SignedOutUnlock />

@@ -18,7 +18,7 @@ vi.mock("@clerk/clerk-react", () => ({
 }));
 
 describe("SignUpForm", () => {
-  it("renders Pro-style stacked email and password fields", () => {
+  it("renders stacked email and password fields", () => {
     render(
       <LanguageProvider>
         <MemoryRouter>

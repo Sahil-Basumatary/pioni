@@ -7,7 +7,7 @@ describe("fmt", () => {
   it("formats finite numbers to 2 decimals", () => {
     expect(fmt(9968.27)).toBe("9,968.27");
   });
-  it("uses Pro empty dash", () => {
+  it("uses empty dash for missing values", () => {
     expect(fmt(null)).toBe("-");
   });
 });

@@ -18,7 +18,7 @@ type CategoryHeatmapCardProps = {
 const BASE_H = 322;
 const MAX_H = 480;
 
-/** Pro progressive labels: icon → +name → +value → +chg. Single-line ellipsis only. */
+/** Progressive labels: icon → +name → +value → +chg. Single-line ellipsis only. */
 function labelParts(cell: HeatRect): {
   showDot: boolean;
   showName: boolean;
@@ -26,7 +26,7 @@ function labelParts(cell: HeatRect): {
   showChange: boolean;
 } {
   const { w, h } = cell;
-  // Match live Pro foreignObject thresholds (icon 20 + name 16 + value/chg 10, pad 4, gap 2).
+  // Show icon/name/value/chg once the cell can fit them (icon 20 + name 16 + value/chg 10, pad 4, gap 2).
   const showDot = w >= 36 && h >= 28;
   const showName = w >= 48 && h >= 44;
   const showValue = w >= 56 && h >= 56;

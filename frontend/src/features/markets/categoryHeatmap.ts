@@ -63,7 +63,7 @@ export function buildHeatData(rows: MarketRow[], metric: HeatMetric): HeatDatum[
   }).filter((d) => d.value > 0);
 }
 
-/** Binary split treemap — area ∝ value, 2px gutters like Pro. */
+/** Binary split treemap — area ∝ value, 2px gutters. */
 export function layoutTreemap(
   data: HeatDatum[],
   width: number,
@@ -110,7 +110,7 @@ export function layoutTreemap(
   return out;
 }
 
-/** Pro uses rgba(20,158,97|245,57,94) with alpha scaled by |change|, capped ~0.32. */
+/** Green/red fill with alpha scaled by |change|, capped ~0.32. */
 export function heatFill(changePct: number | null, scaled: boolean): string {
   const change = changePct ?? 0;
   if (change === 0) return "rgba(104, 107, 130, 0.12)";

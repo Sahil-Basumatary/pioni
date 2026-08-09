@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-/** Pro switches trade mobile chrome below 640px (Tailwind `sm`). */
+/** Compact trade chrome below 640px (Tailwind `sm`). */
 const COMPACT_QUERY = "(max-width: 639px)";
 
 function matchesCompact(): boolean {

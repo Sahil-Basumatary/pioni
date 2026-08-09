@@ -29,7 +29,7 @@ describe("EarnPage", () => {
     expect(screen.queryByText("Earn balance")).not.toBeInTheDocument();
   });
 
-  it("renders earn chrome without competitor brand copy", () => {
+  it("renders earn chrome without third-party brand copy", () => {
     auth.isSignedIn = true;
     renderEarn();
     expect(screen.getByText("Earn balance")).toBeInTheDocument();

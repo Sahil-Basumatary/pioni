@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import PropPage from "../../pages/PropPage";
 
 describe("PropPage", () => {
-  it("matches prop surface chrome and keeps competitor brand out of copy", () => {
+  it("matches prop surface chrome and keeps third-party brand out of copy", () => {
     render(
       <MemoryRouter>
         <PropPage />

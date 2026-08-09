@@ -30,7 +30,7 @@ describe("AuthLanguageMenu", () => {
     });
   });
 
-  it("opens Pro language list and persists selection", async () => {
+  it("opens language list and persists selection", async () => {
     const user = userEvent.setup();
     render(
       <LanguageProvider>

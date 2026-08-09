@@ -24,7 +24,7 @@ export type CategoryIndexDef = {
   catalogMatch?: string;
 };
 
-/** Stroke colors sampled from the live Pro Category indices chart. */
+/** Stroke colors for category index series. */
 export const CATEGORY_INDICES: CategoryIndexDef[] = [
   { id: "defi", label: "DeFi", color: "#38C7EF" },
   { id: "infrastructure", label: "Infrastructure", color: "#CF0F11" },

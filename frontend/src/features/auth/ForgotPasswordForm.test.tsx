@@ -24,7 +24,7 @@ describe("clerkErrorMessage", () => {
 });
 
 describe("ForgotPasswordForm", () => {
-  it("shows Pro-style request step", () => {
+  it("shows request step", () => {
     render(
       <LanguageProvider>
         <MemoryRouter>
