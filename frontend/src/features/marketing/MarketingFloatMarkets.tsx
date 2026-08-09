@@ -1,207 +1,100 @@
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { assetIconUrl } from "../../components/shell/activityFormat";
-import { formatChangePct, formatMarketPrice, formatVolume } from "../markets/format";
-import { SIGN_UP_PATH } from "../auth/authRoutes";
+import MarketingMarketCard from "./MarketingMarketCard";
 import {
-  changeTone,
-  highestActivity,
-  newestListed,
-  topMovers,
+  chipLabel,
   type LiveMarketRow,
   type MarketingChipId,
 } from "./marketingLiveRows";
 
-const HUBS = [
-  {
-    id: "spot",
-    title: "Spot desk",
-    body: "Live pairs, charts, and an order book with simulated funds",
-    href: "/trading",
-  },
-  {
-    id: "margin",
-    title: "Margin practice",
-    body: "Learn leveraged order flow without risking a deposit",
-    href: "/trading",
-  },
-  {
-    id: "watch",
-    title: "Majors",
-    body: "BTC, ETH, and SOL stay one click from the ticket",
-    href: "/trading",
-  },
-] as const;
-
 type Props = {
   rows: LiveMarketRow[];
+  allRows: LiveMarketRow[];
   chip: MarketingChipId;
 };
 
-function RailCard({ row }: { row: LiveMarketRow }) {
-  return (
-    <Link
-      to="/trading"
-      data-mkt="rail-card"
-      className="flex min-w-[200px] flex-1 items-center gap-3 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] px-3.5 py-3 shadow-[var(--shadow-card)] transition hover:-translate-y-0.5 hover:shadow-[var(--mkt-elevation-mid)]"
-    >
-      <img
-        src={assetIconUrl(row.symbol)}
-        alt=""
-        className="h-8 w-8 shrink-0 rounded-full bg-white object-scale-down"
-      />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="truncate text-sm font-semibold text-[var(--text-primary)]">
-            {row.label}
-          </span>
-          <span className={`shrink-0 text-xs font-medium tabular-nums ${changeTone(row.changePct)}`}>
-            {formatChangePct(row.changePct)}
-          </span>
-        </div>
-        <div className="mt-0.5 flex items-baseline justify-between gap-2 text-xs tabular-nums text-[var(--text-muted)]">
-          <span>{formatMarketPrice(row.price)}</span>
-          <span>{formatVolume(row.volume)}</span>
-        </div>
-      </div>
-    </Link>
-  );
-}
+/* A narrow category would otherwise leave the main column shorter than the side
+   rail, so the rest of the desk fills the row under its own heading. */
+const MIN_ROWS_BEFORE_SPILLOVER = 9;
+/* Six desktop rows: enough to outrun the side rail without burying mobile. */
+export const COLLAPSED_ROWS = 12;
 
-function Rail({
-  title,
-  rows,
-}: {
-  title: string;
-  rows: LiveMarketRow[];
-}) {
-  if (!rows.length) return null;
-  return (
-    <div data-mkt="market-rail" className="mt-9">
-      <div className="flex items-end justify-between gap-4">
-        <h3 className="text-lg font-medium text-[var(--text-primary)]">{title}</h3>
-        <Link
-          to="/trading"
-          className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-        >
-          View all
-        </Link>
-      </div>
-      <div className="mt-4 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-3 sm:overflow-visible lg:grid-cols-6">
-        {rows.map((row) => (
-          <RailCard key={`${title}-${row.symbol}`} row={row} />
-        ))}
-      </div>
-    </div>
-  );
-}
+export default function MarketingFloatMarkets({ rows, allRows, chip }: Props) {
+  const [expanded, setExpanded] = useState(false);
 
-export default function MarketingFloatMarkets({ rows, chip }: Props) {
-  const movers = topMovers(rows);
-  const newest = newestListed(rows);
-  const activity = highestActivity(rows);
-  const grid = rows.slice(0, 12);
-  const chipLabel =
-    chip === "all"
-      ? "All markets"
-      : chip === "spot"
-        ? "Spot"
-        : chip === "margin"
-          ? "Margin"
-          : chip === "Payment and value"
-            ? "Payment"
-            : chip;
+  const rest = useMemo(() => {
+    if (rows.length >= MIN_ROWS_BEFORE_SPILLOVER) return [];
+    const shown = new Set(rows.map((row) => row.symbol));
+    return allRows.filter((row) => !shown.has(row.symbol));
+  }, [rows, allRows]);
+
+  const visibleRows = expanded ? rows : rows.slice(0, COLLAPSED_ROWS);
+  const restBudget = Math.max(0, COLLAPSED_ROWS - visibleRows.length);
+  const visibleRest = expanded ? rest : rest.slice(0, restBudget);
+  const hidden =
+    rows.length + rest.length - visibleRows.length - visibleRest.length;
 
   return (
     <section
       id="markets"
       data-mkt="float-markets"
-      className="marketing-plane marketing-float scroll-mt-32 border-y border-[var(--card-border)]"
+      className="scroll-mt-32 pt-6"
       aria-labelledby="mkt-float-title"
     >
-      <div className="mx-auto w-full max-w-7xl px-4 pb-20 pt-14 sm:px-6 sm:pb-24 sm:pt-16">
-        <div className="max-w-2xl">
-          <h2
-            id="mkt-float-title"
-            className="text-3xl type-display font-medium text-[var(--text-primary)] sm:text-4xl sm:leading-[44px]"
-          >
-            Live markets with paper funds
-          </h2>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-[var(--text-muted)]">
-            Prices update from the public feed. Orders fill against your simulated balance.
-          </p>
-        </div>
-
-        <div
-          data-mkt="hubs"
-          className="mt-9 grid gap-3 sm:grid-cols-3 sm:gap-4"
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h2
+          id="mkt-float-title"
+          className="text-xl type-display font-medium text-[var(--text-primary)] sm:text-2xl"
         >
-          {HUBS.map((hub) => (
-            <Link
-              key={hub.id}
-              to={hub.href}
-              data-mkt="hub-card"
-              className="rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-5 shadow-[var(--mkt-elevation-mid)] transition hover:-translate-y-0.5 hover:shadow-[var(--mkt-elevation-lift)]"
-            >
-              <h3 className="text-base font-semibold text-[var(--text-primary)]">
-                {hub.title}
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">
-                {hub.body}
-              </p>
-            </Link>
-          ))}
-        </div>
-
-        <Rail title="Top movers" rows={movers} />
-        <Rail title="New" rows={newest} />
-        <Rail title="Highest activity" rows={activity} />
-
-        <div className="mt-12">
-          <h3 className="text-lg font-medium text-[var(--text-primary)]">
-            {chipLabel}
-          </h3>
-          <div className="marketing-float__grid mt-4">
-            {grid.map((card) => (
-              <Link
-                key={card.symbol}
-                to="/trading"
-                data-mkt="float-card"
-                className="marketing-float__card flex h-16 items-center gap-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] px-3 shadow-[var(--shadow-card)] transition hover:-translate-y-0.5 hover:shadow-[var(--mkt-elevation-mid)]"
-              >
-                <img
-                  src={assetIconUrl(card.symbol)}
-                  alt=""
-                  className="h-7 w-7 shrink-0 rounded-full bg-white object-scale-down"
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-xs font-semibold text-[var(--text-primary)]">
-                    {card.name}
-                  </div>
-                  <div className="mt-0.5 flex items-baseline justify-between gap-1.5">
-                    <span className="truncate text-xs tabular-nums text-[var(--text-primary)]">
-                      {formatMarketPrice(card.price)}
-                    </span>
-                    <span
-                      className={`shrink-0 text-[11px] font-medium tabular-nums ${changeTone(card.changePct)}`}
-                    >
-                      {formatChangePct(card.changePct)}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-12 text-center">
+          {chipLabel(chip)}
+        </h2>
+        <div className="flex items-baseline gap-3 text-[13px]">
+          <span className="text-[var(--text-muted)]">
+            {rows.length} live {rows.length === 1 ? "pair" : "pairs"}
+          </span>
           <Link
-            to={SIGN_UP_PATH}
-            className="inline-flex h-12 items-center justify-center rounded-xl bg-[var(--mkt-cta-bg)] px-6 text-sm font-medium text-[var(--mkt-cta-fg)] hover:opacity-90"
+            to="/markets"
+            className="font-medium text-[var(--text-primary)] underline-offset-4 hover:underline"
           >
-            Start paper trading
+            Browse all
           </Link>
         </div>
       </div>
+
+      {visibleRows.length ? (
+        <div className="marketing-market-grid mt-3">
+          {visibleRows.map((row) => (
+            <MarketingMarketCard key={row.symbol} row={row} />
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] px-4 py-6 text-center text-[13px] text-[var(--text-muted)]">
+          No pairs in this category yet.
+        </p>
+      )}
+
+      {visibleRest.length ? (
+        <div className="mt-5">
+          <h3 className="text-[15px] font-semibold text-[var(--text-primary)]">
+            Everything else on the desk
+          </h3>
+          <div className="marketing-market-grid mt-3">
+            {visibleRest.map((row) => (
+              <MarketingMarketCard key={row.symbol} row={row} />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {hidden > 0 || expanded ? (
+        <button
+          type="button"
+          onClick={() => setExpanded((open) => !open)}
+          className="mt-3 inline-flex h-9 w-full items-center justify-center rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] text-[13px] font-medium text-[var(--text-primary)] transition hover:bg-[var(--mkt-hover)]"
+        >
+          {expanded ? "Show less" : `Show ${hidden} more`}
+        </button>
+      ) : null}
     </section>
   );
 }

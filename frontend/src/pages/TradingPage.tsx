@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 import CandlestickChart, {
   type CandlestickChartHandle,
@@ -9,7 +10,12 @@ import {
   intervalChanged,
   selectInterval,
   selectSymbol,
+  symbolSelected,
 } from "../features/instrument/instrumentSlice";
+import {
+  DESK_SYMBOL_PARAM,
+  resolveDeskSymbol,
+} from "../features/markets/marketLinks";
 import { selectMarketStatus } from "../features/market/marketSlice";
 import {
   STATUS_BAR_SYMBOLS,
@@ -130,6 +136,7 @@ export default function TradingPage({
 }) {
   const dispatch = useAppDispatch();
   const { t } = useLanguage();
+  const [searchParams, setSearchParams] = useSearchParams();
   const symbol = useAppSelector(selectSymbol);
   const interval = useAppSelector(selectInterval);
   const status = useAppSelector(selectMarketStatus);
@@ -158,6 +165,17 @@ export default function TradingPage({
     chart: null,
     bottom: null,
   });
+
+  useEffect(() => {
+    const requested = resolveDeskSymbol(searchParams.get(DESK_SYMBOL_PARAM));
+    if (!requested) return;
+    dispatch(symbolSelected(requested));
+    /* Consumed, so drop it: leaving it behind would make a later pair switch
+       inside the desk snap back on refresh. */
+    const next = new URLSearchParams(searchParams);
+    next.delete(DESK_SYMBOL_PARAM);
+    setSearchParams(next, { replace: true });
+  }, [dispatch, searchParams, setSearchParams]);
 
   const handleKline = useCallback(
     (kline: Kline, klineInterval: string) => {
@@ -216,7 +234,7 @@ export default function TradingPage({
   function onTicketMenuSelect(id: string) {
     if (id === "trades") {
       clearStub("ticket");
-      // Surface market trades in the book pane — matches Pro widget picker.
+      // Surface market trades in the book pane from the ticket widget picker.
       setBookTab("markettrades");
       return;
     }

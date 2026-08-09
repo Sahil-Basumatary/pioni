@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { assetIconUrl } from "../../components/shell/activityFormat";
 import { StarIcon } from "../../components/shell/shellIcons";
+import { deskPath } from "./marketLinks";
 import type { MarketRow } from "./useMarketRows";
 import {
   formatChangePct,
@@ -168,7 +169,10 @@ function MarketTableRow({
             {marketCell}
           </button>
         ) : (
-          <Link to="/trading" className="block hover:opacity-90">
+          <Link
+            to={deskPath(row.tradeSymbol ?? row.symbol)}
+            className="block hover:opacity-90"
+          >
             {marketCell}
           </Link>
         )}
