@@ -294,7 +294,7 @@ export default function AccountSecurity() {
       closeDeleteConfirm();
       closeSettings();
       toast(t("settingsAccountDeleted"));
-      await clerk.signOut({ redirectUrl: "/trading" });
+      await clerk.signOut({ redirectUrl: "/" });
     } catch (err) {
       toast(clerkMessage(err, t("settingsSomethingWentWrong")));
     } finally {
