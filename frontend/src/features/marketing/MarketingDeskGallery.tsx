@@ -10,27 +10,26 @@ export default function MarketingDeskGallery() {
     <section
       id="desk"
       data-mkt="desk-gallery"
-      className="marketing-desk-gallery scroll-mt-32 border-y border-[var(--card-border)] pb-28 pt-24 sm:pb-32 sm:pt-28"
+      className="marketing-desk-gallery scroll-mt-32 border-y border-[var(--card-border)] py-10"
       aria-labelledby="mkt-desk-title"
     >
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
+      <div className="mx-auto w-full max-w-[1320px] px-4 sm:px-6">
         <div className="max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
             Inside Pioni
           </p>
           <h2
             id="mkt-desk-title"
-            className="mt-3 text-3xl type-display font-medium text-[var(--text-primary)] sm:text-4xl sm:leading-[44px]"
+            className="mt-2 text-2xl type-display font-medium text-[var(--text-primary)] sm:text-[28px] sm:leading-8"
           >
             Everything stays in one desk
           </h2>
-          <p className="mt-5 max-w-xl text-base leading-relaxed text-[var(--text-muted)]">
-            Place an order, follow the book, read the chart, and check your balance
-            without switching views.
+          <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-[var(--text-muted)]">
+            One workspace for the whole trade. Nothing opens in a separate view.
           </p>
         </div>
 
-        <div className="marketing-desk-gallery__bento mt-12 sm:mt-16">
+        <div className="marketing-desk-gallery__bento mt-5">
           <div className="marketing-desk-gallery__cell" data-cell="ticket">
             <OrderTicketPanel />
           </div>

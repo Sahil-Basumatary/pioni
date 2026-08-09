@@ -97,89 +97,98 @@ body:has(.marketing-page) {
   --mkt-logo-ink: 20px;
 }
 
-/* Sticky stack: the SLOT owns height + stacking. Sticky is constrained to the
-   slot, so it releases when the slot scrolls away instead of covering Closing. */
-.marketing-plane-slot {
-  position: relative;
-  z-index: var(--plane-z, 1);
+.marketing-feed__layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.marketing-plane {
-  position: sticky;
-  top: 4rem;
+.marketing-side-rails {
+  width: 100%;
 }
 
-.marketing-plane-slot--featured {
-  --plane-z: 2;
-  padding-bottom: 8vh;
+/* Once the rail drops under the feed it is full width, so its blocks pair up
+   instead of stretching single file across the page. */
+@media (min-width: 720px) and (max-width: 1099px) {
+  .marketing-side-rails {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 1rem;
+  }
+
+  .marketing-side-rails > * {
+    margin-top: 0;
+  }
 }
 
-.marketing-plane-slot--markets {
-  --plane-z: 3;
-  padding-bottom: 10vh;
-  margin-top: -3rem;
+@media (min-width: 1100px) {
+  .marketing-feed__layout {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+
+  .marketing-feed__main {
+    flex: 1 1 auto;
+  }
+
+  /* Sticky keeps the rail beside the feed instead of stranding whitespace once
+     the shorter column runs out. */
+  .marketing-side-rails {
+    flex: 0 0 340px;
+    width: 340px;
+    position: sticky;
+    top: 7rem;
+  }
 }
 
-.marketing-plane-slot--practice {
-  --plane-z: 5;
-  padding-bottom: 6vh;
-  margin-top: -1.5rem;
+.marketing-market-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
 }
 
-.marketing-plane-slot--desk {
-  --plane-z: 6;
-  padding-bottom: 4vh;
-  margin-top: -2.5rem;
-}
-
-.marketing-featured {
-  background: var(--mkt-ink-950);
-  margin-top: -0.5rem;
-}
-
-.marketing-float {
-  background: var(--mkt-ink-900);
-  border-radius: 1.25rem 1.25rem 0 0;
-  box-shadow: var(--mkt-elevation-high);
-}
-
-.marketing-integrity {
-  position: relative;
-  z-index: 4;
-  margin-top: -2rem;
-}
-
-[data-mkt="practice"].marketing-plane {
-  box-shadow: var(--mkt-elevation-mid);
-}
-
-.marketing-desk-gallery.marketing-plane {
-  border-radius: 1.25rem 1.25rem 0 0;
-  box-shadow: var(--mkt-elevation-high);
-}
-
-/* Tail sections sit above the stack so a sticky miss never paints over them. */
-[data-mkt="app-showcase"],
-[data-mkt="faq"],
-[data-mkt="closing"],
-[data-mkt="footer"] {
-  position: relative;
-  z-index: 20;
+/* Two columns is the widest the row fits before the pair and volume line has to
+   truncate inside the 880px feed column. */
+@media (min-width: 560px) {
+  .marketing-market-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 [data-mkt="faq"] {
   background: var(--mkt-ink-950);
 }
 
-.marketing-hero-media {
+.marketing-desk-shot {
   position: relative;
   width: 100%;
 }
 
+.marketing-browse__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .marketing-browse__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .marketing-browse__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+
 /* Ambient wash behind the product shot so it reads as lit rather than pasted on.
    On dark this is a bloom rather than a shadow: the light screen has to look
    like the thing emitting into the page. */
-.marketing-hero-media::before {
+.marketing-desk-shot::before {
   content: "";
   position: absolute;
   inset: 4% 0% -10%;
@@ -193,12 +202,12 @@ body:has(.marketing-page) {
   z-index: 0;
 }
 
-.marketing-hero-media__frame {
+.marketing-desk-shot__frame {
   position: relative;
   z-index: 1;
 }
 
-.marketing-hero-media__img {
+.marketing-desk-shot__img {
   display: block;
   width: 100%;
   height: auto;
@@ -271,7 +280,7 @@ body:has(.marketing-page) {
 
 .marketing-phone {
   position: relative;
-  width: 210px;
+  width: 192px;
   flex: none;
 }
 
@@ -281,16 +290,16 @@ body:has(.marketing-page) {
 
 .marketing-phone[data-depth="1"] {
   z-index: 2;
-  width: 194px;
+  width: 178px;
   margin: 0 -1.5rem;
-  top: 30px;
+  top: 26px;
 }
 
 .marketing-phone[data-depth="2"] {
   z-index: 1;
-  width: 180px;
+  width: 165px;
   margin: 0 -1.5rem;
-  top: 58px;
+  top: 50px;
 }
 
 /* The fan only reads as depth once there is room for all five phones. */
@@ -419,24 +428,6 @@ body:has(.marketing-page) {
 
 .marketing-book__depth--bid {
   background: rgba(5, 150, 105, 0.09);
-}
-
-.marketing-float__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-@media (min-width: 640px) {
-  .marketing-float__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1024px) {
-  .marketing-float__grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
 }
 
 .marketing-desk-gallery {
