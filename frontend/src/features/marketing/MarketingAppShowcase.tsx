@@ -14,27 +14,27 @@ export default function MarketingAppShowcase() {
     <section
       id="app"
       data-mkt="app-showcase"
-      className="marketing-appshowcase scroll-mt-32 overflow-hidden border-y border-[var(--card-border)] pb-24 pt-28 sm:pb-28 sm:pt-32"
+      className="marketing-appshowcase scroll-mt-32 overflow-hidden border-y border-[var(--card-border)] py-10"
       aria-labelledby="mkt-app-title"
     >
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
+      <div className="mx-auto w-full max-w-[1320px] px-4 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
             On mobile
           </p>
           <h2
             id="mkt-app-title"
-            className="mt-3 text-3xl type-display font-medium text-[var(--text-primary)] sm:text-4xl sm:leading-[44px]"
+            className="mt-2 text-2xl type-display font-medium text-[var(--text-primary)] sm:text-[28px] sm:leading-8"
           >
             Paper trading on your phone
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-[var(--text-muted)]">
-            Check markets, place orders, and review your portfolio from the same
-            paper balance.
+          <p className="mx-auto mt-2 max-w-xl text-[14px] leading-relaxed text-[var(--text-muted)]">
+            The same account on a smaller screen, so a position is never more than a
+            tap away.
           </p>
         </div>
 
-        <div className="marketing-appshowcase__row mt-14 sm:mt-[4.5rem]">
+        <div className="marketing-appshowcase__row mt-7">
           <PhoneFrame depth={2} label="Pioni order review on mobile">
             <TicketScreen />
           </PhoneFrame>
@@ -52,10 +52,10 @@ export default function MarketingAppShowcase() {
           </PhoneFrame>
         </div>
 
-        <div className="mt-[4.5rem] text-center sm:mt-20">
+        <div className="mt-8 text-center">
           <Link
             to={SIGN_UP_PATH}
-            className="inline-flex h-12 items-center justify-center rounded-xl bg-[var(--mkt-cta-bg)] px-6 text-sm font-medium text-[var(--mkt-cta-fg)] hover:opacity-90"
+            className="inline-flex h-10 items-center justify-center rounded-xl bg-[var(--mkt-cta-bg)] px-5 text-sm font-medium text-[var(--mkt-cta-fg)] hover:opacity-90"
           >
             Start paper trading
           </Link>

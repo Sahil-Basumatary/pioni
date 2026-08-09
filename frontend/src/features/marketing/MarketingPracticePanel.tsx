@@ -2,16 +2,16 @@ import { useMemo, useState } from "react";
 
 const FEATURES = [
   {
-    title: "Set your starting balance",
-    body: "Choose how much paper money you want to work with.",
+    title: "Every fill is recorded",
+    body: "Positions, orders, and trade history update the moment an order fills.",
   },
   {
-    title: "Review every fill",
-    body: "Your balance, positions, and order history update after each trade.",
+    title: "Resets are one step",
+    body: "Clear the book and return to your starting balance from Settings.",
   },
   {
-    title: "Start over anytime",
-    body: "Reset the account and try a different approach whenever you want.",
+    title: "Try as often as you like",
+    body: "There is no limit on resets and no cost to start again.",
   },
 ] as const;
 
@@ -64,38 +64,38 @@ export default function MarketingPracticePanel() {
     <section
       id="practice"
       data-mkt="practice"
-      className="mx-auto w-full max-w-7xl scroll-mt-32 px-4 pb-28 pt-24 sm:px-6 sm:pb-32 sm:pt-28"
+      className="mx-auto w-full max-w-[1320px] scroll-mt-32 bg-[var(--mkt-ink-950)] px-4 py-10 sm:px-6"
       aria-labelledby="mkt-practice-title"
     >
-      <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-stretch lg:gap-14">
-        <div className="flex flex-col gap-3">
+      <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-start lg:gap-10">
+        <div className="flex flex-col gap-2.5">
           <h2
             id="mkt-practice-title"
-            className="text-3xl type-display font-medium text-[var(--text-primary)] sm:text-4xl sm:leading-[44px]"
+            className="text-2xl type-display font-medium text-[var(--text-primary)] sm:text-[28px] sm:leading-8"
           >
             A paper balance you can reset
           </h2>
-          <p className="text-sm leading-relaxed text-[var(--text-muted)]">
-            Choose a paper balance and a time range. The chart is an example, not a
-            forecast.
+          <p className="text-[14px] leading-relaxed text-[var(--text-muted)]">
+            Choose a starting balance and a range to see how the account moves over
+            time.
           </p>
           {FEATURES.map((item) => (
             <article
               key={item.title}
               data-mkt="practice-card"
-              className="rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] px-5 pb-5 pt-4 shadow-[var(--shadow-card)]"
+              className="rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] px-3.5 py-3 shadow-[var(--shadow-card)]"
             >
-              <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+              <h3 className="text-[14px] font-semibold text-[var(--text-primary)]">
                 {item.title}
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">
+              <p className="mt-1 text-[12px] leading-relaxed text-[var(--text-muted)]">
                 {item.body}
               </p>
             </article>
           ))}
         </div>
 
-        <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-5 shadow-[var(--shadow-card)] sm:p-6">
+        <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-4 shadow-[var(--shadow-card)] sm:p-5">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <div className="text-xs font-medium text-[var(--text-muted)]">
@@ -130,7 +130,7 @@ export default function MarketingPracticePanel() {
             </div>
           </div>
 
-          <svg viewBox="0 0 520 180" className="mt-8 h-48 w-full" aria-hidden>
+          <svg viewBox="0 0 520 180" className="mt-5 h-40 w-full" aria-hidden>
             <defs>
               <linearGradient id="mkt-practice-fill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#ffffff" stopOpacity="0.16" />
@@ -198,7 +198,7 @@ export default function MarketingPracticePanel() {
               </button>
             ))}
           </div>
-          <p className="mt-4 text-xs leading-relaxed text-[var(--text-muted)]">
+          <p className="mt-3 text-xs leading-relaxed text-[var(--text-muted)]">
             Example only. This is not a forecast or investment advice.
           </p>
         </div>

@@ -63,7 +63,9 @@ function PanelFrame({
 export function OrderTicketPanel() {
   return (
     <PanelFrame title="Order form" tabs={["Alerts"]}>
-      <div className="p-3">
+      {/* The ticket spans both bento rows, so the form distributes into the cell
+          instead of leaving a dead block under the last summary row. */}
+      <div className="flex flex-1 flex-col justify-between p-3">
         <div className="grid grid-cols-2 gap-1 rounded-lg bg-black/[0.05] p-1">
           <span className="rounded-md bg-white py-1.5 text-center text-[11px] font-semibold text-[var(--text-primary)] shadow-[var(--shadow-soft)]">
             Buy
@@ -261,7 +263,7 @@ export function ChartPanel() {
 export function PositionsPanel() {
   return (
     <PanelFrame title="Balances" tabs={["Positions", "Orders", "Trades"]}>
-      <div className="px-3 pb-3 pt-2">
+      <div className="flex flex-1 flex-col px-3 pb-3 pt-2">
         <div className="grid grid-cols-[1.4fr_1fr_1fr] text-[9px] uppercase tracking-wide text-[var(--text-muted)]">
           <span>Asset</span>
           <span className="text-right">Balance</span>
@@ -284,7 +286,7 @@ export function PositionsPanel() {
             </div>
           ))}
         </div>
-        <div className="mt-2 flex items-center justify-between border-t border-[var(--card-border)] pt-2 text-[10px]">
+        <div className="mt-auto flex items-center justify-between border-t border-[var(--card-border)] pt-2 text-[10px]">
           <span className="font-medium text-[var(--text-primary)]">Total value</span>
           <span className="font-semibold tabular-nums text-[var(--text-primary)]">
             25,274.56 USD

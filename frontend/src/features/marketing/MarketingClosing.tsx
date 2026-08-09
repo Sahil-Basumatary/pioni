@@ -5,27 +5,25 @@ export default function MarketingClosing() {
   return (
     <section
       data-mkt="closing"
-      className="marketing-closing pb-28 pt-24 text-center sm:pb-32 sm:pt-28"
+      className="marketing-closing py-12 text-center"
       aria-labelledby="mkt-closing-title"
     >
       <div className="mx-auto w-full max-w-3xl px-4 sm:px-6">
         <h2
           id="mkt-closing-title"
-          className="text-3xl type-display font-medium text-white sm:text-5xl sm:leading-[56px]"
+          className="text-2xl type-display font-medium text-white sm:text-[28px] sm:leading-8"
         >
           Ready to place your first paper trade?
         </h2>
-        <p className="mx-auto mt-6 max-w-lg text-base leading-relaxed text-white/65">
-          Create an account. We will add the simulated funds and take you straight
-          to the desk.
+        <p className="mx-auto mt-3 max-w-lg text-[14px] leading-relaxed text-white/65">
+          It takes an email address. Everything else is already set up.
         </p>
         <Link
           to={SIGN_UP_PATH}
-          className="mt-10 inline-flex h-12 min-w-[180px] items-center justify-center rounded-xl bg-[var(--mkt-cta-bg)] px-6 text-sm font-semibold text-[var(--mkt-cta-fg)] hover:opacity-90"
+          className="mt-5 inline-flex h-10 min-w-[160px] items-center justify-center rounded-xl bg-[var(--mkt-cta-bg)] px-5 text-sm font-semibold text-[var(--mkt-cta-fg)] hover:opacity-90"
         >
           Start paper trading
         </Link>
-        <p className="mt-5 text-sm text-white/45">No deposit. No real money.</p>
       </div>
     </section>
   );
