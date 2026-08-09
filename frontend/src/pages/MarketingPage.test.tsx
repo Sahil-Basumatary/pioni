@@ -76,6 +76,16 @@ describe("MarketingPage", () => {
     expect(screen.getByRole("button", { name: "All markets" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "10x margin" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 2, name: "Bitcoin" })).toBeInTheDocument();
+    const hero = document.querySelector("[data-mkt='hero']");
+    expect(hero).not.toBeNull();
+    expect(
+      within(hero as HTMLElement).getByRole("heading", { level: 2, name: "Bitcoin" }),
+    ).toBeInTheDocument();
+    expect(document.querySelectorAll("[data-mkt='featured']")).toHaveLength(1);
+    expect(document.querySelector("[data-mkt='featured-scrubber']")).not.toBeNull();
+    expect(
+      screen.getByRole("slider", { name: "Featured market position" }),
+    ).toBeInTheDocument();
     expect(screen.getByAltText("Pioni paper trading desk")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { level: 2, name: "All markets" }),
