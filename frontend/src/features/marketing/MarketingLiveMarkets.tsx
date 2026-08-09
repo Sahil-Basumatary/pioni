@@ -2,12 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useGetPricesQuery } from "../market/marketApi";
 import MarketingCategoryRail from "./MarketingCategoryRail";
 import MarketingCategorySections from "./MarketingCategorySections";
-import MarketingFeaturedMarket from "./MarketingFeaturedMarket";
 import MarketingFloatMarkets, { COLLAPSED_ROWS } from "./MarketingFloatMarkets";
 import MarketingIntegrityStrip from "./MarketingIntegrityStrip";
 import MarketingSideRails from "./MarketingSideRails";
 import {
-  featuredRows,
   filterByChip,
   toLiveRows,
   type MarketingChipId,
@@ -42,10 +40,6 @@ export default function MarketingLiveMarkets() {
 
   const rows = useMemo(() => toLiveRows(prices), [prices]);
   const filtered = useMemo(() => filterByChip(rows, chip), [rows, chip]);
-  const featured = useMemo(
-    () => featuredRows(filtered.length ? filtered : rows, 3),
-    [filtered, rows],
-  );
   const onScreen = useMemo(
     () => new Set(filtered.slice(0, COLLAPSED_ROWS).map((row) => row.symbol)),
     [filtered],
@@ -59,7 +53,6 @@ export default function MarketingLiveMarkets() {
       <div className="marketing-feed mx-auto w-full max-w-[1320px] px-4 pb-10 pt-4 sm:px-6">
         <div className="marketing-feed__layout">
           <div className="marketing-feed__main min-w-0">
-            <MarketingFeaturedMarket rows={featured} />
             <MarketingIntegrityStrip />
             {/* Keyed by chip so switching category collapses the list again. */}
             <MarketingFloatMarkets key={chip} rows={filtered} allRows={rows} chip={chip} />
