@@ -27,6 +27,12 @@ const OtcPage = lazy(() => import("./pages/OtcPage"));
 const OtcPortalPage = lazy(() => import("./pages/OtcPortalPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
+const HelpPage = lazy(() => import("./pages/docs/HelpPage"));
+const RulesPage = lazy(() => import("./pages/docs/RulesPage"));
+const FeesPage = lazy(() => import("./pages/docs/FeesPage"));
+const ApiPage = lazy(() => import("./pages/docs/ApiPage"));
+const AboutPage = lazy(() => import("./pages/docs/AboutPage"));
+const ContactPage = lazy(() => import("./pages/docs/ContactPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const SignInPage = lazy(() => import("./pages/SignInPage"));
 const SignUpPage = lazy(() => import("./pages/SignUpPage"));
@@ -73,7 +79,7 @@ function ShellLayout() {
   );
 }
 
-function PublicLegalLayout() {
+function PublicDocLayout() {
   return (
     <div className="min-h-dvh bg-[#F6F5F9] text-[var(--text-primary)]">
       <MarketingHeader />
@@ -97,9 +103,15 @@ function App() {
           <Route path="/sign-up/*" element={<SignUpPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/sso-callback" element={<SsoCallbackPage />} />
-          <Route element={<PublicLegalLayout />}>
+          <Route element={<PublicDocLayout />}>
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
+            <Route path="/help" element={<HelpPage />} />
+            <Route path="/rules" element={<RulesPage />} />
+            <Route path="/fees" element={<FeesPage />} />
+            <Route path="/api" element={<ApiPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
           </Route>
           <Route element={<ShellLayout />}>
             <Route path="/home" element={<HomePage />} />

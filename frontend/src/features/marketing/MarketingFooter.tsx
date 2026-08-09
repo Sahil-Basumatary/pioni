@@ -1,6 +1,37 @@
 import { Link } from "react-router-dom";
 import { SIGN_IN_PATH, SIGN_UP_PATH } from "../auth/authRoutes";
 
+const COLUMNS = [
+  {
+    heading: "Product",
+    links: [
+      { label: "Paper trading", to: "/trading" },
+      { label: "Markets", to: "/markets" },
+      { label: "Margin practice", to: "/trade/margin" },
+      { label: "Create account", to: SIGN_UP_PATH },
+      { label: "Sign in", to: SIGN_IN_PATH },
+    ],
+  },
+  {
+    heading: "Resources",
+    links: [
+      { label: "Help centre", to: "/help" },
+      { label: "How paper trading works", to: "/rules" },
+      { label: "Fee schedule", to: "/fees" },
+      { label: "API reference", to: "/api" },
+    ],
+  },
+  {
+    heading: "Company",
+    links: [
+      { label: "About", to: "/about" },
+      { label: "Contact", to: "/contact" },
+      { label: "Privacy", to: "/privacy" },
+      { label: "Terms", to: "/terms" },
+    ],
+  },
+] as const;
+
 export default function MarketingFooter() {
   return (
     <footer
@@ -18,54 +49,40 @@ export default function MarketingFooter() {
               />
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-[var(--text-muted)]">
-              Paper trading with live prices and simulated funds.
+              Learn to trade before it counts.
             </p>
           </div>
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
-              Product
-            </h3>
-            <nav className="mt-4 flex flex-col gap-2.5 text-sm" aria-label="Product">
-              <Link to="/trading" className="text-[var(--text-primary)] hover:opacity-70">
-                Paper trading
-              </Link>
-              <Link to="/markets" className="text-[var(--text-primary)] hover:opacity-70">
-                Markets
-              </Link>
-              <Link to={SIGN_UP_PATH} className="text-[var(--text-primary)] hover:opacity-70">
-                Create account
-              </Link>
-              <Link to={SIGN_IN_PATH} className="text-[var(--text-primary)] hover:opacity-70">
-                Sign in
-              </Link>
-            </nav>
-          </div>
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
-              Company
-            </h3>
-            <nav className="mt-4 flex flex-col gap-2.5 text-sm" aria-label="Company">
-              <Link to="/privacy" className="text-[var(--text-primary)] hover:opacity-70">
-                Privacy
-              </Link>
-              <Link to="/terms" className="text-[var(--text-primary)] hover:opacity-70">
-                Terms
-              </Link>
-            </nav>
-          </div>
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
-              Important
-            </h3>
-            <p className="mt-4 text-sm leading-relaxed text-[var(--text-muted)]">
-              Pioni is a paper-trading product. Balances, fills, and fees are
-              simulated. Pioni is not a broker.
-            </p>
-          </div>
+          {COLUMNS.map((column) => (
+            <div key={column.heading}>
+              <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                {column.heading}
+              </h3>
+              <nav
+                className="mt-4 flex flex-col gap-2.5 text-sm"
+                aria-label={column.heading}
+              >
+                {column.links.map((link) => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className="text-[var(--text-primary)] hover:opacity-70"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+          ))}
         </div>
-        <p className="mt-14 border-t border-[var(--card-border)] pt-7 text-xs text-[var(--text-muted)]">
-          © {new Date().getFullYear()} Pioni. Simulated funds only. Not investment advice.
-        </p>
+        <div className="mt-14 border-t border-[var(--card-border)] pt-7 text-xs leading-relaxed text-[var(--text-muted)]">
+          <p className="max-w-3xl">
+            Pioni is a paper-trading product. Balances, fills, and fees are simulated.
+            Pioni is not a broker.
+          </p>
+          <p className="mt-2">
+            © {new Date().getFullYear()} Pioni. Not investment advice.
+          </p>
+        </div>
       </div>
     </footer>
   );
