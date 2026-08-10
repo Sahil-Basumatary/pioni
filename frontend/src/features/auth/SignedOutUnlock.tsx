@@ -22,7 +22,7 @@ export default function SignedOutUnlock({
         <img src="/logo.svg" alt="" className="h-40 w-40 object-contain" />
       ) : null}
       <p className="flex max-w-md flex-wrap items-center justify-center gap-1 text-base leading-6 text-[#101114]">
-        <span>Unlock everything Pioni has to offer.</span>
+        <span>Sign in or create an account to continue.</span>
         <Link
           to={SIGN_IN_PATH}
           className="text-[#101114] underline underline-offset-2 hover:text-[rgb(72,75,94)]"

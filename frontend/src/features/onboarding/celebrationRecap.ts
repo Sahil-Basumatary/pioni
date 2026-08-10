@@ -38,7 +38,7 @@ export function buildFirstTradeRecap(trade: PortfolioTrade): FirstTradeRecap {
     asset,
     priceLabel,
     headline: `You ${verb} ${trade.quantity} ${asset}`,
-    detail: `at ${priceLabel} — watch it live in Positions. Paper only, not real money.`,
+    detail: `at ${priceLabel}. View it in Positions.`,
   };
 }
 

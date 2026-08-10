@@ -129,7 +129,7 @@ export default function WelcomeCard() {
       },
       onComplete: () => {
         void persist({ tour_completed: true, checklist_tour: true });
-        toast("Tour done — place your first paper trade when you're ready.");
+        toast("Tour complete");
       },
     });
   }, [persist, startTour, toast]);
@@ -213,13 +213,13 @@ export default function WelcomeCard() {
               id={titleId}
               className="text-xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-[22px]"
             >
-              Practice with real market feel
+              Paper trading with live market data
             </h2>
             <p
               id={descId}
               className="text-sm leading-relaxed text-[var(--text-muted)]"
             >
-              You've got $100k in practice money — want a 2-minute tour?
+              Your account includes 100,000 USD in practice funds. Take a 2-minute tour?
             </p>
           </div>
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -229,7 +229,7 @@ export default function WelcomeCard() {
               onClick={() => void onSkip()}
               className="inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-medium text-[var(--text-muted)] hover:bg-black/[0.04] hover:text-[var(--text-primary)] disabled:opacity-60"
             >
-              Skip, I'll explore
+              Skip tour
             </button>
             <button
               type="button"
@@ -237,7 +237,7 @@ export default function WelcomeCard() {
               onClick={() => void onStart()}
               className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--accent)] px-4 text-sm font-medium text-white hover:bg-[var(--accent-soft)] disabled:opacity-60"
             >
-              Show me around
+              Start tour
             </button>
           </div>
         </div>

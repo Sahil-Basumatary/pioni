@@ -34,7 +34,7 @@ describe("ForgotPasswordForm", () => {
     );
     expect(screen.getByRole("heading", { name: "Forgot password" })).toBeInTheDocument();
     expect(
-      screen.getByText(/Enter your email address. If it's correct/i),
+      screen.getByText(/If it matches an account, we'll send reset instructions/i),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Send email" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Sign in" })).not.toBeInTheDocument();

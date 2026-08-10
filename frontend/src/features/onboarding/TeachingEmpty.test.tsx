@@ -17,7 +17,7 @@ describe("TeachingEmpty", () => {
   it("renders title and teaching body", () => {
     wrap(<TeachingEmpty id="trades" />);
     expect(screen.getByText("No trades yet")).toBeTruthy();
-    expect(screen.getByText(/first paper fill/i)).toBeTruthy();
+    expect(screen.getByText(/Your fills appear here/i)).toBeTruthy();
   });
 
   it("runs custom action when provided", () => {

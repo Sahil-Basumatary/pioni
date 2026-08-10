@@ -40,20 +40,20 @@ const STEPS: {
     id: "tour",
     flag: "checklist_tour",
     title: "Take the tour",
-    hint: "Two minutes — chart, balance, ticket, positions.",
+    hint: "Chart, balance, order ticket, and positions.",
     cta: "Resume tour",
   },
   {
     id: "first_trade",
     flag: "checklist_first_trade",
     title: "Place your first paper trade",
-    hint: "Practice money only — nothing real is at risk.",
+    hint: "Use the order ticket on Trade.",
     cta: "Open Trade",
   },
   {
     id: "view_position",
     flag: "checklist_view_position",
-    title: "Check a position & P&L",
+    title: "Check a position and P&L",
     hint: "After a fill, open Positions under the chart.",
     cta: "View positions",
   },
@@ -61,14 +61,14 @@ const STEPS: {
     id: "sentiment",
     flag: "checklist_sentiment",
     title: "Read a sentiment signal",
-    hint: "See how the crowd leans before your next trade.",
+    hint: "Open a market signal on Sentiment.",
     cta: "Open Sentiment",
   },
   {
     id: "limit_order",
     flag: "checklist_limit_order",
     title: "Place a limit order",
-    hint: "Set your price — cancel or let it fill.",
+    hint: "Set a price, then cancel the order or wait for a fill.",
     cta: "Try a limit",
   },
 ];
@@ -121,7 +121,7 @@ export default function GettingStartedChecklist() {
           },
           onComplete: () => {
             void patch({ tour_completed: true, checklist_tour: true });
-            toast("Tour done — place your first paper trade when you're ready.");
+            toast("Tour complete");
           },
         });
         setOpen(false);
@@ -209,7 +209,7 @@ export default function GettingStartedChecklist() {
             </div>
           ) : completed ? (
             <p className="px-4 py-10 text-center text-sm text-[var(--text-muted)]">
-              You’ve finished getting started. Nice work.
+              Getting started complete.
             </p>
           ) : (
             <ul className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">

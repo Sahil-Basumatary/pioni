@@ -4,9 +4,9 @@ export const DEFAULT_TOUR_STEPS: TourStep[] = [
   {
     id: "chart",
     element: '[data-tour="chart"]',
-    title: "Live chart & symbols",
+    title: "Chart and markets",
     description:
-      "Watch prices update in real time. Switch pairs anytime from the header.",
+      "Watch live prices and switch markets from the header.",
     side: "left",
     align: "start",
   },
@@ -14,8 +14,7 @@ export const DEFAULT_TOUR_STEPS: TourStep[] = [
     id: "balance",
     element: '[data-tour="balance"]',
     title: "Your paper balance",
-    description:
-      "This is practice money — trade freely without risking anything real.",
+    description: "This balance uses simulated funds.",
     side: "bottom",
     align: "end",
   },
@@ -23,24 +22,22 @@ export const DEFAULT_TOUR_STEPS: TourStep[] = [
     id: "order-ticket",
     element: '[data-tour="order-ticket"]',
     title: "Place a paper order",
-    description:
-      "Buy or sell here. It's practice money — you can't lose anything real.",
+    description: "Place buy or sell orders here.",
     side: "left",
   },
   {
     id: "positions",
     element: '[data-tour="positions"]',
-    title: "Positions & P&L",
+    title: "Positions and P&L",
     description:
-      "After a fill, your holdings and profit/loss show up in this panel.",
+      "Filled orders appear here with size and unrealized P&L.",
     side: "top",
   },
   {
     id: "sentiment",
     element: '[data-tour="sentiment-nav"]',
-    title: "Sentiment signals",
-    description:
-      "Read market mood here anytime. Check the getting-started checklist too.",
+    title: "Sentiment",
+    description: "Open sentiment data from the navigation.",
     side: "bottom",
   },
 ];

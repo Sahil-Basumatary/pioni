@@ -11,7 +11,7 @@ describe("celebrationRecap", () => {
     const recap = buildFirstTradeRecap(DEMO_FIRST_TRADE);
     expect(recap.headline).toMatch(/bought 0\.001 BTC/i);
     expect(recap.detail).toMatch(/Positions/i);
-    expect(recap.detail).toMatch(/paper only/i);
+    expect(recap.detail).not.toMatch(/not real money/i);
   });
 
   it("picks the newest trade", () => {

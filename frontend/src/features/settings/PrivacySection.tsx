@@ -40,7 +40,7 @@ export default function PrivacySection() {
     return (
       <div className="flex flex-col items-start gap-3">
         <p className="text-sm text-[#787774]">
-          Sign in to review privacy controls and export your paper data.
+          Sign in to view privacy controls and export your data.
         </p>
         <button
           type="button"

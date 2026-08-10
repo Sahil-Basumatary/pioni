@@ -4,14 +4,14 @@ import { describe, expect, it } from "vitest";
 import SignedOutUnlock from "./SignedOutUnlock";
 
 describe("SignedOutUnlock", () => {
-  it("shows unlock line with Sign in and Sign up links", () => {
+  it("shows the sign-in prompt with account links", () => {
     render(
       <MemoryRouter>
         <SignedOutUnlock />
       </MemoryRouter>,
     );
     expect(
-      screen.getByText(/Unlock everything Pioni has to offer/i),
+      screen.getByText(/Sign in or create an account to continue/i),
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
       "href",

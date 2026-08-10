@@ -459,14 +459,14 @@ function PreferencesSection() {
             onChange={(checked) => update({ confirmOrders: checked })}
           />
           <ToggleRow
-            title="Show jargon InfoTips"
-            body="Add dashed underlines that explain trading terms like spread and mark price."
+            title="Show term explanations"
+            body="Explain terms such as spread and mark price"
             checked={prefs.showInfoTips}
             onChange={(checked) => update({ showInfoTips: checked })}
           />
           <ToggleRow
             title="Play a sound on fills"
-            body="A soft chime plays when a paper order fills or partially fills."
+            body="Play a sound when an order fills"
             checked={prefs.soundOnFill}
             onChange={(checked) => update({ soundOnFill: checked })}
           />
@@ -580,7 +580,7 @@ function PaperSection() {
     return (
       <div className="flex flex-col items-start gap-3">
         <p className="text-sm text-[#787774]">
-          Sign in to reset paper balances or replay the product tour.
+          Sign in to reset your balance or replay the tour.
         </p>
         <button
           type="button"
@@ -642,8 +642,8 @@ function PaperSection() {
   return (
     <div className="flex flex-col gap-4">
       <ActionCard
-        title="Replay product tour"
-        body="Walk through the chart, order ticket, book, and positions again."
+        title="Replay tour"
+        body="Review the chart, order ticket, book, and positions"
         actionLabel={busy ? "Starting…" : "Start tour"}
         disabled={busy}
         onClick={() => void replayTour()}
@@ -826,7 +826,7 @@ function NotificationsSection() {
         <div className="mt-2 flex flex-col">
           <ToggleRow
             title="In-app toasts"
-            body="Show pop-up toast cards while you are in Pioni"
+            body="Show order updates while you use Pioni"
             checked={prefs.toastPopups}
             onChange={(toastPopups) => void update({ toastPopups })}
           />
@@ -859,7 +859,7 @@ function NotificationsSection() {
         <section className="border-t border-[rgba(42,28,0,0.07)] pt-6">
           <h3 className="text-base font-semibold text-[#2C2C2B]">Customization</h3>
           <p className="mt-1 text-sm text-[#787774]">
-            Customize which order events can notify you
+            Choose which order events can notify you
           </p>
           <div className="mt-2 flex flex-col">
             <ToggleRow

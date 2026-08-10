@@ -27,7 +27,7 @@ describe("SignUpForm", () => {
       </LanguageProvider>,
     );
     expect(screen.getByRole("heading", { name: "Create an account" })).toBeInTheDocument();
-    expect(screen.getByText("Access paper trading on Pioni")).toBeInTheDocument();
+    expect(screen.getByText("Paper trading on Pioni")).toBeInTheDocument();
     expect(screen.getByText("Email")).toBeInTheDocument();
     expect(screen.getByText("Password")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Continue" })).toBeInTheDocument();

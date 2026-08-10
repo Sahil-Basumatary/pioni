@@ -31,7 +31,7 @@ export default function ActivitySection() {
           Recent paper trades
         </h3>
         <p className="mt-1 text-sm text-[#787774]">
-          Manage your recent paper trading fills
+          View recent paper trading fills
         </p>
         <div className="mt-4 overflow-x-auto">
           <div className="grid min-w-[520px] grid-cols-[1.1fr_0.7fr_0.9fr_0.9fr_1.2fr] gap-2 border-b border-[rgba(42,28,0,0.07)] pb-2 text-xs font-medium text-[#A19E99]">
@@ -54,7 +54,7 @@ export default function ActivitySection() {
           ) : trades.length === 0 ? (
             <div className="py-3">
               <p className="text-sm text-[#787774]">
-                No paper trades yet. Place a fill on Trade to see it here.
+                No paper trades yet. Place a trade to see it here.
               </p>
               <button
                 type="button"
