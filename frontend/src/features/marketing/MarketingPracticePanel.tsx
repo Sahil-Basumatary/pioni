@@ -2,21 +2,46 @@ import { useMemo, useState } from "react";
 
 const FEATURES = [
   {
-    title: "Every fill is recorded",
-    body: "Positions, orders, and trade history update the moment an order fills.",
+    title: "Fills update your account",
+    body: "Positions, orders, and history update when an order fills.",
   },
   {
-    title: "Resets are one step",
-    body: "Clear the book and return to your starting balance from Settings.",
+    title: "Reset from Settings",
+    body: "Clear your activity and restore the starting balance.",
   },
   {
-    title: "Try as often as you like",
-    body: "There is no limit on resets and no cost to start again.",
+    title: "Reset when you need to",
+    body: "Resets are free and have no usage limit.",
   },
 ] as const;
 
 const AMOUNTS = [1000, 5000, 10000] as const;
 const MONTHS = [1, 3, 6, 12] as const;
+
+const CHART = {
+  width: 520,
+  height: 180,
+  left: 10,
+  right: 470,
+  top: 24,
+  bottom: 148,
+  base: 172,
+} as const;
+
+const AXIS_GUTTER = `${((CHART.width - CHART.right) / CHART.width) * 100}%`;
+
+const pct = (value: number, total: number) => `${(value / total) * 100}%`;
+
+// Rounds a raw interval up to the nearest 1/2/5 x power of ten so axis labels
+// land on readable values instead of the raw data range.
+function niceStep(range: number, count: number) {
+  const raw = range / count;
+  const magnitude = 10 ** Math.floor(Math.log10(raw));
+  const normalised = raw / magnitude;
+  const multiple =
+    normalised >= 7.07 ? 10 : normalised >= 3.16 ? 5 : normalised >= 1.41 ? 2 : 1;
+  return Math.max(1, multiple * magnitude);
+}
 
 export default function MarketingPracticePanel() {
   const [amount, setAmount] = useState<(typeof AMOUNTS)[number]>(10000);
@@ -48,16 +73,36 @@ export default function MarketingPracticePanel() {
     const min = Math.min(...vals);
     const max = Math.max(...vals);
     const span = max - min || 1;
-    const pt = (v: number, i: number) => ({
-      x: 10 + (i / steps) * 500,
-      y: 150 - ((v - min) / span) * 112,
-    });
-    const coords = vals.map(pt);
+    const toY = (v: number) =>
+      CHART.bottom - ((v - min) / span) * (CHART.bottom - CHART.top);
+    const coords = vals.map((v, i) => ({
+      x: CHART.left + (i / steps) * (CHART.right - CHART.left),
+      y: toY(v),
+    }));
     const line = coords
       .map((c, i) => `${i === 0 ? "M" : "L"}${c.x.toFixed(1)} ${c.y.toFixed(1)}`)
       .join(" ");
-    const last = coords[coords.length - 1];
-    return { line, area: `${line} L510 170 L10 170 Z`, last };
+
+    const step = niceStep(span, 4);
+    const first = Math.ceil(min / step) * step;
+    const ticks = Array.from(
+      { length: Math.floor((max - first) / step) + 1 },
+      (_, k) => {
+        const value = first + k * step;
+        return {
+          value,
+          y: toY(value),
+          label: value.toLocaleString("en-US", { maximumFractionDigits: 0 }),
+        };
+      },
+    );
+
+    return {
+      line,
+      area: `${line} L${CHART.right} ${CHART.base} L${CHART.left} ${CHART.base} Z`,
+      last: coords[coords.length - 1],
+      ticks,
+    };
   }, [amount, months, projected]);
 
   return (
@@ -76,8 +121,7 @@ export default function MarketingPracticePanel() {
             A paper balance you can reset
           </h2>
           <p className="text-[14px] leading-relaxed text-[var(--text-muted)]">
-            Choose a starting balance and a range to see how the account moves over
-            time.
+            Pick a starting balance and time range. The chart is an example.
           </p>
           {FEATURES.map((item) => (
             <article
@@ -130,52 +174,66 @@ export default function MarketingPracticePanel() {
             </div>
           </div>
 
-          <svg viewBox="0 0 520 180" className="mt-5 h-40 w-full" aria-hidden>
-            <defs>
-              <linearGradient id="mkt-practice-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.16" />
-                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            {[8, 44, 80, 116, 152].map((y) => (
-              <line
-                key={y}
-                x1="0"
-                x2="520"
-                y1={y}
-                y2={y}
+          <div className="relative mt-5 h-40 w-full" aria-hidden>
+            <svg
+              viewBox={`0 0 ${CHART.width} ${CHART.height}`}
+              preserveAspectRatio="none"
+              className="h-full w-full"
+            >
+              <defs>
+                <linearGradient id="mkt-practice-fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.16" />
+                  <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              {curve.ticks.map((tick) => (
+                <line
+                  key={tick.value}
+                  x1="0"
+                  x2={CHART.right}
+                  y1={tick.y}
+                  y2={tick.y}
+                  stroke="currentColor"
+                  strokeWidth="1"
+                  vectorEffect="non-scaling-stroke"
+                  className="text-white/[0.08]"
+                />
+              ))}
+              <path d={curve.area} fill="url(#mkt-practice-fill)" />
+              <path
+                d={curve.line}
+                fill="none"
                 stroke="currentColor"
-                strokeWidth="1"
-                className="text-white/[0.08]"
+                strokeWidth="2"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                vectorEffect="non-scaling-stroke"
+                className="text-[var(--text-primary)]"
               />
+            </svg>
+            {curve.ticks.map((tick) => (
+              <span
+                key={tick.value}
+                className="absolute right-0 -translate-y-1/2 text-[10px] tabular-nums text-[var(--text-muted)]"
+                style={{ top: pct(tick.y, CHART.height) }}
+              >
+                {tick.label}
+              </span>
             ))}
-            <path d={curve.area} fill="url(#mkt-practice-fill)" />
-            <path
-              d={curve.line}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-              className="text-[var(--text-primary)]"
-            />
-            <circle
-              cx={curve.last.x}
-              cy={curve.last.y}
-              r="4.5"
-              fill="currentColor"
-              className="text-[var(--text-primary)]"
-            />
-            <circle
-              cx={curve.last.x}
-              cy={curve.last.y}
-              r="9"
-              fill="currentColor"
-              opacity="0.14"
-              className="text-[var(--text-primary)]"
-            />
-          </svg>
-          <div className="flex justify-between text-[10px] tabular-nums text-[var(--text-muted)]">
+            <span
+              className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--text-primary)]/[0.14] p-[4.5px]"
+              style={{
+                left: pct(curve.last.x, CHART.width),
+                top: pct(curve.last.y, CHART.height),
+              }}
+            >
+              <span className="block h-[9px] w-[9px] rounded-full bg-[var(--text-primary)]" />
+            </span>
+          </div>
+          <div
+            className="flex justify-between text-[10px] tabular-nums text-[var(--text-muted)]"
+            style={{ paddingRight: AXIS_GUTTER }}
+          >
             <span>Today</span>
             <span>
               {months} month{months === 1 ? "" : "s"}
@@ -199,7 +257,7 @@ export default function MarketingPracticePanel() {
             ))}
           </div>
           <p className="mt-3 text-xs leading-relaxed text-[var(--text-muted)]">
-            Example only. This is not a forecast or investment advice.
+            Example only. Not a forecast or investment advice.
           </p>
         </div>
       </div>
