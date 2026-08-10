@@ -18,8 +18,8 @@ export default function MarketingHero() {
       data-mkt="hero"
       className="mx-auto w-full max-w-[1320px] scroll-mt-32 px-4 pb-5 pt-5 sm:px-6 sm:pb-6 sm:pt-6"
     >
-      <div className="grid items-end gap-7 lg:grid-cols-2 lg:gap-6 xl:gap-10">
-        <div data-mkt="hero-copy" className="max-w-[620px] pb-1">
+      <div className="grid gap-7 lg:grid-cols-2 lg:items-center lg:gap-6 xl:gap-10">
+        <div data-mkt="hero-copy" className="max-w-[620px]">
           <p
             data-mkt="eyebrow"
             className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]"
@@ -30,14 +30,13 @@ export default function MarketingHero() {
             data-mkt="title"
             className="mt-2 text-[32px] type-display font-medium leading-9 text-[var(--text-primary)] sm:text-[40px] sm:leading-[44px]"
           >
-            Learn to trade without risking real money
+            Paper trade with live market data
           </h1>
           <p
             data-mkt="lede"
             className="mt-2.5 max-w-[36rem] text-[15px] leading-relaxed text-[var(--text-muted)]"
           >
-            Place orders against live market data and see what your decisions would
-            have cost, before any money is on the line.
+            Place market and limit orders with simulated USD. No deposit required.
           </p>
           <div
             data-mkt="ctas"
