@@ -73,10 +73,6 @@ def _run_bench(name: str, setup_fn, bench_fn, iterations: int) -> dict:
     }
 
 
-# ------------------------------------------------------------------
-# Benchmark: add() — single price level
-# ------------------------------------------------------------------
-
 def _setup_add_single(n: int) -> dict:
     return {
         "book": OrderBook(SYMBOL),
@@ -86,10 +82,6 @@ def _setup_add_single(n: int) -> dict:
 def _bench_add_single(ctx: dict, i: int) -> None:
     ctx["book"].add(ctx["orders"][i])
 
-
-# ------------------------------------------------------------------
-# Benchmark: add() — multi price level (spread across 500 ticks)
-# ------------------------------------------------------------------
 
 def _setup_add_multi(n: int) -> dict:
     orders = [
@@ -102,10 +94,6 @@ def _bench_add_multi(ctx: dict, i: int) -> None:
     ctx["book"].add(ctx["orders"][i])
 
 
-# ------------------------------------------------------------------
-# Benchmark: cancel()
-# ------------------------------------------------------------------
-
 def _setup_cancel(n: int) -> dict:
     book = OrderBook(SYMBOL)
     orders = [_make_order(OrderSide.BUY, BASE_PRICE + TICK * (i % 200)) for i in range(n)]
@@ -117,10 +105,6 @@ def _bench_cancel(ctx: dict, i: int) -> None:
     ctx["book"].cancel(ctx["order_ids"][i])
 
 
-# ------------------------------------------------------------------
-# Benchmark: _pop_best_order()
-# ------------------------------------------------------------------
-
 def _setup_pop_best(n: int) -> dict:
     book = OrderBook(SYMBOL)
     for i in range(n):
@@ -130,10 +114,6 @@ def _setup_pop_best(n: int) -> dict:
 def _bench_pop_best(ctx: dict, _i: int) -> None:
     ctx["book"]._pop_best_order(OrderSide.BUY)
 
-
-# ------------------------------------------------------------------
-# Benchmark: depth()
-# ------------------------------------------------------------------
 
 def _setup_depth(n: int) -> dict:
     book = OrderBook(SYMBOL)

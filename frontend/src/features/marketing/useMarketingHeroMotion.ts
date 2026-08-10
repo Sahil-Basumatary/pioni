@@ -33,7 +33,7 @@ const RESET_SELECTOR = [
   "[data-mkt='coverage-stat']",
   "[data-mkt='faq-item']",
   ".marketing-phone",
-  ".marketing-macbook",
+  ".marketing-laptop",
   "main h2",
 ].join(", ");
 
@@ -114,7 +114,7 @@ export function useMarketingHeroMotion(
         });
       });
 
-      const laptop = root.querySelector<HTMLElement>(".marketing-macbook");
+      const laptop = root.querySelector<HTMLElement>(".marketing-laptop");
       const desk = root.querySelector<HTMLElement>("[data-mkt='coverage']");
       if (laptop && desk) {
         gsap.set(laptop, { transformPerspective: 1400, transformOrigin: "50% 50%" });

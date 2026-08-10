@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { useLanguage } from "./LanguageProvider";
 import type { AuthMessageKey } from "./authCatalog";
 
-/** Renders templates like "Forgot {password} or {username}?" with locale-safe order. */
 export function AuthRichText({
   id,
   values,

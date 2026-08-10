@@ -64,12 +64,8 @@ function formatChangePct(pct: number | null): string {
 
 async function fetchSnapshot(symbol: string): Promise<TickerSnapshot> {
   const base = import.meta.env.VITE_GATEWAY_URL || DEFAULT_GATEWAY_URL;
-  try {
-    const res = await fetch(`${base}/market/prices/${symbol}`);
-    if (res.ok) return res.json();
-  } catch {
-    // fall through
-  }
+  const gatewayResponse = await fetch(`${base}/market/prices/${symbol}`).catch(() => null);
+  if (gatewayResponse?.ok) return gatewayResponse.json();
   const res = await fetch(
     `https://api.binance.com/api/v3/ticker/24hr?symbol=${encodeURIComponent(symbol)}`,
   );

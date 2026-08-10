@@ -18,7 +18,6 @@ type CategoryHeatmapCardProps = {
 const BASE_H = 322;
 const MAX_H = 480;
 
-/** Progressive labels: icon → +name → +value → +chg. Single-line ellipsis only. */
 function labelParts(cell: HeatRect): {
   showDot: boolean;
   showName: boolean;

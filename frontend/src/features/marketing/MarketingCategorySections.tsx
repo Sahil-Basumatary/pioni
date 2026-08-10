@@ -4,7 +4,6 @@ import type { LiveMarketRow, MarketingChipId } from "./marketingLiveRows";
 
 type Props = {
   rows: LiveMarketRow[];
-  /* Symbols already on screen in the flat grid above. */
   exclude: Set<string>;
   onSelectCategory: (id: MarketingChipId) => void;
 };

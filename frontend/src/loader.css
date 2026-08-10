@@ -11,7 +11,6 @@
   to { transform: rotate(360deg); }
 }
 
-/* Apple Stocks–style chart loading skeleton */
 .skeleton-chart {
   position: relative;
   overflow: hidden;

@@ -62,7 +62,7 @@ body:has(.marketing-page) {
 /* Product UI keeps the real light app palette. The whole point of a dark page is
    that the actual desk glows inside the frames, so these surfaces opt back out. */
 .marketing-panel,
-.marketing-macbook__screen,
+.marketing-laptop__screen,
 .marketing-phone__screen {
   --text-primary: rgba(0, 0, 0, 0.9);
   --text-muted: rgba(0, 0, 0, 0.55);
@@ -216,12 +216,12 @@ body:has(.marketing-page) {
 
 /* The base flares wider than the lid, so the lid has to stay under 100% or the
    flare pushes the page into a horizontal scroll. */
-.marketing-macbook {
+.marketing-laptop {
   width: 90%;
   margin-inline: auto;
 }
 
-.marketing-macbook__lid {
+.marketing-laptop__lid {
   position: relative;
   border-radius: 0.9rem;
   background: linear-gradient(180deg, #3a3d45 0%, #202329 100%);
@@ -229,7 +229,7 @@ body:has(.marketing-page) {
   box-shadow: var(--mkt-elevation-lift);
 }
 
-.marketing-macbook__camera {
+.marketing-laptop__camera {
   position: absolute;
   top: 0.34rem;
   left: 50%;
@@ -240,13 +240,13 @@ body:has(.marketing-page) {
   background: #4a4d55;
 }
 
-.marketing-macbook__screen {
+.marketing-laptop__screen {
   overflow: hidden;
   border-radius: 0.3rem;
   background: var(--card-bg);
 }
 
-.marketing-macbook__base {
+.marketing-laptop__base {
   position: relative;
   left: 50%;
   width: 108%;
@@ -257,7 +257,7 @@ body:has(.marketing-page) {
   box-shadow: 0 12px 26px rgba(16, 17, 20, 0.16);
 }
 
-.marketing-macbook__notch {
+.marketing-laptop__notch {
   position: absolute;
   top: 0;
   left: 50%;

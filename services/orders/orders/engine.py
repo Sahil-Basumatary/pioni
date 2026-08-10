@@ -71,10 +71,6 @@ class MatchingEngine:
             results.append(self._execute_market(order))
         return results
 
-    # ------------------------------------------------------------------
-    # Order-type handlers
-    # ------------------------------------------------------------------
-
     def _execute_market(self, order: BookOrder) -> _FastResult:
         fills = self._match(order)
         if not fills:
@@ -123,10 +119,6 @@ class MatchingEngine:
             status=OrderStatus.OPEN,
             remaining_quantity=order.remaining,
         )
-
-    # ------------------------------------------------------------------
-    # Core matching loop
-    # ------------------------------------------------------------------
 
     def _match(
         self, order: BookOrder, price_limit: Decimal | None = None,

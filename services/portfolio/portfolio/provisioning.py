@@ -116,6 +116,5 @@ async def get_or_create_portfolio(
     )
     session.add(portfolio)
     await session.flush()
-    # Load DB-populated columns (server-default timestamps) so the response is complete.
     await session.refresh(portfolio)
     return portfolio

@@ -1,6 +1,5 @@
 import type { Appearance } from "@clerk/shared/types";
 
-/** Full-page auth card chrome (Pioni monochrome). */
 export const clerkAppearance = {
   layout: {
     logoImageUrl: "/logo.svg",

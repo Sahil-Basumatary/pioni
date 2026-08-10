@@ -24,7 +24,6 @@ export type CategoryIndexDef = {
   catalogMatch?: string;
 };
 
-/** Stroke colors for category index series. */
 export const CATEGORY_INDICES: CategoryIndexDef[] = [
   { id: "defi", label: "DeFi", color: "#38C7EF" },
   { id: "infrastructure", label: "Infrastructure", color: "#CF0F11" },
@@ -72,7 +71,6 @@ function targetChange(def: CategoryIndexDef, rows: MarketRow[]): number {
   return ((h % 1400) / 100) - 5;
 }
 
-/** Percent return series starting at 0, drifting toward category performance. */
 export function categorySeries(
   def: CategoryIndexDef,
   rows: MarketRow[],

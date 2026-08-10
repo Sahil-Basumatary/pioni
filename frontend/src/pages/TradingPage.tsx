@@ -234,7 +234,6 @@ export default function TradingPage({
   function onTicketMenuSelect(id: string) {
     if (id === "trades") {
       clearStub("ticket");
-      // Surface market trades in the book pane from the ticket widget picker.
       setBookTab("markettrades");
       return;
     }

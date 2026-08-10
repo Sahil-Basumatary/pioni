@@ -24,7 +24,6 @@ def test_request_id_header_and_state_propagation():
     assert resp.status_code == 200
     header_id = resp.headers["X-Request-ID"]
     assert len(header_id) == 12
-    # The same id set on scope state must be visible to the downstream handler.
     assert resp.json()["request_id"] == header_id
 
 

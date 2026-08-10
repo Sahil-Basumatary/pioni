@@ -1,10 +1,10 @@
-import { MacBookFrame } from "./MarketingDevices";
+import { LaptopFrame } from "./MarketingDevices";
 
 export default function MarketingDeskShot() {
   return (
     <div data-mkt="desk-shot" className="marketing-desk-shot">
       <div className="marketing-desk-shot__frame">
-        <MacBookFrame>
+        <LaptopFrame>
           <img
             src="/marketing/hero.webp"
             srcSet="/marketing/hero.webp 1305w, /marketing/hero@2x.webp 2610w"
@@ -16,7 +16,7 @@ export default function MarketingDeskShot() {
             loading="lazy"
             decoding="async"
           />
-        </MacBookFrame>
+        </LaptopFrame>
       </div>
     </div>
   );

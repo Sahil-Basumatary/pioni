@@ -76,7 +76,6 @@ def _apply_sell(
         raise ValueError(
             f"sell qty {qty} exceeds position qty {position.quantity}",
         )
-    # Realized P&L is proceeds above cost basis, less fees
     new_qty = position.quantity - qty
     realized_increment = (price - position.avg_entry_price) * qty - fee
     new_avg = Decimal(0) if new_qty == 0 else position.avg_entry_price

@@ -20,7 +20,6 @@ async def test_get_prices_serves_pre_serialized_bytes(monkeypatch):
     assert first.body == b'{"BTCUSDT": {"price": "1"}}'
     assert first.media_type == "application/json"
     assert second.body == first.body
-    # The second call is a cache hit, so the upstream is touched only once.
     assert calls == 1
 
 

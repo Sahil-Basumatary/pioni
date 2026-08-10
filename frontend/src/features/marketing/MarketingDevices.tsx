@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
 
-export function MacBookFrame({ children }: { children: ReactNode }) {
+export function LaptopFrame({ children }: { children: ReactNode }) {
   return (
-    <div className="marketing-macbook">
-      <div className="marketing-macbook__lid">
-        <span className="marketing-macbook__camera" aria-hidden />
-        <div className="marketing-macbook__screen">{children}</div>
+    <div className="marketing-laptop">
+      <div className="marketing-laptop__lid">
+        <span className="marketing-laptop__camera" aria-hidden />
+        <div className="marketing-laptop__screen">{children}</div>
       </div>
-      <div className="marketing-macbook__base" aria-hidden>
-        <span className="marketing-macbook__notch" />
+      <div className="marketing-laptop__base" aria-hidden>
+        <span className="marketing-laptop__notch" />
       </div>
     </div>
   );

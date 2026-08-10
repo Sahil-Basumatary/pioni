@@ -18,7 +18,6 @@ function hoursAgo(hours: number): string {
   return new Date(Date.now() - hours * 3600_000).toISOString();
 }
 
-/** Dense sample feed when the account has no live fills yet. */
 export const PAPER_HOME_ACTIVITY: PaperActivityItem[] = [
   {
     kind: "withdrawal",

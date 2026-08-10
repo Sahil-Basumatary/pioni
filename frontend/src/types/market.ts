@@ -52,8 +52,6 @@ export interface KlinesResponse {
   klines: Kline[];
 }
 
-// --- WebSocket messages (server -> client) ---
-
 interface WSConnected {
   type: "connected";
   message: string;
@@ -94,8 +92,6 @@ export type WSMessage =
   | WSTrade
   | WSKline
   | WSError;
-
-// --- WebSocket commands (client -> server) ---
 
 export interface WSSubscribeCommand {
   action: "subscribe";
