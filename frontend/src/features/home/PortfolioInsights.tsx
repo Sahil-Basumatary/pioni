@@ -78,7 +78,7 @@ export default function PortfolioInsights({
               rows={[
                 { label: "Balance value", value: tv, suffix: "USD" },
                 {
-                  label: "Balances UP&L",
+                  label: "Unrealized P&L",
                   value: upnl,
                   suffix: "USD",
                   tone:

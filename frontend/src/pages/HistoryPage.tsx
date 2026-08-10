@@ -187,7 +187,7 @@ export default function HistoryPage() {
         </div>
         <button
           type="button"
-          onClick={() => toast("Paper statements — coming soon")}
+          onClick={() => toast("Statements aren't available yet")}
           className="rail-icon inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[var(--accent)] hover:opacity-80"
         >
           View statements
@@ -230,7 +230,7 @@ export default function HistoryPage() {
         {!mainScope ? (
           <EmptyPanel
             title={`No ${scope === "earn" ? "Earn" : "OTC"} activity`}
-            body={`${scope === "earn" ? "Earn" : "OTC"} runs on simulated desks that do not post to your ledger yet.`}
+            body={`${scope === "earn" ? "Earn" : "OTC"} activity isn't included in the ledger.`}
           />
         ) : activeSection === "ledger" ? (
           <SectionPanel query={ledgerQuery} empty={<TeachingEmpty id="history_ledger" size="panel" />}>

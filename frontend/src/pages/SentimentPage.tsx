@@ -207,7 +207,7 @@ export default function SentimentPage() {
         <div>
           <h1 className="text-lg font-semibold text-[var(--text-primary)]">Sentiment</h1>
           <p className="text-sm text-[var(--text-secondary)]">
-            Quick read on how the market is feeling about a ticker.
+            Sentiment from recent news, Reddit, and X.
           </p>
         </div>
         <div className="hidden md:flex items-center gap-2 text-xs px-3 py-1 rounded-full border border-[var(--card-border)] bg-[var(--card-bg)]">
@@ -293,7 +293,7 @@ export default function SentimentPage() {
                     disabled={loading || ticker.length === 0}
                     className="btn-premium w-full mt-5 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    {loading ? "hold on, cooking..." : "Get sentiment"}
+                    {loading ? "Loading…" : "Get sentiment"}
                   </button>
 
                   <div className="mt-5 grid grid-cols-3 gap-3">
@@ -359,7 +359,7 @@ export default function SentimentPage() {
                   {landing && (
                     <div className="mt-5 rounded-xl border border-[var(--card-border)] bg-[var(--bg)] px-4 py-3 text-left">
                       <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
-                        Features of this legendary app
+                        Included data
                       </p>
                       <ul className="mt-2 space-y-1 text-xs text-[var(--text-muted)]">
                         <li>• Combined sentiment score with confidence</li>
@@ -407,8 +407,8 @@ export default function SentimentPage() {
                 {requestError === "SERVER_OFFLINE" && (
                   <EmptyStatePanel
                     variant="warning"
-                    title="Backend is offline"
-                    body="Can't reach the sentiment server. Make sure your FastAPI backend is running."
+                    title="Sentiment unavailable"
+                    body="Can't reach the sentiment service. Try again later."
                   />
                 )}
 
@@ -636,7 +636,7 @@ export default function SentimentPage() {
               <EmptyStatePanel
                 variant="history"
                 title="No history for this ticker"
-                body="The mock backend only returns a short window for some tickers while building."
+                body="No 7-day history is available for this ticker."
               />
             )}
 
@@ -678,7 +678,7 @@ export default function SentimentPage() {
             <EmptyStatePanel
               variant="history"
               title="No posts to show yet"
-              body="We couldn't pull any recent headlines, Reddit threads, or X posts for this ticker in mock mode."
+              body="No recent news, Reddit, or X posts are available for this ticker."
             />
           )}
         </div>

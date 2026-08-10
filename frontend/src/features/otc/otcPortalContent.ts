@@ -68,15 +68,15 @@ export const OTC_PORTAL_PAIRS: OtcPortalPair[] = [
 export const OTC_PORTAL_FAQ = [
   {
     q: "What is Pioni OTC?",
-    a: "Pioni Over-The-Counter Trading is a private and personalized paper service to practice large orders at competitive simulated pricing with minimum market impact. You get access to deep practice liquidity and flexible settlement arrangements.",
+    a: "Pioni OTC lets you practice large orders with simulated quotes and settlement.",
   },
   {
     q: "How can I trade with Pioni OTC?",
-    a: "You can practice with us via the simulated OTC desk chat flow, or via our automated RFQ (Request-For-Quote).",
+    a: "Use the simulated desk chat or request a quote through RFQ.",
   },
   {
     q: "What is the minimum trade amount?",
-    a: "The minimum trade amount is an equivalent value of 50,000 USD. RFQ allows you to trade up to 1,000,000 USD. For trades above 1,000,000 USD, use the paper OTC desk chat preview or raise your simulated exposure.",
+    a: "The minimum order is 50,000 USD. RFQ supports up to 1,000,000 USD in simulated exposure.",
   },
   {
     q: "Is there a fee?",
@@ -84,24 +84,24 @@ export const OTC_PORTAL_FAQ = [
   },
   {
     q: "How many times can I request a quote?",
-    a: "You can request a quote as many times as you’d like. The quote duration will vary depending on market volatility.",
+    a: "You can request unlimited quotes. Quote duration depends on market volatility.",
   },
   {
     q: "What cryptocurrencies can I trade with Pioni OTC?",
-    a: "RFQ supports 23 paper assets across major quote currencies. Practice restrictions may apply to some quote currencies. Chat trading preview supports asset pairs listed on the Pioni platform (with some exceptions).",
+    a: "RFQ supports 23 simulated assets across major quote currencies.",
   },
 ] as const;
 
 export const OTC_PORTAL_BENEFITS = [
   {
     id: "chat",
-    title: "Chat trading and flex settlement",
-    body: "Execute large trades via chat with our OTC desk, and settle on your schedule.",
+    title: "Chat trading preview",
+    body: "Build a large simulated order through the desk chat flow.",
   },
   {
     id: "lending",
-    title: "OTC Lending",
-    body: "Access crypto-backed loans from 500K USD, tailored for institutions and high-net-worth clients.",
+    title: "Lending preview",
+    body: "Explore a simulated crypto-backed lending flow.",
   },
 ] as const;
 

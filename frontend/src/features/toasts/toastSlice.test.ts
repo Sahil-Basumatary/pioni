@@ -51,7 +51,7 @@ describe("orderToastCopy", () => {
       },
       t,
     );
-    expect(toast.title).toContain("bought 0.01 BTC");
+    expect(toast.title).toBe("Filled 0.01 BTC");
     expect(toast.tone).toBe("positive");
   });
 

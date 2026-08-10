@@ -21,9 +21,9 @@ export default function TrendEmptyPreview() {
         </svg>
       </div>
       <div className="rounded-xl border border-[var(--card-border)] bg-[var(--bg)] px-4 py-3">
-        <p className="text-sm font-medium text-[var(--text-primary)]">Waiting for you bruv</p>
+        <p className="text-sm font-medium text-[var(--text-primary)]">Enter a ticker</p>
         <p className="mt-1 text-xs text-[var(--text-muted)]">
-          Enter a ticker to unlock a compact trend read: bias, direction, and the biggest drivers behind the move.
+          View bias, 7-day change, range, and top drivers.
         </p>
         <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
           <Metric label="Bias" value="—" />

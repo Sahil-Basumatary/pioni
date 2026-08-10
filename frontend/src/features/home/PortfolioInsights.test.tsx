@@ -29,7 +29,7 @@ describe("PortfolioInsights", () => {
     expect(screen.getByText("Healthy")).toBeInTheDocument();
     expect(screen.getByText("Inverse Futures")).toBeInTheDocument();
     expect(screen.getByText("Available margin")).toBeInTheDocument();
-    expect(screen.getByText("Balances UP&L")).toBeInTheDocument();
+    expect(screen.getByText("Unrealized P&L")).toBeInTheDocument();
     expect(screen.getByText("-31.72")).toBeInTheDocument();
   });
 });

@@ -294,7 +294,7 @@ export default function ConvertDialog() {
             disabled={!canReview}
             onClick={() =>
               flash(
-                `Preview only — converting ${fromRaw || "0"} ${fromSymbol} would return about ${formatConvertAmount(toAmount, toSymbol)} ${toSymbol}. No balances moved.`,
+                `Preview: ${fromRaw || "0"} ${fromSymbol} converts to about ${formatConvertAmount(toAmount, toSymbol)} ${toSymbol}. Balances are unchanged.`,
               )
             }
             className={`mt-2 inline-flex h-10 w-full items-center justify-center rounded-xl bg-black text-sm font-medium text-white ${

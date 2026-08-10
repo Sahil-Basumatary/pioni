@@ -59,4 +59,22 @@ describe("shell i18n catalog", () => {
   it("still resolves auth keys", () => {
     expect(translate("en-US", "signInTitle")).toContain("Pioni");
   });
+
+  it("keeps internal roadmap wording out of English product copy", () => {
+    const englishLocales = ["en-US", "en-GB", "en-AU", "en-CA"] as const;
+    const copy = englishLocales
+      .flatMap((locale) => [
+        SHELL_CATALOG[locale],
+        STATUS_SHELL_CATALOG[locale],
+        TRADE_SHELL_CATALOG[locale],
+        TRADE_CHROME_CATALOG[locale],
+        GLOSSARY_CATALOG[locale],
+        SETTINGS_CATALOG[locale],
+      ])
+      .flatMap((catalog) => Object.values(catalog))
+      .join(" ");
+
+    expect(copy).not.toMatch(/later milestone|lands next|populate this view|coming with ledger/i);
+    expect(copy).not.toMatch(/You are all caught up|Never miss a trading opportunity|Unlock derivatives/i);
+  });
 });

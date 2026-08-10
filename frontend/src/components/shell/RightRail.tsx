@@ -138,7 +138,7 @@ export default function RightRail() {
           </RailIconButton>
           <RailIconButton
             label={t("learnCenter")}
-            onClick={() => navigate("/terms")}
+            onClick={() => navigate("/help")}
           >
             <BookIcon className="h-6 w-6" />
           </RailIconButton>

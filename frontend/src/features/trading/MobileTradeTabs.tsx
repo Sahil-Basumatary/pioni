@@ -39,7 +39,7 @@ const SELECT_GROUPS = [
     id: "engine",
     labelKey: "tradeChartEngine",
     options: [
-      { id: "advanced", labelKey: "tradeEngineTradingView" },
+      { id: "advanced", labelKey: "tradeEngineAdvancedChart" },
       { id: "simple", labelKey: "tradeEngineSimpleChart" },
     ],
   },

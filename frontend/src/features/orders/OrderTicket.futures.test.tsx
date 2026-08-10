@@ -47,7 +47,7 @@ describe("OrderTicket futures venue", () => {
     expect(screen.getByRole("tab", { name: "Long" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Short" })).toBeInTheDocument();
     expect(screen.getByLabelText("Cross 100x")).toBeInTheDocument();
-    expect(screen.getByText("Unlock derivatives")).toBeInTheDocument();
+    expect(screen.getByText("Continue to futures")).toBeInTheDocument();
     expect(screen.getByText("Trade spot instead")).toBeInTheDocument();
     expect(screen.getByText("Available balance")).toBeInTheDocument();
     expect(screen.getByLabelText("Reduce only")).toBeChecked();

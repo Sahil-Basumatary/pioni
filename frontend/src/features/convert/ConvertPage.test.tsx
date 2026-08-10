@@ -54,7 +54,7 @@ describe("ConvertDialog", () => {
     isSignedIn.current = false;
     renderDialog();
     expect(
-      screen.getByText(/Unlock everything Pioni has to offer/i),
+      screen.getByText(/Sign in or create an account to continue/i),
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Sign in" })).toBeInTheDocument();
     expect(

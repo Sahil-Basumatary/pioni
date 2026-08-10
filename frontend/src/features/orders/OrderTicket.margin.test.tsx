@@ -96,7 +96,7 @@ describe("OrderTicket margin venue", () => {
   it("says leverage is a preview so the label cannot be read as real leverage", () => {
     renderTicket("margin");
     expect(
-      screen.getByText(/fills unlevered against your paper balance/i),
+      screen.getByText(/Margin is a simulated preview/i),
     ).toBeInTheDocument();
   });
 });

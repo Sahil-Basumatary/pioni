@@ -45,11 +45,11 @@ export default function OtcPage() {
             style={{ boxShadow: "0px 2px 6px rgba(0,0,0,0.07)" }}
           >
             <h2 id="otc-unlock-title" className="mb-2 text-lg font-medium">
-              Unlock paper OTC Portal?
+              Open paper OTC?
             </h2>
             <p className="mb-5 text-sm leading-relaxed text-[var(--text-muted)]">
-              You’ll get RFQ, exposure and quote history for practice only. No real
-              funds move. Simulated minimum size is 50,000 USD.
+              Use simulated RFQs, exposure, and quote history. Minimum size is
+              50,000 USD.
             </p>
             <div className="flex flex-wrap justify-end gap-2">
               <button
@@ -64,7 +64,7 @@ export default function OtcPage() {
                 onClick={goPortal}
                 className="inline-flex h-10 items-center rounded-lg bg-[var(--accent)] px-4 text-sm font-medium text-white"
               >
-                Confirm unlock
+                Open portal
               </button>
             </div>
           </div>
@@ -81,16 +81,14 @@ export default function OtcPage() {
               Pioni OTC
             </p>
             <h1 className="max-w-[660px] text-[32px] font-medium leading-tight tracking-tight md:text-[40px]">
-              White-glove service for large trades
+              Practice large OTC orders
             </h1>
             <div className="flex max-w-[660px] flex-col gap-4 text-sm leading-relaxed text-[var(--text-muted)] md:text-base">
               <p>
-                Pioni’s OTC (over-the-counter) desk offers deep liquidity, tighter
-                spreads and private settlement off the open order book.
+                Request simulated quotes for large orders away from the public book.
               </p>
               <p>
-                Become an OTC client today to enjoy a discreet, secure service
-                built for institutions and high-net-worth clients.
+                Quotes, fills, and settlement use your paper balance.
               </p>
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -100,7 +98,7 @@ export default function OtcPage() {
                   onClick={() => navigate(SIGN_IN_PATH)}
                   className="inline-flex h-10 items-center rounded-lg bg-[var(--accent)] px-4 text-sm font-medium text-white hover:bg-[var(--accent-soft)]"
                 >
-                  Unlock OTC trading
+                  Sign in to use OTC
                 </button>
               </SignedOut>
               <SignedIn>
@@ -109,7 +107,7 @@ export default function OtcPage() {
                   onClick={unlock}
                   className="inline-flex h-10 items-center rounded-lg bg-[var(--accent)] px-4 text-sm font-medium text-white hover:bg-[var(--accent-soft)]"
                 >
-                  Unlock OTC trading
+                  Open paper OTC
                 </button>
               </SignedIn>
               <button
@@ -154,7 +152,7 @@ export default function OtcPage() {
           <div className="flex flex-col gap-8 lg:flex-row">
             <button
               type="button"
-              onClick={() => toast("Paper OTC walkthrough — coming soon")}
+              onClick={() => toast("OTC walkthrough isn't available yet")}
               className="relative w-full overflow-hidden rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
               style={{ aspectRatio: "16 / 9" }}
               aria-label="Play OTC walkthrough"
@@ -216,7 +214,7 @@ export default function OtcPage() {
               <button
                 type="button"
                 onClick={() =>
-                  toast(`Paper ${item.cta.toLowerCase()} — coming soon`)
+                  toast(`${item.cta} isn't available yet`)
                 }
                 className="mt-auto inline-flex h-10 w-fit items-center rounded-lg bg-[rgba(104,107,130,0.08)] px-4 text-sm font-medium text-[var(--text-primary)] hover:bg-[rgba(104,107,130,0.12)]"
               >

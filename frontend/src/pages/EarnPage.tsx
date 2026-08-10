@@ -116,7 +116,7 @@ export default function EarnPage() {
           <div className="mt-1 flex w-full flex-row flex-wrap items-start gap-x-6 gap-y-2">
             <button
               type="button"
-              onClick={() => flash("Paper allocate — simulated only")}
+              onClick={() => flash("Simulated allocation only")}
               className="flex min-h-10 w-full max-w-[240px] shrink-0 cursor-pointer flex-col justify-between self-stretch border-0 bg-transparent p-0 pb-1 text-left"
             >
               <div className="flex h-4 items-center justify-between gap-2">
@@ -167,7 +167,7 @@ export default function EarnPage() {
         <h2 className="mb-3 text-base font-medium">For you</h2>
         <button
           type="button"
-          onClick={() => flash("Paper staking — simulated only")}
+          onClick={() => flash("Simulated staking only")}
           className="flex h-[120px] w-fit min-w-[220px] max-w-[300px] flex-col justify-between rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-4 text-left hover:bg-black/[0.02]"
         >
           <div className="flex flex-col gap-0.5">
@@ -225,8 +225,8 @@ export default function EarnPage() {
           </div>
           <button
             type="button"
-            aria-label="Options"
-            onClick={() => flash("Paper earn options — coming soon")}
+            aria-label="Earn options"
+            onClick={() => flash("Earn options aren't available yet")}
             className="rail-icon flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-black/[0.04] hover:text-[var(--text-primary)]"
           >
             <SettingsSliderHorizontalIcon className="h-4 w-4" />
@@ -277,7 +277,7 @@ export default function EarnPage() {
                         <button
                           type="button"
                           onClick={() =>
-                            flash(`Paper allocate ${asset.symbol} — simulated only`)
+                            flash(`Simulated ${asset.symbol} allocation only`)
                           }
                           className="inline-flex h-7 items-center rounded-lg bg-[rgba(104,107,130,0.08)] px-2.5 text-xs font-medium text-[rgb(104,107,130)] hover:bg-[rgba(104,107,130,0.14)] hover:text-[var(--text-primary)]"
                         >
@@ -327,7 +327,7 @@ export default function EarnPage() {
                         <button
                           type="button"
                           onClick={() =>
-                            flash(`Paper buy ${asset.name} — simulated only`)
+                            flash(`Simulated ${asset.name} purchase only`)
                           }
                           className="inline-flex h-7 items-center rounded-lg bg-[rgba(104,107,130,0.08)] px-2.5 text-xs font-medium text-[rgb(104,107,130)] hover:bg-[rgba(104,107,130,0.14)] hover:text-[var(--text-primary)]"
                         >
@@ -376,7 +376,7 @@ export default function EarnPage() {
           <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={() => flash("Paper earn history — coming with ledger")}
+              onClick={() => flash("Earn history isn't available yet")}
               className="rail-icon inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             >
               View history
@@ -384,8 +384,8 @@ export default function EarnPage() {
             </button>
             <button
               type="button"
-              aria-label="Options"
-              onClick={() => flash("Paper earn options — coming soon")}
+              aria-label="Earn history options"
+              onClick={() => flash("Earn options aren't available yet")}
               className="rail-icon flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-black/[0.04] hover:text-[var(--text-primary)]"
             >
               <SettingsSliderHorizontalIcon className="h-4 w-4" />
@@ -456,7 +456,7 @@ export default function EarnPage() {
           </>
         ) : (
           <div className="px-4 py-10 text-center text-sm text-[var(--text-muted)]">
-            No earn activity yet. Paper allocations will show up here.
+            No earn activity
           </div>
         )}
       </section>
@@ -487,7 +487,7 @@ function ColHeader({
             {filter ? (
               <button
                 type="button"
-                aria-label="Filter"
+                aria-label="Filter earn activity"
                 className="rail-icon rounded p-0.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               >
                 <FilterIcon className="h-3.5 w-3.5" />

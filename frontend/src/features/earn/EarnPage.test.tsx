@@ -24,7 +24,7 @@ describe("EarnPage", () => {
     auth.isSignedIn = false;
     renderEarn();
     expect(
-      screen.getByText(/Unlock everything Pioni has to offer/i),
+      screen.getByText(/Sign in or create an account to continue/i),
     ).toBeInTheDocument();
     expect(screen.queryByText("Earn balance")).not.toBeInTheDocument();
   });
@@ -50,7 +50,7 @@ describe("EarnPage", () => {
     renderEarn();
     await user.click(screen.getByRole("tab", { name: "Activity" }));
     expect(
-      screen.getByText(/No earn activity yet/),
+      screen.getByText("No earn activity"),
     ).toBeInTheDocument();
   });
 
