@@ -38,7 +38,7 @@ orders -> RabbitMQ -> portfolio
 portfolio -> Redis -> gateway WebSocket -> frontend
 ```
 
-The services can scale and fail independently, but the split adds more local setup and operational work than a monolith. PostgreSQL remains the source of truth. Redis publishing is best effort.
+The services can scale and fail independently, but the split adds more local setup and operational work. Postgres is still our baseline. 
 
 Portfolio event deduplication is process-local. Persistent deduplication is required before running multiple portfolio workers. Market and sentiment coverage also depends on external providers and their availability.
 
@@ -71,7 +71,7 @@ cp .env.example .env
 cp frontend/.env.example frontend/.env
 ```
 
-Set the Clerk keys in both environment files. Add sentiment provider keys for live sentiment; mock mode works without them.
+Set the Clerk keys in both environment files. Add sentiment provider keys for live sentiment but mock mode will work without them.
 
 Start the infrastructure, apply migrations, then run the stack:
 
@@ -98,9 +98,9 @@ Load-test and frontend performance notes live in [`loadtest/`](loadtest/) and [`
 ## Contact
 
 - Email: [sahil@sahilbasumatary.dev](mailto:sahil@sahilbasumatary.dev)
+- Website [sahilbzy.com](https://sahilbzy.com)
 - GitHub: [Sahil-Basumatary](https://github.com/Sahil-Basumatary)
 - LinkedIn: [Sahil Basumatary](https://www.linkedin.com/in/sahil-basumatary/)
-- Blog: [blog.sahilbzy.com](https://blog.sahilbzy.com)
 
 ## License
 
