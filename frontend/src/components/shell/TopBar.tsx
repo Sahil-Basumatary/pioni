@@ -5,6 +5,7 @@ import BalanceChip from "./BalanceChip";
 import LayoutsMenu from "./LayoutsMenu";
 import ProductSwitcher from "./ProductSwitcher";
 import TopBarLanguageMenu from "./TopBarLanguageMenu";
+import PioniLogo from "../PioniLogo";
 import { useMarketSearch } from "../../features/markets/MarketSearchContext";
 import { useConvert } from "../../features/convert/ConvertContext";
 import { useSettings } from "../../features/settings/settingsContext";
@@ -28,12 +29,12 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
           <div className="flex h-full min-w-0 grow items-center gap-3">
             <SignedIn>
               <NavLink to="/home" className="flex shrink-0 items-center gap-1.5 p-1">
-                <img src="/logo.svg" alt="Pioni" className="h-5" />
+                <PioniLogo />
               </NavLink>
             </SignedIn>
             <SignedOut>
               <NavLink to="/trading" className="flex shrink-0 items-center gap-1.5 p-1">
-                <img src="/logo.svg" alt="Pioni" className="h-5" />
+                <PioniLogo />
               </NavLink>
             </SignedOut>
             <ProductSwitcher />
@@ -75,12 +76,12 @@ export default function TopBar({ compact = false }: { compact?: boolean }) {
       <div className="mx-auto flex h-14 w-full max-w-[1750px] items-center gap-3 px-2">
         <SignedIn>
           <NavLink to="/home" className="flex shrink-0 items-center">
-            <img src="/logo.svg" alt="Pioni" className="h-9" />
+            <PioniLogo />
           </NavLink>
         </SignedIn>
         <SignedOut>
           <NavLink to="/trading" className="flex shrink-0 items-center">
-            <img src="/logo.svg" alt="Pioni" className="h-9" />
+            <PioniLogo />
           </NavLink>
         </SignedOut>
         <button
@@ -133,13 +134,13 @@ function AuthButtons() {
     <div className="relative z-[60] flex items-center gap-1">
       <Link
         to={SIGN_IN_PATH}
-        className="rounded-full px-3 py-1.5 text-sm font-medium text-[var(--text-primary)] hover:bg-black/[0.04]"
+        className="rounded-lg px-3 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-black/[0.04]"
       >
         {t("signIn")}
       </Link>
       <Link
         to={SIGN_UP_PATH}
-        className="rounded-full bg-[var(--accent)] px-3.5 py-1.5 text-sm font-medium text-white hover:bg-[var(--accent-soft)]"
+        className="inline-flex h-10 items-center rounded-lg bg-[var(--accent)] px-4 text-sm font-medium text-white hover:bg-[var(--accent-soft)]"
       >
         {t("signUp")}
       </Link>
