@@ -34,7 +34,7 @@ export const clerkAppearance = {
       "w-full rounded-[20px] bg-white shadow-[0_1px_4px_rgba(16,24,40,0.04)]",
     card: "gap-4 rounded-[20px] bg-white px-6 py-6",
     logoBox: "mb-2 justify-center",
-    logoImage: "h-14 w-auto",
+    logoImage: "pioni-logo pioni-logo--header",
     headerTitle:
       "text-center text-[28px] font-medium leading-9 tracking-tight text-[#101114]",
     headerSubtitle: "text-center text-sm text-[#686B82]",

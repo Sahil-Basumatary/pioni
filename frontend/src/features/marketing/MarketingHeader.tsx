@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import PioniLogo from "../../components/PioniLogo";
 import { SIGN_IN_PATH, SIGN_UP_PATH } from "../auth/authRoutes";
 import { MARKETING_SECTIONS, MARKETING_SECTION_IDS } from "./marketingSections";
 import { useActiveSection } from "./useActiveSection";
@@ -31,11 +32,7 @@ export default function MarketingHeader() {
       <div className="mx-auto flex h-full w-full max-w-7xl items-center gap-6 px-4 sm:px-6">
         <div className="flex flex-1 items-center">
           <Link to="/" className="flex items-center" aria-label="Pioni home">
-            <img
-              src="/logo.svg"
-              alt="Pioni"
-              className="marketing-logo marketing-logo--header"
-            />
+            <PioniLogo invert />
           </Link>
         </div>
 

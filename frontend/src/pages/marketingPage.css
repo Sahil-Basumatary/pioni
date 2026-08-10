@@ -75,27 +75,6 @@ body:has(.marketing-page) {
   color-scheme: light;
 }
 
-/* Single-colour black mark, so inverting is exact and cannot drift out of sync
-   with the shape the way a duplicated light asset would. */
-.marketing-logo {
-  /* logo.svg carries ~62% transparent padding: the artwork spans y 245.5-329.5
-     inside a 224-unit box. Sizing by box height therefore renders a mark far
-     smaller than the number suggests, so size by ink and divide it back out.
-     If the asset is ever cropped to its artwork, this ratio becomes 1. */
-  --mkt-logo-ink-ratio: 0.375;
-  height: calc(var(--mkt-logo-ink) / var(--mkt-logo-ink-ratio));
-  width: auto;
-  filter: invert(1);
-}
-
-/* 22px of visible mark in a 64px bar. */
-.marketing-logo--header {
-  --mkt-logo-ink: 22px;
-}
-
-.marketing-logo--footer {
-  --mkt-logo-ink: 20px;
-}
 
 .marketing-feed__layout {
   display: flex;

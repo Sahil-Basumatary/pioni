@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
+import PioniLogo from "../../components/PioniLogo";
 import {
   ChevronLeftSmallIcon,
   SupportIcon,
@@ -27,7 +28,7 @@ export default function AuthLayout({
       <header className="flex h-12 shrink-0 items-center justify-between px-4">
         <div className="flex items-center gap-3">
           <Link to="/" className="flex items-center">
-            <img src="/logo.svg" alt="Pioni" className="h-7" />
+            <PioniLogo />
           </Link>
           {backTo && !backAboveCard ? (
             <Link

@@ -53,3 +53,24 @@
     transform: translateY(0);
   }
 }
+
+/* logo.svg has ~62% transparent padding (artwork is ~37.5% of the box).
+   Size by visible ink so headers match across marketing and the desk. */
+.pioni-logo {
+  --pioni-logo-ink-ratio: 0.375;
+  --pioni-logo-ink: 22px;
+  height: calc(var(--pioni-logo-ink) / var(--pioni-logo-ink-ratio));
+  width: auto;
+}
+
+.pioni-logo--header {
+  --pioni-logo-ink: 22px;
+}
+
+.pioni-logo--footer {
+  --pioni-logo-ink: 20px;
+}
+
+.pioni-logo--invert {
+  filter: invert(1);
+}

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import PioniLogo from "../../components/PioniLogo";
 import { SIGN_IN_PATH, SIGN_UP_PATH } from "../auth/authRoutes";
 
 const COLUMNS = [
@@ -42,11 +43,7 @@ export default function MarketingFooter() {
         <div className="grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
           <div className="sm:col-span-2 lg:col-span-1">
             <Link to="/" className="inline-flex items-center" aria-label="Pioni home">
-              <img
-                src="/logo.svg"
-                alt="Pioni"
-                className="marketing-logo marketing-logo--footer"
-              />
+              <PioniLogo ink="footer" invert />
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-[var(--text-muted)]">
               Paper trading with live market data.
