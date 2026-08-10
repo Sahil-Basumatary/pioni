@@ -10,8 +10,7 @@ export default function HelpPage() {
       title="Help centre"
       summary={
         <>
-          <strong>The short version:</strong> create an account, open the desk, and place
-          an order. Practice USD is already there and nothing you do costs money.
+          Create an account, open the desk, and place an order. Practice USD is included.
         </>
       }
       footer={
@@ -29,9 +28,8 @@ export default function HelpPage() {
         <Link className="underline" to={SIGN_UP_PATH}>
           Create an account
         </Link>{" "}
-        with an email address. The desk opens with practice USD already credited, so there
-        is no funding step. Pick a market from the list on the left of the desk to load its
-        chart, order book, and ticket.
+        with an email address. Practice USD is included. Pick a market to load its chart,
+        order book, and ticket.
       </p>
 
       <h2>Placing an order</h2>
@@ -71,12 +69,12 @@ export default function HelpPage() {
           password reset
         </Link>{" "}
         link on the sign-in page. If you originally signed up with Google or another
-        provider, use that same button rather than a password.
+        provider, use the same provider button instead of a password.
       </p>
 
       <h2>Deleting your account</h2>
       <p>
-        Email{" "}
+        Delete your account from Settings, or email{" "}
         <a className="underline" href={`mailto:${LEGAL.contactEmail}`}>
           {LEGAL.contactEmail}
         </a>{" "}

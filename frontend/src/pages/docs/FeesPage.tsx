@@ -15,9 +15,7 @@ export default function FeesPage() {
       title="Fee schedule"
       summary={
         <>
-          <strong>The short version:</strong> nothing on Pioni is ever charged. The rates
-          below are the ones the ticket quotes so your order totals look like a real
-          venue.
+          Nothing is charged. The order ticket shows the simulated rates below.
         </>
       }
       footer={
@@ -38,8 +36,8 @@ export default function FeesPage() {
 
       <h2>What the ticket quotes</h2>
       <p>
-        The order ticket still shows an estimated fee, because learning to read an order
-        total is part of the point. These are the rates it uses.
+        The order ticket shows an estimated fee in the order total. These are the rates
+        it uses.
       </p>
       <table>
         <thead>
@@ -60,9 +58,7 @@ export default function FeesPage() {
         </tbody>
       </table>
       <p>
-        Spot and margin practice run at zero so the numbers stay easy to follow while you
-        are learning the mechanics. Futures quotes a maker and taker split so you can see
-        how the two differ on a leveraged ticket.
+        Spot and margin are 0%. Futures shows separate maker and taker rates.
       </p>
 
       <h2>Maker and taker</h2>

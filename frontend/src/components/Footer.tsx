@@ -7,7 +7,7 @@ export default function Footer() {
       <div className="mx-auto max-w-[1320px] px-6 lg:px-12 py-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-[var(--text-muted)]">
           <span className="font-medium text-[var(--text-secondary)]">Paper trading only.</span>{" "}
-          Simulated funds, not real money — for education, not financial advice.
+          Simulated funds. Not financial advice.
         </p>
         <nav className="flex items-center gap-4 text-xs">
           <NavLink

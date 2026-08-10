@@ -66,7 +66,7 @@ describe("MarketingPage", () => {
     );
 
     expect(
-      screen.getByRole("heading", { level: 1, name: /Learn to trade without risking real money/i }),
+      screen.getByRole("heading", { level: 1, name: /Paper trade with live market data/i }),
     ).toBeInTheDocument();
     expect(screen.getAllByRole("navigation", { name: "Page sections" })).toHaveLength(2);
     expect(
@@ -142,7 +142,7 @@ describe("MarketingPage", () => {
       screen.getByRole("heading", { name: /A paper balance you can reset/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: /Everything stays in one desk/i }),
+      screen.getByRole("heading", { name: /One desk for every order/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { level: 2, name: "What you can trade" }),

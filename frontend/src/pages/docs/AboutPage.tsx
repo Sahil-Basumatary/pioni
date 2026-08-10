@@ -10,8 +10,7 @@ export default function AboutPage() {
       title="About Pioni"
       summary={
         <>
-          <strong>The short version:</strong> a trading desk you can learn on, built so
-          that a first order costs nothing but attention.
+          A paper trading desk with live market data and simulated balances.
         </>
       }
       footer={
@@ -26,26 +25,23 @@ export default function AboutPage() {
     >
       <h2>Why it exists</h2>
       <p>
-        Most people meet a real order ticket for the first time with their own money on it.
-        That is an expensive place to learn what a limit order does, how an order book
-        moves, or how it feels to hold a losing position. Pioni gives you the same
-        instrument with the money taken out.
+        Real trading platforms require money before you can learn the order ticket. Pioni
+        lets you practise market orders, limit orders, and position management without a
+        deposit.
       </p>
 
       <h2>What it does</h2>
       <p>
-        Live prices for {MARKET_CATALOG.length} markets, a matching engine, an order book,
-        charts, positions, and a full trade history, all running against a practice
-        balance. You place orders the way you would anywhere else. The difference is that
-        the balance is simulated and the reset button carries no consequences.
+        Pioni includes live prices for {MARKET_CATALOG.length} markets, charts, an order
+        book, positions, and trade history. Orders use a simulated balance that you can
+        reset.
       </p>
 
       <h2>How it is built</h2>
       <p>
         A React and TypeScript front end talks to a Python gateway that fronts separate
         services for market data, order matching, portfolio, and sentiment. Prices come
-        from public exchange data. The matching engine is our own, which is what makes the
-        order book behave like a book rather than a list of numbers.
+        from public exchange data. Orders match against a simulated book.
       </p>
 
       <h2>Who made it</h2>

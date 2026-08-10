@@ -5,11 +5,11 @@ const FAQS = [
   },
   {
     q: "Where do the prices come from?",
-    a: "Public exchange data, refreshed while the page is open. Pioni does not quote its own prices.",
+    a: "Public exchange data. Prices refresh while the page is open.",
   },
   {
     q: "Are there fees?",
-    a: "Nothing is ever charged. Spot and margin practice run at zero, and the futures ticket quotes a maker and taker rate.",
+    a: "Nothing is charged. Spot and margin are 0%. Futures shows simulated maker and taker rates.",
   },
 ] as const;
 

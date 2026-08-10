@@ -7,9 +7,9 @@ const MAX_MARGIN = Math.max(...MARKET_CATALOG.map((m) => m.marginLeverage ?? 0))
 /* Derived from the catalog so the numbers cannot drift from what the desk
    actually lists. */
 const STATS = [
-  { value: String(MARKET_CATALOG.length), label: "Markets on the desk" },
-  { value: String(CATEGORY_COUNT), label: "Categories to filter by" },
-  { value: `${MAX_MARGIN}x`, label: "Highest margin setting" },
+  { value: String(MARKET_CATALOG.length), label: "Markets" },
+  { value: String(CATEGORY_COUNT), label: "Categories" },
+  { value: `${MAX_MARGIN}x`, label: "Maximum margin" },
 ] as const;
 
 export default function MarketingCoverage() {
@@ -32,8 +32,8 @@ export default function MarketingCoverage() {
             What you can trade
           </h2>
           <p className="mt-2 max-w-md text-[14px] leading-relaxed text-[var(--text-muted)]">
-            Majors, Layer 1s and Layer 2s, and infrastructure tokens, all quoted
-            against USD on the same ticket.
+            Trade major, Layer 1, Layer 2, payment, and infrastructure tokens.
+            Every market is quoted in USD.
           </p>
           <dl className="mt-6 grid grid-cols-3 gap-4">
             {STATS.map((stat) => (

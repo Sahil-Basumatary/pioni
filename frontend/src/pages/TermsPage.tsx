@@ -6,9 +6,8 @@ export default function TermsPage() {
       title="Terms of Service"
       summary={
         <>
-          <strong>The short version:</strong> {LEGAL.product} is a free tool for learning to trade
-          using <strong>simulated money only</strong>. Nothing here is real trading, and nothing is
-          financial advice. By using {LEGAL.product} you agree to the terms below.
+          {LEGAL.product} uses <strong>simulated money only</strong>. It does not provide real
+          trading or financial advice. By using {LEGAL.product}, you agree to these terms.
         </>
       }
     >

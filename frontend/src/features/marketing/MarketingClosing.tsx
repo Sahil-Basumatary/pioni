@@ -16,7 +16,7 @@ export default function MarketingClosing() {
           Ready to place your first paper trade?
         </h2>
         <p className="mx-auto mt-3 max-w-lg text-[14px] leading-relaxed text-white/65">
-          It takes an email address. Everything else is already set up.
+          Create an account. Practice USD is included.
         </p>
         <Link
           to={SIGN_UP_PATH}

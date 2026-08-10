@@ -12,8 +12,8 @@ export default function RulesPage() {
       title="How paper trading works"
       summary={
         <>
-          <strong>The short version:</strong> prices are real, everything else is
-          simulated. No deposit, no withdrawal, and no order ever reaches an exchange.
+          Prices use public market data. Balances, fills, and fees are simulated. Orders
+          never reach an exchange.
         </>
       }
       footer={
@@ -57,8 +57,7 @@ export default function RulesPage() {
 
       <h2>Fees</h2>
       <p>
-        Nothing is ever charged. The ticket quotes an estimated fee so totals read like a
-        real venue. See the{" "}
+        Nothing is charged. The ticket shows a simulated fee estimate. See the{" "}
         <Link className="underline" to="/fees">
           fee schedule
         </Link>{" "}
@@ -74,10 +73,9 @@ export default function RulesPage() {
 
       <h2>What Pioni is not</h2>
       <p>
-        Pioni is not a broker, exchange, or regulated financial service, and nothing on it
-        is financial advice. Results you get here do not predict what would happen with
-        real money, where slippage, liquidity, and your own reaction to risk all behave
-        differently.
+        Pioni is not a broker, exchange, or regulated financial service. Nothing on it is
+        financial advice. Simulated results do not predict real-market slippage,
+        liquidity, or risk.
       </p>
     </DocLayout>
   );

@@ -57,14 +57,13 @@ export default function ApiPage() {
       title="API reference"
       summary={
         <>
-          <strong>The short version:</strong> a REST gateway plus a WebSocket stream. Every
-          write touches simulated balances only, so there is nothing here that can move
-          real money.
+          REST endpoints and a WebSocket stream for market data and paper trading. All
+          writes use simulated balances.
         </>
       }
       footer={
         <>
-          This reference covers the shape of the API rather than every field. Questions to{" "}
+          This is an endpoint overview, not a complete schema. Questions:{" "}
           <a className="underline" href={`mailto:${LEGAL.contactEmail}`}>
             {LEGAL.contactEmail}
           </a>
@@ -96,16 +95,14 @@ export default function ApiPage() {
 
       <h2>Limits and fair use</h2>
       <p>
-        Requests are rate limited per account. Pioni is a personal educational project
-        rather than a commercial service, so please poll at a sensible interval and prefer
-        the WebSocket stream for anything that needs to stay current.
+        Requests are rate limited per account. Use the WebSocket stream for live updates
+        instead of frequent polling.
       </p>
 
       <h2>Stability</h2>
       <p>
-        The API is not versioned yet and can change while Pioni is in active development.
-        It is here to make the platform inspectable and scriptable, not to underpin
-        anything you depend on. See the{" "}
+        The API is not versioned and can change. Do not depend on it for production
+        systems. See the{" "}
         <Link className="underline" to="/terms">
           terms of service
         </Link>{" "}

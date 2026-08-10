@@ -29,8 +29,7 @@ export default function MarketingAppShowcase() {
             Paper trading on your phone
           </h2>
           <p className="mx-auto mt-2 max-w-xl text-[14px] leading-relaxed text-[var(--text-muted)]">
-            The same account on a smaller screen, so a position is never more than a
-            tap away.
+            Check markets, place orders, and review positions on mobile.
           </p>
         </div>
 

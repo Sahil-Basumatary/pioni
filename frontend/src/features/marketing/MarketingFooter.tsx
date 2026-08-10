@@ -49,7 +49,7 @@ export default function MarketingFooter() {
               />
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-[var(--text-muted)]">
-              Learn to trade before it counts.
+              Paper trading with live market data.
             </p>
           </div>
           {COLUMNS.map((column) => (
@@ -76,8 +76,7 @@ export default function MarketingFooter() {
         </div>
         <div className="mt-14 border-t border-[var(--card-border)] pt-7 text-xs leading-relaxed text-[var(--text-muted)]">
           <p className="max-w-3xl">
-            Pioni is a paper-trading product. Balances, fills, and fees are simulated.
-            Pioni is not a broker.
+            Balances, fills, and fees are simulated. Pioni is not a broker.
           </p>
           <p className="mt-2">
             © {new Date().getFullYear()} Pioni. Not investment advice.

@@ -7,10 +7,9 @@ export default function PrivacyPage() {
       title="Privacy Policy"
       summary={
         <>
-          <strong>The short version:</strong> {LEGAL.product} is a free, simulated paper-trading
-          tool for learning. We collect the minimum we need — your sign-in identity and basic
-          technical logs — to run the service securely. We never take payment details, we do not
-          sell your data, and there is no real money involved anywhere on the platform.
+          {LEGAL.product} is a simulated paper-trading tool. We use your sign-in identity and
+          technical logs to run and secure the service. We do not collect payment details or sell
+          your data.
         </>
       }
     >

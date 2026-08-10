@@ -76,7 +76,7 @@ export default function MarketingFloatMarkets({ rows, allRows, chip }: Props) {
       {visibleRest.length ? (
         <div className="mt-5">
           <h3 className="text-[15px] font-semibold text-[var(--text-primary)]">
-            Everything else on the desk
+            More markets
           </h3>
           <div className="marketing-market-grid mt-3">
             {visibleRest.map((row) => (

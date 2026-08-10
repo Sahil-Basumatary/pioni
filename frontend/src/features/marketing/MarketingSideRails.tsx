@@ -20,7 +20,7 @@ const HUBS = [
   {
     id: "margin",
     title: "Margin practice",
-    body: "Positions up to 10x, settled in paper",
+    body: "Simulated positions up to 10x",
     href: "/trade/margin",
   },
 ] as const;
@@ -96,7 +96,7 @@ export default function MarketingSideRails({ rows }: Props) {
           Paper desk
         </h2>
         <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--text-muted)]">
-          Sign up and the desk opens with practice USD already in it.
+          Create an account with practice USD included.
         </p>
         <Link
           to={SIGN_UP_PATH}

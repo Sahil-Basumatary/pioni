@@ -22,10 +22,10 @@ export default function MarketingDeskGallery() {
             id="mkt-desk-title"
             className="mt-2 text-2xl type-display font-medium text-[var(--text-primary)] sm:text-[28px] sm:leading-8"
           >
-            Everything stays in one desk
+            One desk for every order
           </h2>
           <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-[var(--text-muted)]">
-            One workspace for the whole trade. Nothing opens in a separate view.
+            Chart, order book, ticket, and positions stay in one workspace.
           </p>
         </div>
 

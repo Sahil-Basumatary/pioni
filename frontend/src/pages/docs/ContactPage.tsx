@@ -9,22 +9,21 @@ export default function ContactPage() {
       title="Contact"
       summary={
         <>
-          <strong>The short version:</strong> one inbox,{" "}
+          Email{" "}
           <a className="underline" href={`mailto:${LEGAL.contactEmail}`}>
             {LEGAL.contactEmail}
           </a>
-          . Pioni is a personal project, so replies come from a person rather than a queue.
+          {" "}for support, bugs, privacy requests, and feedback.
         </>
       }
     >
       <h2>Support</h2>
       <p>
-        Check the{" "}
+        Read the{" "}
         <Link className="underline" to="/help">
           help centre
         </Link>{" "}
-        first, since it covers the questions that come up most. If it does not answer
-        yours, email{" "}
+        first. If it does not answer your question, email{" "}
         <a className="underline" href={`mailto:${LEGAL.contactEmail}`}>
           {LEGAL.contactEmail}
         </a>{" "}
@@ -49,8 +48,7 @@ export default function ContactPage() {
 
       <h2>Anything else</h2>
       <p>
-        Feedback on the product, questions about how it is built, or notes on the API are
-        all welcome at the same address.
+        Send product feedback, technical questions, and API notes to the same address.
       </p>
     </DocLayout>
   );
