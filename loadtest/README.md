@@ -7,13 +7,9 @@
 | Market read | `gateway_market_read.js` | Gateway `GET /market/prices` (`:8000`) | Public read fan-out latency/error rate through the real edge |
 | Order submit | `orders_submit.js` | Orders `POST /orders` (`:8003`) | End-to-end order throughput: validation → matching → DB write → event publish |
 
-Order submission is driven **directly against the orders service** rather than through the
-gateway. The gateway path is identity-scoped (Clerk JWT per request), which is verified by the
-functional test suite; throughput is a property of the order/matching path, so that is what we
-load here. Each virtual user provisions **its own** paper portfolio (via the portfolio service's
-real get-or-create endpoint) and trades **its own** symbol, so concurrent submits hit distinct
-`SELECT ... FOR UPDATE` rows and distinct per-symbol matching locks — the realistic shape where
-every user trades their own book, rather than 50 users serializing on a single portfolio row.
+Order submission runs directly against the orders service. Gateway authentication is covered by
+functional tests and is outside this throughput measurement. Each virtual user gets a separate
+paper portfolio and symbol, avoiding artificial contention on one portfolio row or matching lock.
 
 ## Prerequisites
 
@@ -62,8 +58,8 @@ Each script encodes thresholds so a run exits non-zero if the system regresses:
 - Market read: `http_req_failed < 1%`, `p95 < 200ms`, `p99 < 500ms`
 - Order submit: `http_req_failed < 2%`, `order_submit p95 < 200ms`, `p99 < 500ms`
 
-These are starting points for a local single-process `uvicorn`; tighten them once you have a
-baseline on the target hardware.
+These thresholds are initial limits for local single-process `uvicorn`. Production hardware needs
+its own measured baseline.
 
 ## Recording results
 

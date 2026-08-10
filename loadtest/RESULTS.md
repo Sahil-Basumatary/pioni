@@ -26,12 +26,11 @@ Record each run with enough context to reproduce it.
 
 ---
 
-## Gateway market results after optimisation 
+## Gateway market results after optimisation
 
-Device - Apple MacBook pro m1 pro
-Stack: local Postgres/Redis/RabbitMQ + market-data
-service. Load generated from the same device, so k6, market-data and the gateway workers all
-contend for the same cores
+- Machine: M1 Pro
+- Stack: local Postgres, Redis, RabbitMQ, and market-data service
+- Load generator: same machine as the services
 
 The market-data source answers `/prices` in ~0.5ms; all latency below is gateway-side.
 
@@ -50,22 +49,16 @@ accepts traffic.
 ² p50/p95 are higher in the ceiling row only because it runs at 3× the concurrency (150 vs 50 VUs);
 the throughput is the headline. At 50 VUs the 8-worker p50 sits in the low single-digit ms.
 
-### What changed and why
+### Findings
 
-- **Bisection first.** A 1-VU run showed a single request costs ~3.5ms, while 50 VUs hit 151ms —
-  proving the 150ms was queuing behind a single event-loop core, not slow work.
-- **Edge cache (`response_cache.TTLByteCache`).** `/prices` is a live snapshot already streamed to
-  clients over WebSocket, so serving a sub-second-stale copy is invisible. The cache stores the raw
-  upstream bytes (skips a JSON decode/re-encode) and a per-key lock collapses a concurrent miss
-  stampede into a single upstream fetch. Cache hits are pure memory reads → sub-millisecond.
-- **Horizontal workers.** Multiple uvicorn workers spread concurrent requests across cores, which
-  is what collapsed the queuing tail.
+- A 1-VU run took about 3.5ms. The 151ms result at 50 VUs came from queueing on one event-loop core.
+- `response_cache.TTLByteCache` stores raw upstream bytes for less than one second. A per-key lock collapses concurrent misses into one upstream request.
+- Multiple uvicorn workers spread requests across cores and reduced queueing.
 
 ### Remaining ceiling
 
-At 4,076/s ≈ 8 × ~510/s, each cache hit costs ~2ms of pure framework overhead. That is the
-`BaseHTTPMiddleware` tax (Starlette wraps each `@app.middleware("http")` in an anyio task group +
-streaming shim). Converting the hot middleware to pure ASGI is the next lever.
+At 4,076 requests per second, each cached request costs about 2ms of framework overhead.
+`BaseHTTPMiddleware` remains the main measured limit on this path.
 
 ### Reproduce
 

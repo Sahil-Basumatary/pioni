@@ -69,6 +69,6 @@ Cross-service timings use wall-clock epoch milliseconds, so they depend on the m
 
 The current p95 is under one 60Hz frame budget, which is the practical target for visible browser UI updates. A sub-3ms receive-to-paint p95 is not a realistic visible-paint target on normal displays; that kind of number belongs to receive-to-state or receive-to-store measurements, not actual painted UI.
 
-With Redux frame batching, sub-3ms receive-to-Redux-state is not the main target either, because state updates are deliberately aligned to the browser frame. If we need a sub-3ms hot path later, the honest metric is browser receive-to-frame-buffer, while Redux remains the stable app state updated once per frame.
+With Redux frame batching, sub-3ms receive-to-Redux-state is not the main target because state updates deliberately align to the browser frame. A future sub-3ms hot path should measure browser receive-to-frame-buffer while Redux remains stable app state updated once per frame.
 
 The hot store gives us that honest fast-path metric. It lets the app prove the newest trade is available almost immediately while keeping visual updates and Redux updates aligned with the browser frame.

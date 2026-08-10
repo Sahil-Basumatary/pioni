@@ -79,7 +79,7 @@ Every service calls `common.instrument_app_tracing`, which:
 
 ### Correlation
 
-The three signals are joined so you can pivot between them:
+The three signals share correlation fields:
 
 - `request.id` (the existing per-request correlation ID) is set as a span attribute
 - `trace_id` and `span_id` are injected into every JSON log line when a span is active

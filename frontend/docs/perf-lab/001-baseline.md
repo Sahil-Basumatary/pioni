@@ -9,7 +9,7 @@
 
 ## Environment
 
-- Machine / CPU: Apple M1 Pro, 16 GB memory, arm64
+- Machine / CPU: M1 Pro, 16 GB memory, arm64
 - OS: macOS 15.6.1 (24G90)
 - Node: v22.20.0, npm 11.7.0
 - Browser: Google Chrome 149.0.7827.104

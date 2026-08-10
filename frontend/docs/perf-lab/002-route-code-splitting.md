@@ -49,7 +49,7 @@ Totals:
 
 - The entry JS chunk dropped from 161.10 KiB gzip to 99.31 KiB gzip, a 61.79 KiB reduction.
 - The default `/trading` route still needs the trading route chunk, so its first-route JS cost is 154.89 KiB gzip (`99.31 + 55.58`).
-- LCP improved from 2.48s to 2.27s, but it is still above my 2.0s target for now.
+- LCP improved from 2.48s to 2.27s but remained above the 2.0s target.
 - CLS is noisier after lazy routing because the trading chart/fallback swap is still not perfectly stable.
 
 ## Next things to check

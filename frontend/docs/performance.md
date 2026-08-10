@@ -1,12 +1,10 @@
-# Frontend Performance
+# Frontend performance
 
-A measured, reproducible account of how the Pioni frontend is kept fast. The
-guiding principle is that every number here is something I **measured, moved, and can
-reproduce on demand**.
+Reproducible frontend measurements and performance budgets.
 
-The production preview (`vite build` followed by a static serve of `dist/`) is
-the single source of truth. Development-mode numbers are noisier and are used
-only for live observation, never for the table below.
+Production-preview runs (`vite build` followed by a static server for `dist/`) are
+the source of truth. Development measurements are kept only when the production
+setup cannot capture a live data path.
 
 ## How to reproduce
 
@@ -21,14 +19,14 @@ All commands run from `frontend/`.
 | Tick-to-state latency | `npm run perf:tick-to-state` | Parses synthetic WebSocket trades, dispatches them into Redux, and measures state update latency. |
 | Tick-to-paint latency | `npm run perf:tick-to-paint` | Builds, serves `dist/`, emits synthetic WebSocket trades, and measures visible price update latency. |
 | Live market latency (dev) | `VITE_MARKET_LATENCY_DEBUG=true npm run dev` | Adds real WebSocket hop timing and logs rolling receive-to-store, receive-to-state, and receive-to-paint p50 / p95 / p99 while the trading page receives live ticks. |
-| Live Web Vitals (dev) | `npm run dev` | Logs LCP / INP / CLS / FCP / TTFB to the console as you interact. |
+| Live Web Vitals (dev) | `npm run dev` | Logs LCP / INP / CLS / FCP / TTFB during interaction. |
 
 ## Measurement environment
 
 > Record the machine these numbers were captured on so the table stays credible.
 > The method used is transferable and numbers are hardware-dependent.
 
-- Machine: Apple M1 Pro, 16 GB memory, arm64
+- Machine: M1 Pro, 16 GB memory, arm64
 - OS: macOS 15.6.1 (24G90)
 - Node: v22.20.0, npm 11.7.0
 - Browser (Lighthouse): Google Chrome 149.0.7827.104, LHCI 0.15.1

@@ -60,7 +60,7 @@ Totals:
 ## Interpretation
 
 - Removing the remote font path cut one external CSS/font dependency from first load.
-- LCP moved from 2.28s to 1.97s, crossing my 2.0s target.
+- LCP moved from 2.28s to 1.97s, crossing the 2.0s target.
 - FCP moved from 1.96s to 1.51s.
 - CLS stayed around 0.095, so the remaining layout movement is more likely route/chart fallback behavior than font swap.
 
