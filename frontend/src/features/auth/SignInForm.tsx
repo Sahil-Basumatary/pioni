@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSignIn } from "@clerk/clerk-react";
+import PioniLogo from "../../components/PioniLogo";
 import { EyeIcon, EyeOffIcon } from "../../components/shell/shellIcons";
+import { GoogleIcon, XIcon } from "./authBrandIcons";
 import { clerkErrorMessage } from "./authErrors";
 import { FORGOT_PASSWORD_PATH, SIGN_UP_PATH } from "./authRoutes";
 import { AuthRichText } from "./AuthRichText";
@@ -73,7 +75,7 @@ export default function SignInForm() {
   return (
     <div className="flex w-full flex-col gap-4 rounded-[20px] bg-white px-6 py-6 shadow-[0_1px_4px_rgba(16,24,40,0.04)]">
       <div className="flex flex-col items-center gap-3">
-        <img src="/logo.svg" alt="" className="h-14 w-auto" />
+        <PioniLogo alt="" />
         <h1 className="text-center text-[28px] font-medium leading-9 tracking-tight text-[#101114]">
           {t("signInTitle")}
         </h1>
@@ -170,16 +172,18 @@ export default function SignInForm() {
           type="button"
           disabled={busy || !isLoaded}
           onClick={() => void onOAuth("oauth_google")}
-          className="flex h-[52px] w-full items-center justify-center rounded-xl bg-[rgba(104,107,130,0.08)] text-base font-medium text-[#101114] hover:bg-[rgba(104,107,130,0.12)] disabled:opacity-60"
+          className="flex h-[52px] w-full items-center justify-center gap-3 rounded-xl bg-[rgba(104,107,130,0.08)] text-base font-medium text-[#101114] hover:bg-[rgba(104,107,130,0.12)] disabled:opacity-60"
         >
+          <GoogleIcon className="h-5 w-5 shrink-0" />
           {t("signInWithGoogle")}
         </button>
         <button
           type="button"
           disabled={busy || !isLoaded}
           onClick={() => void onOAuth("oauth_x")}
-          className="flex h-[52px] w-full items-center justify-center rounded-xl bg-[rgba(104,107,130,0.08)] text-base font-medium text-[#101114] hover:bg-[rgba(104,107,130,0.12)] disabled:opacity-60"
+          className="flex h-[52px] w-full items-center justify-center gap-3 rounded-xl bg-[rgba(104,107,130,0.08)] text-base font-medium text-[#101114] hover:bg-[rgba(104,107,130,0.12)] disabled:opacity-60"
         >
+          <XIcon className="h-5 w-5 shrink-0" />
           {t("signInWithX")}
         </button>
       </div>
