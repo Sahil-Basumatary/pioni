@@ -18,7 +18,7 @@ export default function MarketingSubNav() {
               key={section.id}
               href={`#${section.id}`}
               aria-current={isActive ? "true" : undefined}
-              className={`shrink-0 rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition-colors duration-200 ${
+              className={`shrink-0 rounded-full border px-3.5 py-1.5 text-[15px] font-semibold transition-colors duration-200 ${
                 isActive
                   ? "border-transparent bg-[var(--mkt-cta-bg)] text-[var(--mkt-cta-fg)]"
                   : "border-[var(--card-border)] bg-[var(--mkt-ink-850)] text-[var(--text-muted)]"

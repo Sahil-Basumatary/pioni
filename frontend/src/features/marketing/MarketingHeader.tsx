@@ -50,7 +50,7 @@ export default function MarketingHeader() {
                 key={section.id}
                 href={`#${section.id}`}
                 aria-current={isActive ? "true" : undefined}
-                className={`relative flex h-full items-center px-3.5 text-[13px] font-medium tracking-[-0.01em] transition-colors duration-200 ${
+                className={`relative flex h-full items-center px-3.5 text-[15px] font-semibold tracking-[-0.01em] transition-colors duration-200 ${
                   isActive
                     ? "text-[var(--text-primary)]"
                     : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
