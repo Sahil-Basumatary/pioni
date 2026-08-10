@@ -22,33 +22,33 @@ type BenefitIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
 const BENEFITS: { title: string; body: string; Icon: BenefitIcon }[] = [
   {
-    title: "No capital needed",
-    body: "Pass the evaluation and unlock up to $200,000 in buying power without risking your own funds.",
+    title: "Concept preview",
+    body: "Explore a proposed prop evaluation flow. No program is currently offered.",
     Icon: PropBillIcon,
   },
   {
-    title: "Trader-friendly rules",
-    body: "No time limits for the evaluation, consistency rules, profit caps or restrictions on your trading strategy.",
+    title: "Example rules",
+    body: "Review sample profit targets, daily loss limits, and drawdown limits.",
     Icon: PropFileTextIcon,
   },
   {
-    title: "Limited risk",
-    body: "Because you don’t need to deposit trading capital, you only pay for the evaluation. We cover any losses.",
+    title: "No payment",
+    body: "Evaluations cannot be purchased and no payment details are collected.",
     Icon: PropBalanceIcon,
   },
   {
-    title: "Payouts on demand",
-    body: "Withdraw profits anytime and get paid within 24 hours, directly to your Pioni account.",
+    title: "No payouts",
+    body: "The payout screen is a visual preview. No funds can be withdrawn.",
     Icon: PropWithdrawIcon,
   },
   {
-    title: "Institutional trading environment",
-    body: "Trade 60+ crypto pairs with deep liquidity and advanced tools, directly within Pioni.",
+    title: "Simulated trading",
+    body: "All balances, trades, evaluation results, and account values are simulated.",
     Icon: PropExpandIcon,
   },
   {
-    title: "Proven and trusted",
-    body: "Over 35,000 wallets funded since 2023, with zero payout delays in all market conditions.",
+    title: "Not live",
+    body: "Pioni does not issue funded wallets or provide company capital.",
     Icon: PropShieldTickIcon,
   },
 ];
@@ -56,31 +56,31 @@ const BENEFITS: { title: string; body: string; Icon: BenefitIcon }[] = [
 const FAQ: { q: string; a: string }[] = [
   {
     q: "What is prop trading?",
-    a: "Prop trading (proprietary trading) is when traders trade with a company’s capital instead of their own. Traders are allocated company funds, trade within set risk limits and share in the profits. The company provides the capital and absorbs trading losses. Pioni Prop lets you trade with up to $200,000 of Pioni capital and keep up to 90% of your profits. Start by taking an evaluation in a simulated trading environment that reflects live market conditions. If you reach the profit target without breaching the risk limits, you’ll pass the evaluation and get a funded wallet to trade with.",
+    a: "Prop trading uses a firm's capital under defined risk limits. Pioni Prop is only a concept preview. Pioni does not provide capital, funded wallets, or profit sharing.",
   },
   {
     q: "How does Pioni Prop differ from trading on Pioni?",
-    a: "Pioni Prop uses the same interface and trading tools as Pioni. The difference is that you trade with Pioni capital instead of your own funds.",
+    a: "This page previews evaluation rules and screens. The rest of Pioni provides paper trading with simulated balances.",
   },
   {
-    q: "Why do I need to pay a fee to trade?",
-    a: "The fee covers the evaluation. It’s a one-time cost (per evaluation) to demonstrate consistent, risk-managed trading. You don’t need to deposit trading capital — the evaluation fee is your only financial risk. Pioni covers any trading losses beyond that.",
+    q: "Can I buy an evaluation?",
+    a: "No. Evaluations and fees shown on this page are examples. Pioni does not accept payment for a prop program.",
   },
   {
     q: "Is the evaluation time-limited?",
-    a: "No. Once you purchase an evaluation, your goal is to reach the profit target without breaching the risk limits. There’s no time limit, so you can trade at your own pace.",
+    a: "The example plans do not include a time limit. No evaluation can currently be started.",
   },
   {
     q: "What are the risk limits?",
-    a: "Risk limits vary according to the plan you choose. They define the maximum loss allowed in a day or over the lifetime of an evaluation or funded wallet.",
+    a: "The example plans show a daily loss limit and maximum drawdown. These limits are not part of a live program.",
   },
   {
     q: "What if I don’t pass the evaluation?",
-    a: "If your equity falls to or below the daily loss limit or the maximum drawdown limit, the evaluation wallet will be closed. You don’t owe any additional funds and you can buy a new evaluation at any time. The evaluation fee is non-refundable.",
+    a: "Nothing happens because the evaluation is not available. This page does not create or close wallets.",
   },
   {
-    q: "Are there any conflicts of interest I should know about?",
-    a: "When a funded trader’s balance hits the max-loss line, the firm is released from any liability to pay future performance fees — so the firm’s financial interest is opposite to yours. The firm may receive financial incentives from third parties based on trade ideas provided by funded traders. Any such revenue is retained solely by the firm and is not shared with funded traders. Because such financial incentives are not included in PnL for funded traders, conflicts of interest may exist between the firm and each funded trader. Funded traders should carefully consider these conflicts before participating. In addition, because fees are earned each time an evaluation trader fails and then re-purchases an evaluation, conflicts of interest may also exist between the platform and each evaluation trader.",
+    q: "Can I receive funding or a payout?",
+    a: "No. Pioni does not provide trading capital, funded wallets, profit shares, or payouts.",
   },
 ];
 
@@ -88,7 +88,6 @@ export default function PropPage() {
   const [walletSize, setWalletSize] = useState<WalletSize>(10_000);
   const [planId, setPlanId] = useState<PlanId>("starter");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [notified, setNotified] = useState(false);
   const plans = useMemo(() => plansForWallet(walletSize), [walletSize]);
   const activePlanId = resolvePlanId(planId, walletSize);
   const plan = useMemo(
@@ -118,28 +117,28 @@ export default function PropPage() {
           </span>
           <div className="min-w-0 text-sm leading-[1.4]">
             <p className="font-medium">
-              Pioni Prop isn&apos;t available in United Kingdom yet
+              Pioni Prop is a concept preview
             </p>
             <p className="text-[rgb(72,75,94)]">
-              We&apos;ll notify you once Prop is available
+              Evaluations, funded wallets, and payouts are not available
             </p>
           </div>
         </div>
         <button
           type="button"
-          onClick={() => setNotified(true)}
+          disabled
           className="inline-flex h-8 shrink-0 items-center rounded-lg bg-[rgb(0,121,180)] px-2 text-xs font-medium text-white hover:bg-[rgb(0,105,158)]"
         >
-          {notified ? "Subscribed" : "Get notified"}
+          Not available
         </button>
       </div>
 
       <header className="mb-14 flex flex-col items-center text-center">
         <h1 className="text-[48px] font-normal leading-[56px] tracking-tight">
-          Trade with our money — not yours
+          Preview a prop evaluation
         </h1>
         <p className="mt-5 whitespace-pre-wrap text-[20px] font-normal leading-7 text-[rgb(16,17,20)]">
-          {"You bring the strategy. We provide the capital.\nYou keep up to 90% of your profits."}
+          {"Review example plans and risk limits.\nNo fees, funding, or payouts are available."}
         </p>
         <div className="mt-6 flex w-full items-center justify-center">
           <PropHeroArt />
@@ -152,8 +151,8 @@ export default function PropPage() {
         </h2>
         <div className="grid w-full gap-4 md:grid-cols-3">
           <HowCard
-            title="Buy an evaluation"
-            body="Reach a profit target while staying within loss limits in a simulated trading environment."
+            title="Review an example plan"
+            body="See sample targets and loss limits. You cannot buy this evaluation."
           >
             <PropStepGlass>
               <p className="text-xs leading-4 text-[var(--text-muted)]">
@@ -175,29 +174,29 @@ export default function PropPage() {
                 aria-disabled="true"
                 className="mt-auto inline-flex h-9 w-full cursor-not-allowed items-center justify-center rounded-xl bg-[var(--accent)] px-3 text-sm font-medium text-white opacity-40 pointer-events-none"
               >
-                Proceed to payment
+                Unavailable
               </button>
             </PropStepGlass>
           </HowCard>
           <HowCard
-            title="Get funded"
-            body="Pass the evaluation to get a funded wallet with up to $200,000 of Pioni’s capital."
+            title="Preview a result"
+            body="See how a passed evaluation could appear. No funded wallet is issued."
           >
             <PropStepGlass className="items-center justify-center gap-3 px-4 py-5 text-center">
               <PropFundedMark />
               <div className="text-sm font-medium leading-5 text-[var(--text-primary)]">
-                <p>Congratulations!</p>
-                <p>You passed the evaluation.</p>
+                <p>Example result</p>
+                <p>Evaluation passed</p>
               </div>
             </PropStepGlass>
           </HowCard>
           <HowCard
-            title="Collect profits"
-            body="Once funded, keep up to 90% of gains and withdraw to your Pioni account at any time."
+            title="Preview a payout"
+            body="Review the example payout interface. No funds can be withdrawn."
           >
             <PropStepGlass>
               <p className="text-xs leading-4 text-[var(--text-muted)]">
-                Available for{" "}
+                Example{" "}
                 <span className="underline decoration-dotted underline-offset-2">
                   payout
                 </span>
@@ -250,7 +249,7 @@ export default function PropPage() {
 
       <section className="mb-16 flex flex-col items-center gap-5">
         <h2 className="text-center text-[28px] font-normal leading-9">
-          Choose your wallet size
+          Choose an example wallet size
         </h2>
         <div className="inline-flex flex-wrap justify-center gap-1 rounded-xl bg-[rgba(104,107,130,0.08)] p-1">
           {WALLET_SIZES.map((size) => {
@@ -317,7 +316,7 @@ export default function PropPage() {
                 available={plans.map((p) => p.available)}
               />
               <PlanTableRow
-                label="Evaluation fee"
+                label="Example fee"
                 values={plans.map((p) => p.evaluationFee)}
                 active={activePlanId}
                 available={plans.map((p) => p.available)}

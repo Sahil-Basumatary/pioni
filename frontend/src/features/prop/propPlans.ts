@@ -35,7 +35,6 @@ export const PLAN_RULES: PlanRules[] = [
   },
 ];
 
-/** Base evaluation fees (80% split) by wallet size. Starter has no $200k tier. */
 export const EVALUATION_FEES: Record<
   WalletSize,
   Partial<Record<PlanId, number>>

@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import PropPage from "../../pages/PropPage";
 
 describe("PropPage", () => {
-  it("matches prop surface chrome and keeps third-party brand out of copy", () => {
+  it("presents Prop as an unavailable concept", () => {
     render(
       <MemoryRouter>
         <PropPage />
@@ -13,23 +13,25 @@ describe("PropPage", () => {
     );
     expect(
       screen.getByRole("heading", {
-        name: "Trade with our money — not yours",
+        name: "Preview a prop evaluation",
       }),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        /You bring the strategy\. We provide the capital\.\s*You keep up to 90% of your profits\./,
+        /Review example plans and risk limits\.\s*No fees, funding, or payouts are available\./,
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("How it works")).toBeInTheDocument();
-    expect(screen.getByText("Buy an evaluation")).toBeInTheDocument();
-    expect(screen.getByText("Get funded")).toBeInTheDocument();
-    expect(screen.getByText("Collect profits")).toBeInTheDocument();
-    expect(screen.getByText("No capital needed")).toBeInTheDocument();
-    expect(screen.getByText("Choose your wallet size")).toBeInTheDocument();
+    expect(screen.getByText("Review an example plan")).toBeInTheDocument();
+    expect(screen.getByText("Preview a result")).toBeInTheDocument();
+    expect(screen.getByText("Preview a payout")).toBeInTheDocument();
+    expect(screen.getByText("Concept preview")).toBeInTheDocument();
+    expect(screen.getByText("Choose an example wallet size")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "10,000 USD" })).toBeInTheDocument();
     expect(screen.getByText("Pioni Prop FAQ")).toBeInTheDocument();
     expect(screen.getByText("What is prop trading?")).toBeInTheDocument();
+    expect(screen.queryByText(/35,000 wallets funded/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/keep up to 90%/i)).not.toBeInTheDocument();
   });
 
   it("expands FAQ answers and updates wallet selection and fees", async () => {
@@ -51,7 +53,7 @@ describe("PropPage", () => {
     expect(screen.getAllByText("—").length).toBeGreaterThan(0);
     await user.click(screen.getByRole("button", { name: "What is prop trading?" }));
     expect(
-      screen.getByText(/Prop trading \(proprietary trading\) is when traders trade/),
+      screen.getByText(/Pioni Prop is only a concept preview/),
     ).toBeInTheDocument();
   });
 });
