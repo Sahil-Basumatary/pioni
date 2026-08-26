@@ -13,7 +13,7 @@
     "coverage": "vitest run --coverage",
     "cy:open": "cypress open",
     "cy:run": "cypress run",
-    "e2e": "start-server-and-test dev http://localhost:5173 cy:run",
+    "e2e": "start-server-and-test \"vite --mode e2e --port 5173\" http://localhost:5173 cy:run",
     "e2e:smoke": "cypress run --config-file cypress.smoke.config.ts",
     "preview": "vite preview",
     "build:analyze": "ANALYZE=true npm run build",
