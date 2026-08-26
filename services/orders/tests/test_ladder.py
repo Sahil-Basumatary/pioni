@@ -9,8 +9,8 @@ def test_build_ladder_places_symmetric_bids_and_asks():
         spread_bps=Decimal("100"),
         notional_usd=Decimal("1000"),
     )
-    bids = [l for l in levels if l.side == "BUY"]
-    asks = [l for l in levels if l.side == "SELL"]
+    bids = [level for level in levels if level.side == "BUY"]
+    asks = [level for level in levels if level.side == "SELL"]
     assert len(bids) == 3
     assert len(asks) == 3
     assert bids[0].price == Decimal("99.00")

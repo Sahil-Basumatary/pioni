@@ -5,7 +5,6 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from common import (
     MAX_NOTIONAL,
-    MAX_NUMERIC_20_2,
     MAX_NUMERIC_20_8,
     OrderSide,
     OrderType,

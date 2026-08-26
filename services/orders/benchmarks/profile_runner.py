@@ -60,7 +60,7 @@ def run_workload(rounds: int, orders_per_round: int) -> None:
     """Mixed workload: seed limits, sweep with markets, cancel stragglers."""
     engine = MatchingEngine(SYMBOL)
     total_ops = 0
-    for rnd in range(rounds):
+    for _ in range(rounds):
         resting_ids: list[uuid.UUID] = []
         for i in range(orders_per_round):
             price = BASE_PRICE + TICK * (i % 200)
@@ -99,10 +99,10 @@ def main() -> None:
     elapsed = time.perf_counter() - t0
     print(f"Completed {total_ops:,} operations in {elapsed:.3f}s")
     print(f"Throughput: {total_ops / elapsed:,.0f} ops/sec")
-    print(f"\nTo profile:")
-    print(f"  py-spy:    py-spy record -o profile.svg -- python -m benchmarks.profile_runner")
-    print(f"  cProfile:  python -m cProfile -o profile.prof -m benchmarks.profile_runner")
-    print(f"  snakeviz:  snakeviz profile.prof")
+    print("\nTo profile:")
+    print("  py-spy:    py-spy record -o profile.svg -- python -m benchmarks.profile_runner")
+    print("  cProfile:  python -m cProfile -o profile.prof -m benchmarks.profile_runner")
+    print("  snakeviz:  snakeviz profile.prof")
 
 
 if __name__ == "__main__":
