@@ -56,9 +56,10 @@ function resultLine(result: BenchmarkResult): string {
 }
 
 function resultNotes(result: BenchmarkResult): string {
+  const recorded = new Date().toISOString().slice(0, 10);
   return `# Tick-to-Paint Latency
 
-Recorded: 2026-06-17
+Recorded: ${recorded}
 
 ## Method
 
@@ -77,10 +78,6 @@ Recorded: 2026-06-17
 | p95 | ${result.p95.toFixed(2)}ms |
 | p99 | ${result.p99.toFixed(2)}ms |
 | max | ${result.max.toFixed(2)}ms |
-
-## Interpretation
-
-The p95 result is below the 50ms target, so the hot path from synthetic trade receipt to visible price update is fast enough for the current trading UI. The benchmark isolates client render latency and does not include real network jitter or exchange feed latency.
 `;
 }
 

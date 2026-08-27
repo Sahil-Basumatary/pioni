@@ -59,9 +59,10 @@ function resultLine(result: BenchmarkResult): string {
 }
 
 function resultNotes(result: BenchmarkResult): string {
+  const recorded = new Date().toISOString().slice(0, 10);
   return `# Tick-to-State Latency
 
-Recorded: 2026-06-18
+Recorded: ${recorded}
 
 ## Method
 
@@ -79,10 +80,6 @@ Recorded: 2026-06-18
 | p95 | ${result.p95.toFixed(4)}ms |
 | p99 | ${result.p99.toFixed(4)}ms |
 | max | ${result.max.toFixed(4)}ms |
-
-## Interpretation
-
-This isolates the client data path from browser rendering. It measures parsing and Redux state update latency, not network latency, React commit time, or display refresh timing.
 `;
 }
 
