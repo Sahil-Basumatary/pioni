@@ -22,6 +22,7 @@ import {
 import type { Kline } from "../../types/market";
 import { useLanguage } from "../../features/auth/LanguageProvider";
 import type { MessageKey } from "../../features/i18n/translate";
+import { GATEWAY_URL } from "../../endpoints";
 
 export const INTERVALS = ["1m", "5m", "15m", "1h", "4h", "1d"] as const;
 export type Interval = (typeof INTERVALS)[number];
@@ -45,8 +46,6 @@ const TOOLS: { id: ChartTool; labelKey: MessageKey; ready: boolean }[] = [
   { id: "text", labelKey: "tradeToolText", ready: false },
   { id: "measure", labelKey: "tradeToolMeasure", ready: false },
 ];
-
-const DEFAULT_GATEWAY_URL = "http://localhost:8000";
 
 interface CandlestickChartProps {
   symbol: string;
@@ -82,8 +81,7 @@ async function fetchKlines(
   interval: string,
   limit = 500,
 ): Promise<Kline[]> {
-  const base = import.meta.env.VITE_GATEWAY_URL || DEFAULT_GATEWAY_URL;
-  const url = `${base}/market/klines/${symbol}?interval=${interval}&limit=${limit}`;
+  const url = `${GATEWAY_URL}/market/klines/${symbol}?interval=${interval}&limit=${limit}`;
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Failed to fetch klines: ${res.status}`);

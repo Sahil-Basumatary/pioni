@@ -10,10 +10,9 @@ import TrendSummary from "../components/TrendSummary";
 import TrendDrivers from "../components/TrendDrivers";
 import TrendEmptyPreview from "../components/TrendEmptyPreview";
 import FeedCard from "../components/FeedCard";
+import { API_BASE_URL } from "../endpoints";
 
 const SentimentChart = lazy(() => import("../components/SentimentChart"));
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 type RequestErrorCode =
   | "NOT_FOUND"

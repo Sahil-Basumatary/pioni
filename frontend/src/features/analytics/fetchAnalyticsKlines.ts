@@ -1,7 +1,7 @@
+import { GATEWAY_URL } from "../../endpoints";
 import type { Kline } from "../../types/market";
 import type { AnalyticsInterval } from "./analyticsConfig";
 
-const DEFAULT_GATEWAY_URL = "http://localhost:8000";
 const BINANCE_KLINES_URL = "https://api.binance.com/api/v3/klines";
 
 export function toApiInterval(interval: AnalyticsInterval): string {
@@ -63,18 +63,13 @@ export async function fetchAnalyticsKlines(
   limit = 500,
 ): Promise<Kline[]> {
   const apiInterval = toApiInterval(interval);
-  const base = import.meta.env.VITE_GATEWAY_URL || DEFAULT_GATEWAY_URL;
-  try {
-    const res = await fetch(
-      `${base}/market/klines/${symbol}?interval=${apiInterval}&limit=${limit}`,
-    );
-    if (res.ok) {
-      const data = await res.json();
-      const rows = (data.klines ?? data) as Kline[];
-      if (Array.isArray(rows) && rows.length > 0) return rows;
-    }
-  } catch {
-    // gateway / market-data often down locally — fall through to public feed
+  const res = await fetch(
+    `${GATEWAY_URL}/market/klines/${symbol}?interval=${apiInterval}&limit=${limit}`,
+  ).catch(() => null);
+  if (res?.ok) {
+    const data = await res.json();
+    const rows = (data.klines ?? data) as Kline[];
+    if (Array.isArray(rows) && rows.length > 0) return rows;
   }
   return fetchBinanceKlines(symbol, apiInterval, limit);
 }

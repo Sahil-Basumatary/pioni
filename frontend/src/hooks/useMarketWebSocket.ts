@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { MARKET_WS_URL } from "../endpoints";
 import { markTradeBrowserReceived } from "../features/market/marketLatency";
 import type { Kline, Trade, WSCommand, WSMessage } from "../types/market";
 
@@ -6,7 +7,6 @@ export type ConnectionStatus = "connecting" | "connected" | "disconnected";
 
 const INITIAL_RECONNECT_DELAY = 1_000;
 const MAX_RECONNECT_DELAY = 30_000;
-const DEFAULT_WS_URL = "ws://localhost:8000/ws/market";
 
 interface UseMarketWebSocketOptions {
   onTrade?: (trade: Trade) => void;
@@ -38,9 +38,8 @@ export function useMarketWebSocket(options: UseMarketWebSocketOptions = {}) {
 
   const connect = useCallback(() => {
     if (wsRef.current) return;
-    const url = import.meta.env.VITE_WS_URL || DEFAULT_WS_URL;
     updateStatus("connecting");
-    const ws = new WebSocket(url);
+    const ws = new WebSocket(MARKET_WS_URL);
     wsRef.current = ws;
 
     ws.onopen = () => {

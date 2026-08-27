@@ -1,9 +1,9 @@
 import { memo, useEffect, useRef, useState } from "react";
+import { GATEWAY_URL } from "../../endpoints";
 import { useLiveMarketTrade } from "../../features/market/liveMarketStore";
 import { useLanguage } from "../../features/auth/LanguageProvider";
 import type { TickerSnapshot } from "../../types/market";
 
-const DEFAULT_GATEWAY_URL = "http://localhost:8000";
 const SNAPSHOT_REFRESH_MS = 30_000;
 const FLASH_DURATION_MS = 500;
 
@@ -45,8 +45,7 @@ function formatChangePct(pct: number | null): string {
 }
 
 async function fetchSnapshot(symbol: string): Promise<TickerSnapshot> {
-  const base = import.meta.env.VITE_GATEWAY_URL || DEFAULT_GATEWAY_URL;
-  const res = await fetch(`${base}/market/prices/${symbol}`);
+  const res = await fetch(`${GATEWAY_URL}/market/prices/${symbol}`);
   if (!res.ok) throw new Error(`ticker fetch ${res.status}`);
   return res.json();
 }

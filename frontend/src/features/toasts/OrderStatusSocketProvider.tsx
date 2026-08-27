@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { useAuth } from "@clerk/clerk-react";
+import { MARKET_WS_URL } from "../../endpoints";
 import { useAppDispatch } from "../../app/hooks";
 import { useGetMyPortfolioQuery } from "../portfolio/portfolioApi";
 import { ordersApi } from "../orders/ordersApi";
@@ -15,13 +16,11 @@ import {
 } from "./orderWatch";
 import { useLanguage } from "../auth/LanguageProvider";
 
-const DEFAULT_MARKET_WS = "ws://localhost:8000/ws/market";
 const POLL_MS = 2500;
 
 function ordersWsUrl(): string {
-  const market = import.meta.env.VITE_WS_URL || DEFAULT_MARKET_WS;
   if (import.meta.env.VITE_ORDERS_WS_URL) return import.meta.env.VITE_ORDERS_WS_URL;
-  return market.replace(/\/ws\/market(?:\?.*)?$/, "/ws/orders");
+  return MARKET_WS_URL.replace(/\/ws\/market(?:\?.*)?$/, "/ws/orders");
 }
 
 function parseUpdate(raw: unknown): OrderStatusUpdate | null {

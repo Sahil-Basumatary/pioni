@@ -1,7 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { GATEWAY_URL } from "../../endpoints";
 import type { TickerSnapshot } from "../../types/market";
-
-const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || "http://localhost:8000";
 
 export type PriceMap = Record<string, TickerSnapshot>;
 
