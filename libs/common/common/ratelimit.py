@@ -54,8 +54,7 @@ def _cors_headers_for(origin: str | None, get_cors_origins: Callable[[], list[st
 
 
 class RateLimitMiddleware:
-    # Pure ASGI so the allow path (the overwhelming majority of requests) is a dict lookup and a
-    # deque trim with no BaseHTTPMiddleware wrapping. Only the rare 429 path builds a response.
+    # Pure ASGI avoids BaseHTTPMiddleware overhead on the allow path.
     _SKIP_PREFIXES = (
         "/health",
         "/orderbook",

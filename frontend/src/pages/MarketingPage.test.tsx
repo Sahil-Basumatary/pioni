@@ -70,7 +70,9 @@ describe("MarketingPage", () => {
     ).toBeInTheDocument();
     expect(screen.getAllByRole("navigation", { name: "Page sections" })).toHaveLength(2);
     expect(
-      screen.getAllByRole("link", { name: "Markets" }).some((l) => l.getAttribute("href") === "#markets"),
+      screen
+        .getAllByRole("link", { name: "Markets" })
+        .some((link) => link.getAttribute("href") === "#markets"),
     ).toBe(true);
     expect(screen.getByRole("navigation", { name: "Market categories" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "All markets" })).toBeInTheDocument();
@@ -90,8 +92,6 @@ describe("MarketingPage", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: "All markets" }),
     ).toBeInTheDocument();
-    // The category breakdown only earns its space if it surfaces names the flat
-    // grid above has not already shown.
     const names = (scope: string) =>
       [...document.querySelectorAll(`${scope} [data-mkt='market-name']`)].map(
         (el) => el.textContent,
@@ -102,7 +102,6 @@ describe("MarketingPage", () => {
     expect(grouped.filter((name) => flat.includes(name))).toHaveLength(0);
     expect(screen.getByRole("heading", { name: "Top movers" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Spot desk" })).toBeInTheDocument();
-    // Both hubs used to point at /trading, so the margin card silently opened spot.
     const hubs = [...document.querySelectorAll("[data-mkt='hub-card']")].map((el) => [
       el.querySelector("h3")?.textContent,
       el.getAttribute("href"),
@@ -111,8 +110,6 @@ describe("MarketingPage", () => {
       ["Spot desk", "/trading"],
       ["Margin practice", "/trade/margin"],
     ]);
-    // Every market link used to drop you on the default pair instead of the one
-    // that was clicked, so each one has to name its own symbol.
     const marketLinks = [
       ...document.querySelectorAll(
         "[data-mkt='side-row'], [data-mkt='market-card'], [data-mkt='featured-card'], [data-mkt='browse-market'] a",
@@ -155,7 +152,9 @@ describe("MarketingPage", () => {
       screen.getByRole("heading", { name: /Paper trading on your phone/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getAllByRole("link", { name: "App" }).some((l) => l.getAttribute("href") === "#app"),
+      screen
+        .getAllByRole("link", { name: "App" })
+        .some((link) => link.getAttribute("href") === "#app"),
     ).toBe(true);
     expect(
       screen.getByRole("img", { name: "Pioni trade ticket on mobile" }),
@@ -165,8 +164,6 @@ describe("MarketingPage", () => {
       screen.getByRole("heading", { name: /Ready to place your first paper trade/i }),
     ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Browse markets" })).toBeInTheDocument();
-    // Every catalog entry has to be reachable from the index, not just the ones
-    // the live feed happens to price.
     const browse = screen.getByRole("region", { name: "Browse markets" });
     expect(browse.querySelectorAll("[data-mkt='browse-market']")).toHaveLength(
       MARKET_CATALOG.length,

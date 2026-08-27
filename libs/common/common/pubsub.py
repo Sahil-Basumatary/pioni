@@ -112,8 +112,6 @@ class MarketSubscriber:
 
 
 class OrderSubscriber:
-    """Subscribes to order:status:* channels and dispatches to a callback."""
-
     def __init__(
         self,
         redis: aioredis.Redis,
@@ -195,14 +193,6 @@ class OrderSubscriber:
 
 
 class PortfolioSubscriber:
-    """Subscribes to portfolio:updated:* channels and dispatches to a callback.
-
-    The structural twin of OrderSubscriber. Once we add a fourth subscriber the duplication
-    will warrant collapsing all three into a generic ChannelSubscriber(pattern, parts_index)
-    helper — for now keeping the explicit class makes the channel contract obvious at the
-    grep level.
-    """
-
     def __init__(
         self,
         redis: aioredis.Redis,

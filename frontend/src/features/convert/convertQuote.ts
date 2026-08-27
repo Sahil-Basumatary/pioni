@@ -38,7 +38,6 @@ export const CONVERT_ASSETS: ConvertAsset[] = [
   },
 ];
 
-/** Returns null when either leg has no live price, so the caller can block the quote. */
 export function quoteReceive(
   fromAmount: number,
   fromUsdPrice: number | null,

@@ -4,8 +4,6 @@ import MarketingDeskShot from "./MarketingDeskShot";
 const CATEGORY_COUNT = new Set(MARKET_CATALOG.map((m) => m.category)).size;
 const MAX_MARGIN = Math.max(...MARKET_CATALOG.map((m) => m.marginLeverage ?? 0));
 
-/* Derived from the catalog so the numbers cannot drift from what the desk
-   actually lists. */
 const STATS = [
   { value: String(MARKET_CATALOG.length), label: "Markets" },
   { value: String(CATEGORY_COUNT), label: "Categories" },

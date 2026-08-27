@@ -55,7 +55,6 @@ export default function MarketingPracticePanel() {
   const curve = useMemo(() => {
     const steps = 48;
     const vals: number[] = [];
-    // Deterministic walk so the illustration is identical on every render.
     let seed = months * 7919;
     const noise = () => {
       seed = (seed * 1103515245 + 12345) % 2147483648;

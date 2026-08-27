@@ -1,9 +1,4 @@
-/* The palette is declared at the root but applied only inside .marketing-page.
-   Nothing else in the app references these, so the light shell is unaffected,
-   and body can still reach them to match during overscroll. */
 :root {
-  /* Never pure black. A slight blue undertone stops large fills from reading as
-     a dead screen, and gives the ramp somewhere to go at the dark end. */
   --mkt-ink-1000: #08090c;
   --mkt-ink-950: #0b0d11;
   --mkt-ink-900: #10131a;
@@ -16,36 +11,28 @@
   --mkt-text: #f3f5f8;
   --mkt-text-muted: #9ba4b4;
 
-  /* Primary actions invert on dark: light pill, ink label. */
   --mkt-cta-bg: #ffffff;
   --mkt-cta-fg: #0b0d11;
   --mkt-hover: rgba(255, 255, 255, 0.07);
 
-  /* Pre-mixed alpha, because Tailwind's /opacity modifier cannot inject an alpha
-     channel into a var() colour and silently resolves to transparent. */
+  /* Tailwind opacity modifiers do not add alpha to var() colours. */
   --mkt-scrim: rgba(11, 13, 17, 0.9);
   --mkt-scrim-scrolled: rgba(11, 13, 17, 0.8);
 
   --mkt-elevation: 0 1px 2px rgba(0, 0, 0, 0.55), 0 12px 32px rgba(0, 0, 0, 0.4);
   --mkt-elevation-mid: 0 0 0 1px rgba(255, 255, 255, 0.05),
     0 2px 8px rgba(0, 0, 0, 0.45), 0 18px 40px rgba(0, 0, 0, 0.4);
-  /* The 1px white ring does the separating, not the shadow: a drop shadow has
-     nothing to darken against on a dark page. */
   --mkt-elevation-lift: 0 0 0 1px rgba(255, 255, 255, 0.06),
     0 2px 6px rgba(0, 0, 0, 0.5), 0 30px 70px rgba(0, 0, 0, 0.55);
   --mkt-elevation-high: 0 0 0 1px rgba(255, 255, 255, 0.08),
     0 8px 24px rgba(0, 0, 0, 0.55), 0 40px 90px rgba(0, 0, 0, 0.65);
 }
 
-/* Rubber-band overscroll would otherwise flash the light shell gradient above
-   and below the dark page. */
+/* Prevent light-shell flashes during rubber-band overscroll. */
 body:has(.marketing-page) {
   background: var(--mkt-ink-1000);
 }
 
-/* Marketing runs a dark ink palette while the app shell stays light. Scoping the
-   overrides to this class is what keeps the shell rule intact: nothing here
-   leaks past the marketing tree. */
 .marketing-page {
   --text-primary: var(--mkt-text);
   --text-muted: var(--mkt-text-muted);
@@ -59,8 +46,6 @@ body:has(.marketing-page) {
   color-scheme: dark;
 }
 
-/* Product UI keeps the real light app palette. The whole point of a dark page is
-   that the actual desk glows inside the frames, so these surfaces opt back out. */
 .marketing-panel,
 .marketing-laptop__screen,
 .marketing-phone__screen {
@@ -86,8 +71,6 @@ body:has(.marketing-page) {
   width: 100%;
 }
 
-/* Once the rail drops under the feed it is full width, so its blocks pair up
-   instead of stretching single file across the page. */
 @media (min-width: 720px) and (max-width: 1099px) {
   .marketing-side-rails {
     display: grid;
@@ -112,8 +95,6 @@ body:has(.marketing-page) {
     flex: 1 1 auto;
   }
 
-  /* Sticky keeps the rail beside the feed instead of stranding whitespace once
-     the shorter column runs out. */
   .marketing-side-rails {
     flex: 0 0 340px;
     width: 340px;
@@ -128,8 +109,6 @@ body:has(.marketing-page) {
   gap: 0.5rem;
 }
 
-/* Two columns is the widest the row fits before the pair and volume line has to
-   truncate inside the 880px feed column. */
 @media (min-width: 560px) {
   .marketing-market-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -164,9 +143,6 @@ body:has(.marketing-page) {
 }
 
 
-/* Ambient wash behind the product shot so it reads as lit rather than pasted on.
-   On dark this is a bloom rather than a shadow: the light screen has to look
-   like the thing emitting into the page. */
 .marketing-desk-shot::before {
   content: "";
   position: absolute;
@@ -193,8 +169,7 @@ body:has(.marketing-page) {
   aspect-ratio: 2610 / 1254;
 }
 
-/* The base flares wider than the lid, so the lid has to stay under 100% or the
-   flare pushes the page into a horizontal scroll. */
+/* Leave room for the wider base without creating horizontal overflow. */
 .marketing-laptop {
   width: 90%;
   margin-inline: auto;
@@ -281,7 +256,6 @@ body:has(.marketing-page) {
   top: 50px;
 }
 
-/* The fan only reads as depth once there is room for all five phones. */
 @media (max-width: 1023px) {
   .marketing-phone[data-depth="2"] {
     display: none;
@@ -442,9 +416,6 @@ body:has(.marketing-page) {
   }
 }
 
-/* The closing used to earn its weight by being the only dark band on a light
-   page. Now that the page is dark it has to differentiate the other way: drop to
-   the floor of the ramp and light it from above. */
 .marketing-closing {
   background: radial-gradient(
       ellipse 55% 130% at 50% 0%,

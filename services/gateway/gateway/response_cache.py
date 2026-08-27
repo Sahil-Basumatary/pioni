@@ -5,10 +5,7 @@ from typing import Awaitable, Callable
 
 
 class TTLByteCache:
-    # Short-lived cache of pre-serialized upstream responses for hot read fan-out (e.g. /prices).
-    # Storing the raw upstream bytes lets the gateway skip both the network hop and a JSON
-    # decode/re-encode round-trip on a cache hit. A per-key lock turns a concurrent miss stampede
-    # into a single upstream fetch (single-flight), so N simultaneous callers cost one hop, not N.
+    # Raw upstream bytes avoid re-encoding; per-key locks single-flight cache misses.
     def __init__(self, ttl_seconds: float) -> None:
         self._ttl = ttl_seconds
         self._store: dict[str, tuple[float, bytes]] = {}

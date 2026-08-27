@@ -166,8 +166,7 @@ export function useMarketingHeroMotion(
     const refresh = () => ScrollTrigger.refresh();
     window.addEventListener("load", refresh);
 
-    /* Filtering the feed adds or removes whole sections, which leaves every
-       trigger below it measuring against a layout that no longer exists. */
+    /* Recalculate triggers after feed filters change the page height. */
     let frame = 0;
     const observer = new ResizeObserver(() => {
       cancelAnimationFrame(frame);

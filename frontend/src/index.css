@@ -9,8 +9,6 @@
 
 html, body {
   font-family: var(--font-sans);
-  /* Tracking stays neutral at text sizes. Negative tracking belongs on display
-     type only; applying it globally is what makes small UI text look cramped. */
   letter-spacing: normal;
 }
 
@@ -18,15 +16,12 @@ html, body {
   --font-sans: "Archivo Variable", ui-sans-serif, system-ui, -apple-system,
                BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-display: var(--font-sans);
-  /* Headings run narrower than UI text, the way a separate condensed cut would. */
   --font-display-stretch: 84%;
 
   --bg: #F5F5F5;
   --card-bg: #FFFFFF;
   --card-border: #D9D9D9;
 
-  /* Text is layered alpha rather than flat greys so it stays harmonious on any
-     surface tint instead of drifting warm/cool against it. */
   --text-primary: rgba(0, 0, 0, 0.9);
   --text-muted: rgba(0, 0, 0, 0.55);
   --text-faint: rgba(0, 0, 0, 0.3);
@@ -47,15 +42,12 @@ body {
   color: var(--text-primary);
 }
 
-/* Display type: narrower cut and slight negative tracking, which only earns its
-   keep above ~18px. Body text keeps normal tracking. */
 .type-display {
   font-family: var(--font-display);
   font-stretch: var(--font-display-stretch);
   letter-spacing: -0.015em;
 }
 
-/* Small uppercase labels need positive tracking or the caps close up. */
 .type-eyebrow {
   font-size: 11px;
   font-weight: 600;

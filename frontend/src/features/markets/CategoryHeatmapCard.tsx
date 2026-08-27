@@ -25,7 +25,6 @@ function labelParts(cell: HeatRect): {
   showChange: boolean;
 } {
   const { w, h } = cell;
-  // Show icon/name/value/chg once the cell can fit them (icon 20 + name 16 + value/chg 10, pad 4, gap 2).
   const showDot = w >= 36 && h >= 28;
   const showName = w >= 48 && h >= 44;
   const showValue = w >= 56 && h >= 56;

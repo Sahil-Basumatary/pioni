@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 
-// Sections become "current" once their top clears the sticky chrome rather than
-// when they merely intersect, so a tall section that scrolled past cannot win.
-// Must stay just past the sections' scroll-mt-32 (128px) or an anchor jump lands
-// one section short of highlighting its own link.
+// Match scroll-mt-32: activate after a section clears the sticky chrome.
 const ACTIVATION_OFFSET = 140;
 
 export function useActiveSection(ids: readonly string[]): string | null {

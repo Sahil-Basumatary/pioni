@@ -8,8 +8,7 @@ type Props = {
   onSelectCategory: (id: MarketingChipId) => void;
 };
 
-/* Two per row on desktop, so anything that cannot fill whole rows would leave a
-   gap in the grid. */
+/* Keep sections to whole rows in the two-column desktop grid. */
 const CARDS_PER_SECTION = 4;
 
 type Section = {
@@ -30,7 +29,6 @@ function buildSections(rows: LiveMarketRow[], exclude: Set<string>): Section[] {
       const fresh = list
         .filter((row) => !exclude.has(row.symbol))
         .sort((a, b) => (b.volume ?? 0) - (a.volume ?? 0));
-      // Round down to whole rows so a section never ends on a half-empty one.
       const take =
         fresh.length >= CARDS_PER_SECTION
           ? CARDS_PER_SECTION

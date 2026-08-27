@@ -3,8 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import MarketingFooter from "./MarketingFooter";
 
-/* Kept in sync with the routes registered in App.tsx. A footer link that points
-   at nothing is worse than no link at all. */
+/* Mirrors the public routes registered in App.tsx. */
 const ROUTES = new Set([
   "/",
   "/trading",

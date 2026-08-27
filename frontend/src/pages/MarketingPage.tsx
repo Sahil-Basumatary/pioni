@@ -20,8 +20,6 @@ import "./marketingPage.css";
 export default function MarketingPage() {
   const { isSignedIn, isLoaded } = useAuth();
   const rootRef = useRef<HTMLDivElement>(null);
-  // The tree below only mounts once Clerk resolves, so the motion effect has to
-  // wait for it rather than firing against a null ref it can never re-check.
   useMarketingHeroMotion(rootRef, isLoaded && !isSignedIn);
 
   if (!isLoaded) {

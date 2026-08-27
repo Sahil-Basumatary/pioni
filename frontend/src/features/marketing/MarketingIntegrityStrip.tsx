@@ -1,7 +1,5 @@
 import { Link } from "react-router-dom";
 
-/* Each claim is explained in exactly one place, so this strip points at those
-   places instead of restating them. */
 const ITEMS = [
   { label: "Simulated funds only", to: "/rules" },
   { label: "How resets work", to: "#practice" },

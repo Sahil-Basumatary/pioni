@@ -8,12 +8,7 @@ from orders.orderbook import OrderBook
 
 
 class MatchingEngine:
-    """Single-symbol matching engine with market, limit, and stop-loss support.
-
-    Pure domain logic — no persistence, no event publishing. Designed for
-    single-threaded in-memory use (paper trading). Production-grade
-    concurrency and persistence are layered on top separately.
-    """
+    """Single-threaded matcher; persistence and events live in OrderService."""
 
     __slots__ = ("symbol", "_book", "_stops", "_last_trade_price")
 

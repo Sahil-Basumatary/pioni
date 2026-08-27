@@ -52,9 +52,7 @@ def trace_exemplar() -> dict[str, str] | None:
 
 
 class MetricsMiddleware:
-    # Pure ASGI to keep the RED-metrics recording off the BaseHTTPMiddleware slow path. Times the
-    # inner app, captures the response status from the ASGI start message, and labels on the matched
-    # route template resolved after the router has run.
+    # Pure ASGI avoids BaseHTTPMiddleware overhead on the metrics hot path.
     def __init__(self, app: ASGIApp, service_name: str) -> None:
         self.app = app
         self.service_name = service_name

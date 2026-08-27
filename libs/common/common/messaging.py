@@ -24,9 +24,6 @@ EventCallback = Callable[[dict[str, Any]], Awaitable[None]]
 
 
 class RabbitMQManager:
-    """Manages a single AMQP connection with automatic reconnection
-    and provides publish/consume primitives over topic exchanges."""
-
     def __init__(self, url: str | None = None):
         self._url = url or os.getenv("RABBITMQ_URL", "")
         self._connection: AbstractRobustConnection | None = None
@@ -129,8 +126,6 @@ class RabbitMQManager:
         *,
         durable: bool = True,
     ) -> AbstractRobustQueue:
-        """Declare a queue and bind it to an exchange.
-        Consumers call this to set up their own queues."""
         if not self.connected:
             await self.connect()
         if not self._channel:
@@ -158,7 +153,6 @@ class RabbitMQManager:
         binding_key: str,
         callback: EventCallback,
     ) -> None:
-        """Declare a queue, bind it, and start consuming messages."""
         queue = await self.declare_queue(
             queue_name, exchange_name, binding_key
         )

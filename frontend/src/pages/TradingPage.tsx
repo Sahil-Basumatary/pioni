@@ -170,8 +170,7 @@ export default function TradingPage({
     const requested = resolveDeskSymbol(searchParams.get(DESK_SYMBOL_PARAM));
     if (!requested) return;
     dispatch(symbolSelected(requested));
-    /* Consumed, so drop it: leaving it behind would make a later pair switch
-       inside the desk snap back on refresh. */
+    /* Prevent refresh from restoring a stale deep-linked pair. */
     const next = new URLSearchParams(searchParams);
     next.delete(DESK_SYMBOL_PARAM);
     setSearchParams(next, { replace: true });

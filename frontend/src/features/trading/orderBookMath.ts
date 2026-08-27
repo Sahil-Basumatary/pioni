@@ -51,7 +51,7 @@ export function withCumulativeDepth(
   fromMidFirst: boolean,
 ): DepthLevel[] {
   if (!levels.length) return [];
-  const qtys = levels.map((l) => Number(l.total_quantity));
+  const qtys = levels.map((level) => Number(level.total_quantity));
   const cum = new Array<number>(levels.length);
   let run = 0;
   if (fromMidFirst) {

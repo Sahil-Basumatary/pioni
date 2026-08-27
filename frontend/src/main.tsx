@@ -2,8 +2,6 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Provider } from 'react-redux'
 import { ClerkProvider } from '@clerk/clerk-react'
-// Width axis build: the same file serves UI text and the condensed display face,
-// so the heading style costs no extra download.
 import '@fontsource-variable/archivo/wdth.css'
 import './index.css'
 import App from './App'
@@ -41,8 +39,7 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 )
 
-// DEV-gated so the entire reporting path is dead code in production and gets
-// stripped from the shipped bundle; Lighthouse measures prod independently.
+// Keep diagnostics out of production bundles.
 if (import.meta.env.DEV) {
   void import('./reportWebVitals').then(({ observeLongTasks, reportWebVitals }) => {
     reportWebVitals((metric) => {

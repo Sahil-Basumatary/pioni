@@ -28,7 +28,7 @@ async def init_redis_pool(url: str | None = None, max_connections: int = 10) -> 
         )
         _redis_instance = aioredis.Redis(connection_pool=_pool)
         await _redis_instance.ping()
-        logger.info("Redis Enterprise pool initialized", extra={"component": "redis", "max_connections": max_connections})
+        logger.info("Redis pool initialized", extra={"component": "redis", "max_connections": max_connections})
     except Exception as e:
         logger.warning("Failed to initialize Redis pool", extra={"component": "redis", "error": str(e)})
         _pool = None

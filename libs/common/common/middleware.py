@@ -13,8 +13,6 @@ logger = logging.getLogger(__name__)
 class RequestIdMiddleware:
     # Pure ASGI rather than BaseHTTPMiddleware: the latter wraps every request in an anyio task
     # group and a streaming response shim, which adds latency and caps concurrency on the hot path.
-    # This assigns a short correlation id, exposes it on request.state for downstream handlers and
-    # error responses, echoes it as X-Request-ID, and emits one structured access log line.
     def __init__(self, app: ASGIApp) -> None:
         self.app = app
 

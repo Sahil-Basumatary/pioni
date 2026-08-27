@@ -13,10 +13,7 @@ type Props = {
   chip: MarketingChipId;
 };
 
-/* A narrow category would otherwise leave the main column shorter than the side
-   rail, so the rest of the desk fills the row under its own heading. */
 const MIN_ROWS_BEFORE_SPILLOVER = 9;
-/* Six desktop rows: enough to outrun the side rail without burying mobile. */
 export const COLLAPSED_ROWS = 12;
 
 export default function MarketingFloatMarkets({ rows, allRows, chip }: Props) {

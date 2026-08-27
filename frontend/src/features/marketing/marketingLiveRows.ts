@@ -60,7 +60,6 @@ export function filterByChip(
 
 export function featuredRows(rows: LiveMarketRow[], limit = 3): LiveMarketRow[] {
   if (!rows.length) return [];
-  // A feed card with no price reads as broken, so unpriced rows never lead.
   const priced = rows.filter((r) => r.price != null);
   return (priced.length ? priced : rows)
     .slice()

@@ -46,8 +46,7 @@ function AssetBadge({ asset }: { asset: ConvertAsset }) {
   );
 }
 
-// Only the status-bar symbols stream by default, so the dialog subscribes to the remainder for
-// as long as it is open — otherwise SOL and XRP would never receive a price.
+// Status-bar subscriptions do not cover every convertible asset.
 const ALWAYS_STREAMED = new Set<string>(STATUS_BAR_SYMBOLS);
 const CONVERT_EXTRA_SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT"].filter(
   (symbol) => !ALWAYS_STREAMED.has(symbol),
@@ -62,10 +61,6 @@ function useConvertStream(open: boolean) {
   }, [open, subscribe, unsubscribe]);
 }
 
-/**
- * Live USD price per convertible asset. The hook count is fixed because CONVERT_ASSETS is a
- * module constant, so calling one hook per asset here stays rules-of-hooks safe.
- */
 function useConvertPrices(): Record<string, number | null> {
   const btc = useLiveMarketTrade("BTCUSDT");
   const eth = useLiveMarketTrade("ETHUSDT");

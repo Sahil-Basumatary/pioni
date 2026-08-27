@@ -59,13 +59,13 @@ describe("withCumulativeDepth", () => {
       [level("99", "1"), level("98", "1"), level("97", "2")],
       true,
     );
-    expect(bids.map((l) => l.depthPct)).toEqual([25, 50, 100]);
-    expect(bids.map((l) => l.cumQty)).toEqual([1, 2, 4]);
+    expect(bids.map((level) => level.depthPct)).toEqual([25, 50, 100]);
+    expect(bids.map((level) => level.cumQty)).toEqual([1, 2, 4]);
     const asksHighToLow = withCumulativeDepth(
       [level("103", "2"), level("102", "1"), level("101", "1")],
       false,
     );
-    expect(asksHighToLow.map((l) => l.depthPct)).toEqual([100, 50, 25]);
-    expect(asksHighToLow.map((l) => l.cumQty)).toEqual([4, 2, 1]);
+    expect(asksHighToLow.map((level) => level.depthPct)).toEqual([100, 50, 25]);
+    expect(asksHighToLow.map((level) => level.cumQty)).toEqual([4, 2, 1]);
   });
 });

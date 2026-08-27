@@ -20,9 +20,7 @@ export default function MarketingLiveMarkets() {
     setChip(id);
   }, []);
 
-  /* Switching category can drop hundreds of pixels out of the column, so the
-     browser keeps a scroll offset that now points past the feed. Runs after
-     commit so the grid is already at its new height. */
+  /* Re-anchor after a filter shortens the feed above the viewport. */
   useEffect(() => {
     if (!repositionAfterFilter.current) return;
     repositionAfterFilter.current = false;
@@ -30,8 +28,7 @@ export default function MarketingLiveMarkets() {
     if (!feed) return;
     const { top } = feed.getBoundingClientRect();
     if (top >= 0 && top <= window.innerHeight) return;
-    /* Instant, not smooth: ScrollTrigger restores the saved offset when it
-       refreshes on the resize, which cancels an in-flight smooth scroll. */
+    /* ScrollTrigger refresh cancels an in-flight smooth scroll. */
     feed.scrollIntoView({ block: "start" });
   }, [chip]);
   const { data: prices } = useGetPricesQuery(undefined, {
@@ -54,10 +51,7 @@ export default function MarketingLiveMarkets() {
         <div className="marketing-feed__layout">
           <div className="marketing-feed__main min-w-0">
             <MarketingIntegrityStrip />
-            {/* Keyed by chip so switching category collapses the list again. */}
             <MarketingFloatMarkets key={chip} rows={filtered} allRows={rows} chip={chip} />
-            {/* A picked category already has its own grid above, so the breakdown
-                only earns its space on the unfiltered view. */}
             {chip === "all" ? (
               <MarketingCategorySections
                 rows={rows}

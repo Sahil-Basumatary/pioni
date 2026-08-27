@@ -12,7 +12,6 @@ const BIDS = [
   { price: "62,976.1", qty: "0.0584", depth: 0.38 },
 ] as const;
 
-// Fixed series so the marketing chart renders identically on every visit.
 const CANDLES = [
   [42, 58, 38, 54],
   [54, 62, 50, 51],
@@ -29,7 +28,6 @@ const CANDLES = [
 ] as const;
 
 const CANDLE_X = (i: number) => 24 + i * 43;
-// Map the series range onto the plot area so candles use the full panel height.
 const CANDLE_Y = (v: number) => 88 - (v - 33) * 1.78;
 
 const LINE = CANDLES.map(
@@ -63,8 +61,6 @@ function PanelFrame({
 export function OrderTicketPanel() {
   return (
     <PanelFrame title="Order form" tabs={["Alerts"]}>
-      {/* The ticket spans both bento rows, so the form distributes into the cell
-          instead of leaving a dead block under the last summary row. */}
       <div className="flex flex-1 flex-col justify-between p-3">
         <div className="grid grid-cols-2 gap-1 rounded-lg bg-black/[0.05] p-1">
           <span className="rounded-md bg-white py-1.5 text-center text-[11px] font-semibold text-[var(--text-primary)] shadow-[var(--shadow-soft)]">

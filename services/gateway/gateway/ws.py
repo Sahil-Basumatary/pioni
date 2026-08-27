@@ -84,8 +84,6 @@ class ConnectionManager:
 
 
 class OrderConnectionManager:
-    """Manages WebSocket connections subscribed to order status updates by portfolio_id."""
-
     def __init__(self):
         self._connections: dict[WebSocket, set[str]] = {}
         self._lock = asyncio.Lock()
@@ -144,13 +142,6 @@ class OrderConnectionManager:
 
 
 class PortfolioConnectionManager:
-    """WebSocket connections subscribed to portfolio update events by portfolio_id.
-
-    Structurally identical to OrderConnectionManager today — once we have a third manager
-    of this shape we should extract a KeyedConnectionManager base and migrate both. For
-    now duplication is cheaper than premature abstraction.
-    """
-
     def __init__(self):
         self._connections: dict[WebSocket, set[str]] = {}
         self._lock = asyncio.Lock()
