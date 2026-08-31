@@ -7,13 +7,12 @@ import {
   Outlet,
 } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
-import AppShell from "./components/shell/AppShell";
 import ComingSoonPage from "./pages/ComingSoonPage";
-import { LanguageProvider } from "./features/auth/LanguageProvider";
 import MarketingHeader from "./features/marketing/MarketingHeader";
 import { startPagePath } from "./features/settings/displayPrefs";
 import "./App.css";
 
+const AppShell = lazy(() => import("./components/shell/AppShell"));
 const SentimentPage = lazy(() => import("./pages/SentimentPage"));
 const TradingPage = lazy(() => import("./pages/TradingPage"));
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -94,7 +93,6 @@ function PublicDocLayout() {
 
 function App() {
   return (
-    <LanguageProvider>
     <BrowserRouter>
       <Suspense fallback={<div className="min-h-dvh bg-[#F6F5F9]" aria-label="Loading" />}>
         <Routes>
@@ -147,7 +145,6 @@ function App() {
         </Routes>
       </Suspense>
     </BrowserRouter>
-    </LanguageProvider>
   );
 }
 

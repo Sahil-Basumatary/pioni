@@ -21,6 +21,7 @@ import { AlertCreateProvider } from "../../features/trading/AlertCreateContext";
 import CreateAlertDialog from "../../features/trading/CreateAlertDialog";
 import PriceAlertWatcher from "../../features/trading/PriceAlertWatcher";
 import { useCompactShell } from "../../hooks/useCompactShell";
+import { LanguageProvider } from "../../features/auth/LanguageProvider";
 import GetAppBanner from "./GetAppBanner";
 import ProductNav from "./ProductNav";
 import RightRail from "./RightRail";
@@ -60,6 +61,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const compact = useCompactShell();
 
   return (
+    <LanguageProvider>
     <MarketSocketProvider>
       <MarketSearchProvider>
         <ConvertProvider>
@@ -107,5 +109,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
         </ConvertProvider>
       </MarketSearchProvider>
     </MarketSocketProvider>
+    </LanguageProvider>
   );
 }

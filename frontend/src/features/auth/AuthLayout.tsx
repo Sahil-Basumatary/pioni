@@ -7,21 +7,31 @@ import {
 } from "../../components/shell/shellIcons";
 import { LEGAL } from "../../pages/legal/legalConfig";
 import AuthLanguageMenu from "./AuthLanguageMenu";
-import { useLanguage } from "./LanguageProvider";
+import { LanguageProvider, useLanguage } from "./LanguageProvider";
 
-export default function AuthLayout({
-  children,
-  headerAction,
-  backTo,
-  backAboveCard,
-  showLegalFooter = false,
-}: {
+type AuthLayoutProps = {
   children: ReactNode;
   headerAction?: ReactNode;
   backTo?: { to: string; label?: string };
   backAboveCard?: { to: string; label?: string };
   showLegalFooter?: boolean;
-}) {
+};
+
+export default function AuthLayout(props: AuthLayoutProps) {
+  return (
+    <LanguageProvider>
+      <AuthLayoutBody {...props} />
+    </LanguageProvider>
+  );
+}
+
+function AuthLayoutBody({
+  children,
+  headerAction,
+  backTo,
+  backAboveCard,
+  showLegalFooter = false,
+}: AuthLayoutProps) {
   const { t } = useLanguage();
   return (
     <div className="flex min-h-dvh flex-col bg-[#F6F5F9] text-[#101114]">
