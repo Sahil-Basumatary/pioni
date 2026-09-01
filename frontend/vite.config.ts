@@ -55,7 +55,13 @@ export default defineConfig(({ mode }) => {
         provider: 'v8',
         reporter: ['text', 'html'],
         include: ['src/**/*.{ts,tsx}'],
-        exclude: ['src/**/*.d.ts', 'src/main.tsx', 'src/bootstrap.tsx', 'src/test/**'],
+        exclude: [
+          'src/**/*.d.ts',
+          'src/main.tsx',
+          'src/bootstrap.tsx',
+          'src/features/i18n/packs/**',
+          'src/test/**',
+        ],
         thresholds: {
           statements: 24,
           branches: 17,

@@ -42,7 +42,7 @@ describe("AuthLanguageMenu", () => {
     expect(LANGUAGE_OPTIONS.length).toBeGreaterThan(20);
     await user.click(screen.getByRole("option", { name: "Deutsch" }));
     expect(readRegionalPrefs().language).toBe("de-DE");
-    expect(screen.getByRole("button", { name: "Sprache" })).toHaveTextContent("Deutsch");
+    expect(await screen.findByRole("button", { name: "Sprache" })).toHaveTextContent("Deutsch");
     expect(document.documentElement.lang).toBe("de-DE");
   });
 
@@ -59,7 +59,7 @@ describe("AuthLanguageMenu", () => {
     expect(screen.getByRole("heading", { name: "Sign in to Pioni" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Language" }));
     await user.click(screen.getByRole("option", { name: "Deutsch" }));
-    expect(screen.getByRole("heading", { name: "Bei Pioni anmelden" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Bei Pioni anmelden" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Fortfahren" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Mit Google anmelden" })).toBeInTheDocument();
   });

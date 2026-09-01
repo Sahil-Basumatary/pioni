@@ -13,7 +13,10 @@ import {
   writeRegionalPrefs,
   type AppLanguage,
 } from "../settings/regionalPrefs";
-import { translate, type MessageKey } from "../i18n/translate";
+import { enUS, loadLocalePack } from "../i18n/loadLocalePack";
+import type { LocalePack } from "../i18n/localePack";
+import { translateFromPack } from "../i18n/translateFromPack";
+import type { MessageKey } from "../i18n/translate";
 
 type LanguageContextValue = {
   language: AppLanguage;
@@ -27,9 +30,22 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<AppLanguage>(
     () => readRegionalPrefs().language,
   );
+  const [pack, setPack] = useState<LocalePack | null>(() =>
+    readRegionalPrefs().language === "en-US" ? enUS : null,
+  );
 
   useEffect(() => {
     applyDocumentLanguage(language);
+  }, [language]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadLocalePack(language).then((next) => {
+      if (!cancelled) setPack(next);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [language]);
 
   useEffect(() => {
@@ -55,14 +71,16 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const t = useCallback(
     (key: MessageKey, vars?: Record<string, string>) =>
-      translate(language, key, vars),
-    [language],
+      translateFromPack(pack ?? enUS, key, vars),
+    [pack],
   );
 
   const value = useMemo(
     () => ({ language, setLanguage, t }),
     [language, setLanguage, t],
   );
+
+  if (!pack) return null;
 
   return (
     <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
