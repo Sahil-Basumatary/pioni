@@ -7,7 +7,11 @@ import { store } from './app/store'
 import { ClerkTokenBridge } from './features/auth/ClerkTokenBridge'
 import { clerkAppearance, clerkLocalization } from './features/auth/clerkAppearance'
 
-export function mount(publishableKey: string) {
+export function mount(publishableKey?: string) {
+  if (!publishableKey) {
+    throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY')
+  }
+
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <ClerkProvider

@@ -6,15 +6,13 @@ import {
 } from './features/settings/regionalPrefs'
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
-
-if (!PUBLISHABLE_KEY && import.meta.env.PROD) {
-  throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY')
-}
+const publishableKey =
+  PUBLISHABLE_KEY || (import.meta.env.PROD ? undefined : 'pk_test_e2e')
 
 applyDocumentLanguage(readRegionalPrefs().language)
 
 void import('./bootstrap').then(({ mount }) => {
-  mount(PUBLISHABLE_KEY || 'pk_test_e2e')
+  mount(publishableKey)
 })
 
 if (import.meta.env.DEV) {
